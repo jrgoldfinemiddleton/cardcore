@@ -1,0 +1,33 @@
+# Binaries
+cardcore
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test cache / coverage
+*.test
+*.out
+coverage.html
+
+# Build output
+/bin/
+
+# Editor artifacts
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+.cursor/
+*.code-workspace
+.emacs.d/
+*.elc
+.dir-locals.el
+
+# golangci-lint cache
+.golangci-lint-cache/
+
+# AI orchestration scratch directory (local only)
+.sisyphus/
