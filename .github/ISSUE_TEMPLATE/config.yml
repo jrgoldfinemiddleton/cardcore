@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Feature Request
+    url: https://github.com/jrgoldfinemiddleton/cardcore/discussions/new?category=ideas
+    about: Suggest and discuss feature ideas in GitHub Discussions.
+  - name: Question
+    url: https://github.com/jrgoldfinemiddleton/cardcore/discussions/new?category=q-a
+    about: Ask usage or design questions in GitHub Discussions.

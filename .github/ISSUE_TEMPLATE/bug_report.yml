@@ -1,0 +1,54 @@
+name: Bug Report
+description: Report a bug in cardcore
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to file this report.
+  - type: checkboxes
+    id: search
+    attributes:
+      label: Duplicate check
+      options:
+        - label: I searched for other open and closed issues and pull requests before opening this, and didn't find anything that seems related.
+          required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: |
+        Tell us what you observed and what you expected to happen instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: |
+        Please share a code snippet or steps that reproduce the issue.
+        Keep it as concise as possible — only the minimum code needed to trigger the bug.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: cardcore version
+      description: You can find this with `go list -m github.com/jrgoldfinemiddleton/cardcore`.
+      placeholder: v0.1.0
+    validations:
+      required: true
+  - type: input
+    id: go-version
+    attributes:
+      label: Go version
+      description: You can find this with `go version`.
+      placeholder: go1.22.0 darwin/arm64
+    validations:
+      required: true
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Anything else you think might be helpful.
+    validations:
+      required: false

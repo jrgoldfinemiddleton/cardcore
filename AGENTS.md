@@ -14,6 +14,17 @@ cardcore/
 │   ├── design.md        # Design principles
 │   ├── architecture.md  # System architecture
 │   └── decisions/       # ADRs — read these before making architectural changes
+├── .github/
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.yml
+│   │   └── config.yml   # Redirects features/questions to Discussions
+│   └── workflows/
+│       ├── pr.yml       # PR validation: title check, make check, changelog nudge
+│       ├── main.yml     # Push to main: make check
+│       └── release.yml  # Tag push: validate, test, create GitHub Release
+├── CONTRIBUTING.md      # Contribution guidelines
+├── SECURITY.md          # Vulnerability reporting
 ├── Makefile             # Build/test/lint targets
 ├── .golangci.yml        # Linter config
 └── README.md            # Project overview
@@ -31,6 +42,7 @@ cardcore/
 
 ## 4. Never Do
 - Never add external dependencies — stdlib only
+- Never use third-party GitHub Actions — first-party (`actions/*`) are acceptable
 - Never put game logic in the root `cardcore` package
 - Never extract generic abstractions (Player, GameState, Rules, etc.) until at least two games are implemented
 - Never commit with failing tests or lint errors
@@ -67,3 +79,6 @@ Read `doc/decisions/` for the rationale behind key choices. Important ADRs:
 - Before adding any external dependency to the project (the answer will almost always be "no")
 - Before writing or modifying any file, propose the change and wait for explicit approval
 - Before installing any dev tool (the answer will almost always be "no")
+
+## 9. Maintainer Runbook
+If `doc/maintainer-runbook.md` exists locally, read it for release procedures, PR review workflow, repository settings reference, and recovery steps. Proactively remind the maintainer of relevant runbook procedures during release, review, and recovery scenarios.
