@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   title-check:
@@ -40,37 +39,5 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Install golangci-lint
-        run: |
-          cd "$HOME"
-          go mod init tools
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-
       - name: Run checks
         run: make check
-
-  changelog-nudge:
-    name: Changelog reminder
-    if: "!github.event.pull_request.draft"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Check for changelog update
-        id: changelog
-        run: |
-          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q '^CHANGELOG\.md$'; then
-            echo "modified=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "modified=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Post reminder
-        if: steps.changelog.outputs.modified == 'false'
-        run: |
-          gh pr comment "${{ github.event.pull_request.number }}" --body \
-            "This PR doesn't update CHANGELOG.md. If the change is user-facing, please add a note under the \`[Unreleased]\` section."
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

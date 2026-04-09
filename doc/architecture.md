@@ -19,7 +19,7 @@ The engine is architected to expose an HTTP/WebSocket API in the future. All cli
 Clients interact with the system by making requests to the server's API. The server translates these requests into engine method calls, which mutate the game state. After the state is updated, the server reads the new state and responds back to the client.
 
 ## Dependency Policy
-cardcore maintains zero external runtime dependencies. It relies exclusively on the Go standard library, using `math/rand/v2` (Go 1.22+) for shuffling and `sort` for hand management. This keeps the binary small and ensures reproducible builds.
+cardcore maintains zero external runtime dependencies. It relies exclusively on the Go standard library, using `math/rand/v2` for shuffling and `sort` for hand management. This keeps the binary small and ensures reproducible builds. Go 1.24.1+ is required for the `tool` directive, which pins dev tool versions (e.g., golangci-lint) in `go.mod` for reproducible builds across contributors and CI.
 
 ## Future Phases
 *   **CLI Client**: Direct command-line interaction for local play.

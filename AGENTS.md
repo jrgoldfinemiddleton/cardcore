@@ -31,7 +31,7 @@ cardcore/
 ```
 
 ## 3. Always Do
-- Run `make check` before considering any change complete (requires golangci-lint in PATH: `export PATH="$(go env GOPATH)/bin:$PATH"`)
+- Run `make check` before considering any change complete (dev tools are managed via the `tool` directive in `go.mod` — no manual installation required)
 - Add or update tests whenever you add or change code — never leave tests behind
 - Write Go doc comments on all exported symbols
 - Keep the root package (`cardcore`) free of game-specific logic

@@ -1,0 +1,11 @@
+# Dependabot keeps first-party GitHub Actions up to date.
+#
+# Go module (gomod) updates are intentionally omitted. Dependabot does not yet
+# support the Go 1.24 tool directive, so tool dependency updates are manual.
+# Tracking issue: https://github.com/dependabot/dependabot-core/issues/12050
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

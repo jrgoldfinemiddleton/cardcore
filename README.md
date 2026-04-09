@@ -28,7 +28,7 @@ cardcore/
 
 ## Requirements
 
-Go 1.22+ (uses `math/rand/v2`)
+Go 1.24.1+ (uses the `tool` directive for dev tooling)
 
 ## Getting Started
 
@@ -38,23 +38,7 @@ make check
 
 This runs formatting, vetting, linting, and tests. See [Makefile Targets](#makefile-targets) for individual targets.
 
-Note: both tools require `$(go env GOPATH)/bin` on your `PATH`:
-
-```bash
-export PATH="$(go env GOPATH)/bin:$PATH"
-```
-
-`make check` requires `golangci-lint`:
-
-```bash
-go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-```
-
-`make doc` requires `pkgsite`:
-
-```bash
-go install golang.org/x/pkgsite/cmd/pkgsite@latest
-```
+Dev tools like [golangci-lint](https://golangci-lint.run/) and [pkgsite](https://pkg.go.dev/golang.org/x/pkgsite) are declared in `go.mod` via the Go 1.24 `tool` directive and are compiled automatically on first use — no manual installation required.
 
 ## Makefile Targets
 
