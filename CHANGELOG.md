@@ -8,5 +8,7 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-04-08
+
 ### Added
 - Core engine primitives: Suit, Rank, Card, Deck, and Hand
