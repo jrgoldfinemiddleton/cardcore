@@ -2,7 +2,10 @@
 
 A universal card game engine in [Go](https://go.dev/).
 
-<!-- badges go here -->
+[![CI](https://github.com/jrgoldfinemiddleton/cardcore/actions/workflows/main.yml/badge.svg)](https://github.com/jrgoldfinemiddleton/cardcore/actions/workflows/main.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/jrgoldfinemiddleton/cardcore.svg)](https://pkg.go.dev/github.com/jrgoldfinemiddleton/cardcore)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jrgoldfinemiddleton/cardcore)](https://goreportcard.com/report/github.com/jrgoldfinemiddleton/cardcore)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ## About
 
