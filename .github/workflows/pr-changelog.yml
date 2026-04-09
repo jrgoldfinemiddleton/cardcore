@@ -38,5 +38,5 @@ jobs:
             echo "Changelog reminder already posted, skipping."
             exit 0
           fi
-          gh pr comment "${{ github.event.pull_request.number }}" --body \
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body \
             "This PR doesn't update CHANGELOG.md. If the change is user-facing, please add a note under the \`[Unreleased]\` section."
