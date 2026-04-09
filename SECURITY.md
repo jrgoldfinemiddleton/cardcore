@@ -2,7 +2,8 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability, please report it through [GitHub Security Advisories](https://github.com/jrgoldfinemiddleton/cardcore/security/advisories/new).
+If you discover a security vulnerability, please report it privately through the
+**Report a vulnerability** button on the [Security tab](https://github.com/jrgoldfinemiddleton/cardcore/security).
 
 **Do not open a public issue for security vulnerabilities.**
 

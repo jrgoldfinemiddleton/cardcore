@@ -10,12 +10,12 @@ vet:
 	go vet ./...
 
 lint:
-	golangci-lint run
+	go tool golangci-lint run
 
 build:
 	go build ./...
 
 doc:
-	pkgsite -open .
+	go tool pkgsite -open .
 
 check: fmt vet lint test

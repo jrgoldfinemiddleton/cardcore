@@ -1,0 +1,42 @@
+name: PR changelog
+
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  changelog-nudge:
+    name: Changelog reminder
+    if: "!github.event.pull_request.draft"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for changelog update
+        id: changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CHANGED=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
+            --jq '.[].filename' | grep -c '^CHANGELOG\.md$' || true)
+          if [ "$CHANGED" -gt 0 ]; then
+            echo "modified=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "modified=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post reminder
+        if: steps.changelog.outputs.modified == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING=$(gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+            --jq '[.[] | select(.user.login == "github-actions[bot]" and (.body | contains("CHANGELOG.md")))] | length')
+          if [ "$EXISTING" -gt 0 ]; then
+            echo "Changelog reminder already posted, skipping."
+            exit 0
+          fi
+          gh pr comment "${{ github.event.pull_request.number }}" --body \
+            "This PR doesn't update CHANGELOG.md. If the change is user-facing, please add a note under the \`[Unreleased]\` section."
