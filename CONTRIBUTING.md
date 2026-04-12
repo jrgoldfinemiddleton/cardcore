@@ -37,6 +37,30 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/). 
 
 An optional `!` after the type/scope indicates a breaking change: `feat(card)!: change Card field order`.
 
+**Note on versioning:** The project is pre-v1.0.0. Breaking changes may occur in any release. A formal versioning and stability policy will be established as the API matures through multiple game implementations.
+
+## Adding a Game
+
+This project follows **Rules-Driven Development** (see
+[ADR-006](doc/decisions/006-rules-driven-development.md)). When adding a
+new game:
+
+1. **Document the rules.** Write `doc/games/<game>/rules.md` with the
+   complete standard rules and any known variants. The rules document is
+   the specification — it must be precise, unambiguous, and readable by
+   non-technical players. For established games, cite primary references.
+   For original games, the rules document itself is the authoritative
+   definition.
+2. **Implement the game.** Create a package under `games/<game>/`. Build
+   the implementation against the rules document.
+3. **Add a package doc.** Create `games/<game>/doc.go` with a concise
+   overview (see `games/hearts/doc.go` for the pattern).
+4. **Write tests.** Test every rule and edge case described in the rules
+   document. Include an integration test that plays a complete game from
+   start to finish, verifying structural invariants (e.g., hand depletion,
+   phase transitions) hold throughout.
+5. **Run `make check`.** Must pass clean before opening a PR.
+
 ## Guidelines
 
 - **No external dependencies.** This project uses only the Go standard library.

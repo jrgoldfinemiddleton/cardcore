@@ -8,6 +8,9 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### Added
+- Hearts card game engine (`games/hearts/`)
+
 ## [0.1.0] - 2026-04-08
 
 ### Added

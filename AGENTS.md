@@ -10,10 +10,17 @@ Module: `github.com/jrgoldfinemiddleton/cardcore`
 cardcore/
 ├── card.go              # Suit, Rank, Card, Deck — engine atoms
 ├── hand.go              # Hand — player's cards
+├── games/
+│   └── hearts/          # Hearts card game
+│       ├── doc.go       # Package documentation
+│       └── hearts.go    # Game logic
 ├── doc/
 │   ├── design.md        # Design principles
 │   ├── architecture.md  # System architecture
-│   └── decisions/       # ADRs — read these before making architectural changes
+│   ├── decisions/       # ADRs — read these before making architectural changes
+│   └── games/
+│       └── hearts/
+│           └── rules.md # Hearts rules specification (RDD)
 ├── .github/
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   ├── ISSUE_TEMPLATE/
@@ -38,6 +45,7 @@ cardcore/
 - Place game-specific logic in subpackages under `games/` (e.g., `games/hearts/`)
 - Follow existing naming conventions: exported types are PascalCase, unexported are camelCase
 - Read the relevant ADRs in `doc/decisions/` before making architectural decisions
+- Follow Rules-Driven Development ([ADR-006](doc/decisions/006-rules-driven-development.md)) when adding a game — write the rules document before implementing
 - Keep the Go version in `go.mod` aligned with the minimum version stated in `README.md`
 
 ## 4. Never Do
@@ -48,6 +56,7 @@ cardcore/
 - Never commit with failing tests or lint errors
 - Never edit an ADR file after its initial commit — write a new one instead
 - Never use `//nolint` directives to silence lint errors — fix the code instead
+- Never tag a v1.0.0 or higher release — the root package is not yet stable enough for a v1.0.0 commitment
 
 ## 5. Development Workflow
 1. Make a change
@@ -63,6 +72,13 @@ cardcore/
 - **Error handling**: functions return `error` as the last return value; callers must check it
 - **No global state**: all state is in structs passed explicitly
 - **Testing**: use standard `testing` package; test files are `*_test.go` in the same package
+  - Every test must execute its assertion — if there's a conditional path to the assertion, the test can silently pass without testing anything; prefer deterministic setups that guarantee the condition under test is reached
+  - Test data must be realistic — if the domain has invariants (e.g., round points sum to 26), test data must respect them; impossible states can mask bugs
+  - When testing for errors, verify *which* error — checking `err != nil` is brittle when the function under test has multiple validation checks; verify the error message
+  - Accumulation needs a nonzero starting point — any test for `+=` behavior must start with existing state, otherwise `=` and `+=` are indistinguishable
+  - Never rely on random setup to exercise a specific code path — if you need a particular hand configuration, construct it explicitly
+  - Each game engine must include an integration test that exercises the full state machine lifecycle (start to terminal state) and verifies structural invariants hold across rounds (e.g., point conservation, hand depletion, phase transitions, no state leaks between rounds)
+  - Scenarios that require multiple subsystems cooperating (e.g., trick resolution → point accumulation → score detection → special scoring logic) need their own integration tests — unit tests on each piece in isolation are not sufficient
 - **Formatting**: `gofmt` is enforced by `make check`; never manually format — let the tool do it
 - **Comments**: exported symbols need doc comments; unexported ones are optional but welcome
 
@@ -71,6 +87,7 @@ Read `doc/decisions/` for the rationale behind key choices. Important ADRs:
 - ADR-003: Why Go
 - ADR-004: Why API-first
 - ADR-005: Why no generic abstractions yet
+- ADR-006: Rules-Driven Development for games
 
 ## 8. When to Check In With the Human
 - Before making any architectural change not covered by an ADR
