@@ -50,7 +50,8 @@ new game:
    the specification — it must be precise, unambiguous, and readable by
    non-technical players. For established games, cite primary references.
    For original games, the rules document itself is the authoritative
-   definition.
+   definition. The rules document may be submitted as its own PR before
+   any implementation work begins.
 2. **Implement the game.** Create a package under `games/<game>/`. Build
    the implementation against the rules document.
 3. **Add a package doc.** Create `games/<game>/doc.go` with a concise

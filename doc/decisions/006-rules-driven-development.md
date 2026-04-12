@@ -1,6 +1,6 @@
 # ADR-006: Rules-Driven Development for Game Implementations
 
-**Date:** 2026-04-09
+**Date:** 2026-04-12
 **Status:** Accepted
 
 ## Context
@@ -29,13 +29,12 @@ RDD means:
    source of truth and the code must be fixed — unless the rules
    document itself needs an intentional update.
 6. Variant rules are documented in a dedicated section of the same
-   rules file, providing a clear specification for future variant
-   support.
+   rules file.
 
 ## Consequences
 (+) Every rule has a single, traceable source of truth outside the code.
 (+) Rules documents double as user-facing documentation.
-(+) Variant support has a clear specification before any code is
+(+) Variant rules have a clear specification before any code is
     written.
 (+) Contributors can review rules correctness without reading Go.
 (-) Requires discipline to write the rules document first.
