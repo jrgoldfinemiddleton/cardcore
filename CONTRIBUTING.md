@@ -72,16 +72,16 @@ categories:
 - Clarifications that do not change specified behavior (rewording,
   calling out edge cases the code already handles)
 - Adding a new variant category that is not yet implemented
-- Adding, changing, or removing variant rules for which no
-  implementation exists
+- Adding, changing, or removing details within a variant that has no
+  implementation
 
 **Rules + implementation required in the same PR:**
 - Changes that alter the specified behavior of an implemented game
 - Adding a variant to an already-implemented variant category (where
   omitting it creates an obvious gap)
 - Adding a variant that is a trivial extension of existing variant code
-- Changing or removing variant rules that have an existing
-  implementation — removal should not be done lightly, but when it
+- Changing or removing an implemented variant's specification —
+  removal should not be done lightly, but when it
   happens, look for opportunities to simplify the engine code that
   no longer needs to support the removed variant
 

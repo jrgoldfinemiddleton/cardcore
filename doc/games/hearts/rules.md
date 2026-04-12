@@ -175,7 +175,7 @@ Reference: Pagat (variant).
 
 #### 3 Players
 
-Remove the 2♦ from the deck. Deal 17 cards to each player. The player
+Remove the 2♣ from the deck. Deal 17 cards to each player. The player
 holding the 3♣ leads it to the first trick. Tricks contain 3 cards.
 
 Pass cycle options:
