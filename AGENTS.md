@@ -1,7 +1,7 @@
 # AI Agent Guidance (AGENTS.md)
 
 ## 1. Project Summary
-Cardcore is a universal card game engine in Go. It is a library (no `main` package). Hearts will be the first game. The design philosophy is suckless: minimal, composable, zero runtime dependencies, abstractions are deferred until they become necessary.
+Cardcore is a universal card game engine in Go. It is a library (no `main` package). Hearts is the first game. The design philosophy is suckless: minimal, composable, zero runtime dependencies, abstractions are deferred until they become necessary.
 
 Module: `github.com/jrgoldfinemiddleton/cardcore`
 
@@ -79,6 +79,7 @@ cardcore/
   - Never rely on random setup to exercise a specific code path — if you need a particular hand configuration, construct it explicitly
   - Each game engine must include an integration test that exercises the full state machine lifecycle (start to terminal state) and verifies structural invariants hold across rounds (e.g., point conservation, hand depletion, phase transitions, no state leaks between rounds)
   - Scenarios that require multiple subsystems cooperating (e.g., trick resolution → point accumulation → score detection → special scoring logic) need their own integration tests — unit tests on each piece in isolation are not sufficient
+  - Implemented variants require integration tests — exceptions need significant justification
 - **Formatting**: `gofmt` is enforced by `make check`; never manually format — let the tool do it
 - **Comments**: exported symbols need doc comments; unexported ones are optional but welcome
 

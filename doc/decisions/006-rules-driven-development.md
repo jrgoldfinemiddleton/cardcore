@@ -30,12 +30,34 @@ RDD means:
    document itself needs an intentional update.
 6. Variant rules are documented in a dedicated section of the same
    rules file.
+7. Rules documents are living specifications. They may be updated after
+   implementation to correct errors, improve clarity, or document new
+   edge cases.
+8. When a rules change alters specified behavior and an implementation
+   exists, the same pull request (PR) must include corresponding
+   implementation and test updates. Clarifications that do not change
+   behavior may be submitted without code changes.
+9. New variant rules may be added without implementation unless the
+   variant belongs to an already-implemented variant category (where
+   omitting it creates an obvious gap) or is a trivial extension of
+   existing variant code.
+10. For established games, the primary references cited in the merged
+    rules document represent the accepted authority for that game.
+    Proposing a different primary reference whose rules conflict with
+    the current one requires a GitHub Discussion before any PR is
+    created.
 
 ## Consequences
 (+) Every rule has a single, traceable source of truth outside the code.
 (+) Rules documents double as user-facing documentation.
-(+) Variant rules have a clear specification before any code is
-    written.
+(+) Variant rules have a clear specification independent of
+    implementation status.
 (+) Contributors can review rules correctness without reading Go.
+(+) Implemented games have stable rules — behavioral changes require
+    code updates in the same PR, preventing spec/code drift.
+(+) Primary reference disputes are resolved through discussion, not
+    competing PRs.
 (-) Requires discipline to write the rules document first.
 (-) Rules documents must be maintained in sync with code changes.
+(-) Changing the behavior of an implemented game is costly — the
+    contributor must update rules, implementation, and tests together.

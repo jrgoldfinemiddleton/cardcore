@@ -13,7 +13,7 @@
 5. Commit using [Conventional Commits](#commit-messages) format.
 6. Open a pull request against `main`.
 
-All PRs are squash-merged, so feel free to commit frequently on your branch.
+All pull requests (PRs) are squash-merged, so feel free to commit frequently on your branch.
 
 ## Commit Messages
 
@@ -59,8 +59,43 @@ new game:
 4. **Write tests.** Test every rule and edge case described in the rules
    document. Include an integration test that plays a complete game from
    start to finish, verifying structural invariants (e.g., hand depletion,
-   phase transitions) hold throughout.
+   phase transitions) hold throughout. Implemented variants require
+   integration tests.
 5. **Run `make check`.** Must pass clean before opening a PR.
+
+## Changing Existing Rules
+
+Rules documents are living specifications. Changes fall into three
+categories:
+
+**Rules-only PR (no code changes required):**
+- Clarifications that do not change specified behavior (rewording,
+  calling out edge cases the code already handles)
+- Adding a new variant category that is not yet implemented
+- Adding, changing, or removing variant rules for which no
+  implementation exists
+
+**Rules + implementation required in the same PR:**
+- Changes that alter the specified behavior of an implemented game
+- Adding a variant to an already-implemented variant category (where
+  omitting it creates an obvious gap)
+- Adding a variant that is a trivial extension of existing variant code
+- Changing or removing variant rules that have an existing
+  implementation — removal should not be done lightly, but when it
+  happens, look for opportunities to simplify the engine code that
+  no longer needs to support the removed variant
+
+**Not a PR — file a bug or open a Discussion instead:**
+- You believe the rules are wrong but cannot contribute the code changes
+- You want to propose a rule change for community feedback before
+  committing to the work
+- You want to propose a major overhaul of a game's standard rules —
+  this has significant upstream impact on servers, clients, and tests,
+  and should be discussed before any PR is created
+- You want to change the primary reference for an established game —
+  the references cited in the merged rules document are the accepted
+  authority, and proposing a conflicting reference is a high bar to
+  overcome, especially when an implementation already exists
 
 ## Guidelines
 
