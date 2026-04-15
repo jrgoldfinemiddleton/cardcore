@@ -41,6 +41,10 @@ details.
   round in the pass cycle.
 - **Safe trick**: Informal term for the first trick, which normally
   contains no penalty points due to the first trick restriction.
+- **Unprotected**: Holding a high card (typically the Q♠) without
+  enough low cards in the same suit to duck under it. For example,
+  holding Q♠ with only one spade below it offers little defense against
+  being forced to win a spade trick and taking the 13-point penalty.
 
 ## Overview
 
