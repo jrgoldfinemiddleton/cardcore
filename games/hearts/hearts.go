@@ -96,6 +96,37 @@ func New() *Game {
 	}
 }
 
+// Clone returns a deep copy of the game state. The returned Game is
+// fully independent — mutating it does not affect the original.
+func (g *Game) Clone() *Game {
+	clone := *g
+	for i := range NumPlayers {
+		if g.Hands[i] != nil {
+			clone.Hands[i] = cardcore.NewHand(g.Hands[i].Cards)
+		}
+	}
+	return &clone
+}
+
+// LegalMoves returns the cards in the given seat's hand that are legal to
+// play in the current trick. It returns an error if the game is not in the
+// play phase or it is not the given seat's turn.
+func (g *Game) LegalMoves(seat Seat) ([]cardcore.Card, error) {
+	if g.Phase != PhasePlay {
+		return nil, fmt.Errorf("cannot enumerate legal moves in phase %d", g.Phase)
+	}
+	if seat != g.Turn {
+		return nil, fmt.Errorf("not player %d's turn (current: %d)", seat, g.Turn)
+	}
+	var legal []cardcore.Card
+	for _, card := range g.Hands[seat].Cards {
+		if g.validatePlay(seat, card) == nil {
+			legal = append(legal, card)
+		}
+	}
+	return legal, nil
+}
+
 // Deal shuffles and deals 13 cards to each player, advancing to the pass
 // or play phase.
 func (g *Game) Deal() error {

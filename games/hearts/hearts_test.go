@@ -1,6 +1,7 @@
 package hearts
 
 import (
+	"fmt"
 	"math/rand/v2"
 	"strings"
 	"testing"
@@ -44,6 +45,310 @@ func TestNewGame(t *testing.T) {
 	}
 	if g.Round != 0 {
 		t.Fatalf("new game round = %d, want 0", g.Round)
+	}
+}
+
+func TestCloneGame(t *testing.T) {
+	g := New()
+	if err := g.Deal(); err != nil {
+		t.Fatalf("Deal error: %v", err)
+	}
+	g.Scores[South] = 42
+	g.RoundPts[North] = 7
+	g.HeartsBroken = true
+
+	clone := g.Clone()
+
+	// Verify clone matches original.
+	for i := range NumPlayers {
+		if clone.Hands[i].Len() != g.Hands[i].Len() {
+			t.Fatalf("clone hand %d length = %d, want %d", i, clone.Hands[i].Len(), g.Hands[i].Len())
+		}
+		for j, card := range g.Hands[i].Cards {
+			if !clone.Hands[i].Cards[j].Equal(card) {
+				t.Fatalf("clone hand %d card %d = %v, want %v", i, j, clone.Hands[i].Cards[j], card)
+			}
+		}
+	}
+	if clone.Phase != g.Phase {
+		t.Fatalf("clone phase = %d, want %d", clone.Phase, g.Phase)
+	}
+	if clone.Scores[South] != 42 {
+		t.Fatalf("clone Scores[South] = %d, want 42", clone.Scores[South])
+	}
+	if clone.RoundPts[North] != 7 {
+		t.Fatalf("clone RoundPts[North] = %d, want 7", clone.RoundPts[North])
+	}
+	if !clone.HeartsBroken {
+		t.Fatalf("clone HeartsBroken = false, want true")
+	}
+
+	// Mutate clone hands — original must be unchanged.
+	originalFirstCard := g.Hands[South].Cards[0]
+	clone.Hands[South].Remove(clone.Hands[South].Cards[0])
+	if !g.Hands[South].Contains(originalFirstCard) {
+		t.Fatalf("original hand lost card %v after clone mutation", originalFirstCard)
+	}
+	if g.Hands[South].Len() == clone.Hands[South].Len() {
+		t.Fatalf("original and clone hand lengths should differ after removal")
+	}
+
+	// Mutate clone scores — original must be unchanged.
+	clone.Scores[South] = 50
+	if g.Scores[South] != 42 {
+		t.Fatalf("original Scores[South] = %d after clone mutation, want 42", g.Scores[South])
+	}
+
+	// Mutate clone trick — original must be unchanged.
+	clone.Trick.Cards[South] = c(ace, spades)
+	clone.Trick.Count = 1
+	if g.Trick.Cards[South] != (cardcore.Card{}) {
+		t.Fatalf("original Trick.Cards[South] = %v after clone mutation, want zero card", g.Trick.Cards[South])
+	}
+	if g.Trick.Count != 0 {
+		t.Fatalf("original Trick.Count = %d after clone mutation, want 0", g.Trick.Count)
+	}
+}
+
+func TestLegalMovesWrongPhase(t *testing.T) {
+	g := New()
+	_, err := g.LegalMoves(South)
+	if err == nil {
+		t.Fatalf("expected error for LegalMoves in PhaseDeal")
+	}
+	if !strings.Contains(err.Error(), "phase") {
+		t.Fatalf("error = %q, want mention of phase", err)
+	}
+}
+
+func TestLegalMovesWrongTurn(t *testing.T) {
+	g := New()
+	g.Phase = PhasePlay
+	g.Turn = South
+	g.Hands[North] = cardcore.NewHand([]cardcore.Card{c(ace, spades)})
+
+	_, err := g.LegalMoves(North)
+	if err == nil {
+		t.Fatalf("expected error for LegalMoves when not seat's turn")
+	}
+	if !strings.Contains(err.Error(), "turn") {
+		t.Fatalf("error = %q, want mention of turn", err)
+	}
+}
+
+func TestLegalMovesFirstTrickLeader(t *testing.T) {
+	g := New()
+	g.Phase = PhasePlay
+	g.TrickNum = 0
+	g.Turn = South
+	g.Trick = Trick{Leader: South}
+	g.Hands[South] = cardcore.NewHand([]cardcore.Card{
+		twoOfClubs, c(ace, spades), c(king, hearts),
+	})
+
+	legal, err := g.LegalMoves(South)
+	if err != nil {
+		t.Fatalf("LegalMoves error: %v", err)
+	}
+	if len(legal) != 1 || legal[0] != twoOfClubs {
+		t.Fatalf("legal = %v, want [2♣]", legal)
+	}
+}
+
+func TestLegalMovesFollowSuit(t *testing.T) {
+	g := New()
+	g.Phase = PhasePlay
+	g.TrickNum = 1
+	g.Turn = East
+	g.Trick = Trick{Leader: South, Cards: [NumPlayers]cardcore.Card{
+		South: c(five, diamonds),
+	}, Count: 1}
+	g.Hands[East] = cardcore.NewHand([]cardcore.Card{
+		c(three, diamonds), c(king, diamonds), c(ace, spades), c(queen, hearts),
+	})
+
+	legal, err := g.LegalMoves(East)
+	if err != nil {
+		t.Fatalf("LegalMoves error: %v", err)
+	}
+	if len(legal) != 2 {
+		t.Fatalf("legal = %v, want 2 diamonds", legal)
+	}
+	for _, card := range legal {
+		if card.Suit != diamonds {
+			t.Fatalf("legal contains %v, want only diamonds", card)
+		}
+	}
+}
+
+func TestLegalMovesVoidInLedSuit(t *testing.T) {
+	g := New()
+	g.Phase = PhasePlay
+	g.TrickNum = 1
+	g.Turn = West
+	g.Trick = Trick{Leader: South, Cards: [NumPlayers]cardcore.Card{
+		South: c(five, diamonds),
+	}, Count: 1}
+	g.Hands[West] = cardcore.NewHand([]cardcore.Card{
+		c(ace, spades), c(queen, hearts), c(king, clubs),
+	})
+
+	legal, err := g.LegalMoves(West)
+	if err != nil {
+		t.Fatalf("LegalMoves error: %v", err)
+	}
+	if len(legal) != 3 {
+		t.Fatalf("legal = %v, want all 3 cards (void in diamonds)", legal)
+	}
+}
+
+func TestLegalMovesHeartsNotBroken(t *testing.T) {
+	g := New()
+	g.Phase = PhasePlay
+	g.TrickNum = 1
+	g.HeartsBroken = false
+	g.Turn = South
+	g.Trick = Trick{Leader: South}
+	g.Hands[South] = cardcore.NewHand([]cardcore.Card{
+		c(ace, spades), c(king, hearts), c(queen, hearts),
+	})
+
+	legal, err := g.LegalMoves(South)
+	if err != nil {
+		t.Fatalf("LegalMoves error: %v", err)
+	}
+	if len(legal) != 1 || legal[0] != c(ace, spades) {
+		t.Fatalf("legal = %v, want [A♠] (hearts not broken)", legal)
+	}
+}
+
+func TestLegalMovesQueenOfSpadesLead(t *testing.T) {
+	g := New()
+	g.Phase = PhasePlay
+	g.TrickNum = 1
+	g.HeartsBroken = false
+	g.Turn = South
+	g.Trick = Trick{Leader: South}
+	g.Hands[South] = cardcore.NewHand([]cardcore.Card{
+		queenOfSpades, c(king, hearts), c(queen, hearts),
+	})
+
+	legal, err := g.LegalMoves(South)
+	if err != nil {
+		t.Fatalf("LegalMoves error: %v", err)
+	}
+	if len(legal) != 1 || legal[0] != queenOfSpades {
+		t.Fatalf("legal = %v, want [Q♠] (not a heart, legal to lead)", legal)
+	}
+}
+
+func TestLegalMovesOnlyHeartsRemain(t *testing.T) {
+	g := New()
+	g.Phase = PhasePlay
+	g.TrickNum = 1
+	g.HeartsBroken = false
+	g.Turn = South
+	g.Trick = Trick{Leader: South}
+	g.Hands[South] = cardcore.NewHand([]cardcore.Card{
+		c(king, hearts), c(queen, hearts), c(jack, hearts),
+	})
+
+	legal, err := g.LegalMoves(South)
+	if err != nil {
+		t.Fatalf("LegalMoves error: %v", err)
+	}
+	if len(legal) != 3 {
+		t.Fatalf("legal = %v, want all 3 hearts (only hearts remain)", legal)
+	}
+}
+
+func TestLegalMovesFirstTrickNoPoints(t *testing.T) {
+	g := New()
+	g.Phase = PhasePlay
+	g.TrickNum = 0
+	g.Turn = East
+	g.Trick = Trick{Leader: South, Cards: [NumPlayers]cardcore.Card{
+		South: twoOfClubs,
+	}, Count: 1}
+	g.Hands[East] = cardcore.NewHand([]cardcore.Card{
+		c(ace, spades), c(queen, hearts), queenOfSpades,
+	})
+
+	legal, err := g.LegalMoves(East)
+	if err != nil {
+		t.Fatalf("LegalMoves error: %v", err)
+	}
+	if len(legal) != 1 || legal[0] != c(ace, spades) {
+		t.Fatalf("legal = %v, want [A♠] (no points on first trick)", legal)
+	}
+}
+
+func TestLegalMovesFirstTrickOnlyPointCards(t *testing.T) {
+	g := New()
+	g.Phase = PhasePlay
+	g.TrickNum = 0
+	g.Turn = East
+	g.Trick = Trick{Leader: South, Cards: [NumPlayers]cardcore.Card{
+		South: twoOfClubs,
+	}, Count: 1}
+	g.Hands[East] = cardcore.NewHand([]cardcore.Card{
+		queenOfSpades, c(queen, hearts), c(king, hearts),
+	})
+
+	legal, err := g.LegalMoves(East)
+	if err != nil {
+		t.Fatalf("LegalMoves error: %v", err)
+	}
+	if len(legal) != 3 {
+		t.Fatalf("legal = %v, want all 3 (only point cards available)", legal)
+	}
+}
+
+func TestLegalMovesRoundtrip(t *testing.T) {
+	for seed := range 50 {
+		rng := rand.New(rand.NewPCG(uint64(seed), uint64(seed+1)))
+		g := New()
+		if err := g.Deal(); err != nil {
+			t.Fatalf("seed %d: Deal error: %v", seed, err)
+		}
+
+		// Skip pass phase by setting up directly.
+		g.Phase = PhasePlay
+		g.startFirstTrick()
+
+		for g.Phase == PhasePlay {
+			seat := g.Turn
+			legal, err := g.LegalMoves(seat)
+			if err != nil {
+				t.Fatalf("seed %d: LegalMoves error: %v", seed, err)
+			}
+			if len(legal) == 0 {
+				t.Fatalf("seed %d: no legal moves for seat %d with hand %v", seed, seat, g.Hands[seat].Cards)
+			}
+
+			// Every card NOT in legal must be rejected by PlayCard.
+			for _, card := range g.Hands[seat].Cards {
+				isLegal := false
+				for _, lc := range legal {
+					if card.Equal(lc) {
+						isLegal = true
+						break
+					}
+				}
+				if !isLegal {
+					clone := g.Clone()
+					if err := clone.PlayCard(seat, card); err == nil {
+						t.Fatalf("seed %d: PlayCard accepted %v but LegalMoves excluded it", seed, card)
+					}
+				}
+			}
+
+			// Play a random legal card.
+			pick := legal[rng.IntN(len(legal))]
+			if err := g.PlayCard(seat, pick); err != nil {
+				t.Fatalf("seed %d: PlayCard rejected legal move %v: %v", seed, pick, err)
+			}
+		}
 	}
 }
 
@@ -807,15 +1112,17 @@ func findAnyOtherCard(g *Game, seat Seat, exclude cardcore.Card) cardcore.Card {
 }
 
 func playAnyValid(g *Game, seat Seat) {
-	cards := make([]cardcore.Card, len(g.Hands[seat].Cards))
-	copy(cards, g.Hands[seat].Cards)
-	rand.Shuffle(len(cards), func(i, j int) { cards[i], cards[j] = cards[j], cards[i] })
-	for _, card := range cards {
-		if err := g.PlayCard(seat, card); err == nil {
-			return
-		}
+	legal, err := g.LegalMoves(seat)
+	if err != nil {
+		panic(fmt.Sprintf("LegalMoves error: %v", err))
 	}
-	panic("no valid card to play")
+	if len(legal) == 0 {
+		panic("no legal moves")
+	}
+	pick := legal[rand.IntN(len(legal))]
+	if err := g.PlayCard(seat, pick); err != nil {
+		panic(fmt.Sprintf("PlayCard rejected legal move %v: %v", pick, err))
+	}
 }
 
 // setupFixedHands creates a game with deterministic hands for rule testing.
