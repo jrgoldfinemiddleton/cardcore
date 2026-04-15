@@ -15,5 +15,8 @@ Game-specific logic is isolated in subpackages under `games/`. For example, a hy
 ## Flexibility Notes
 The engine's core primitives impose minimal constraints, allowing game subpackages to adapt them freely. For example, `Deck` is represented as a `[]Card` slice, so games can construct custom decks beyond the standard 52 cards. Each game defines its own constraints, such as player counts and rule variants.
 
+## Error Handling
+Functions return errors for conditions the caller cannot prevent or that depend on runtime input (invalid cards, wrong phase transitions, malformed requests). Precondition violations — conditions the caller is responsible for checking before the call — trigger panics. A panic signals a bug in the calling code, not a recoverable situation. This distinction keeps error returns meaningful: every `error` a caller handles represents a genuine failure mode, not a misuse of the API.
+
 ## Testing
 Reliability is enforced through comprehensive testing. All packages include unit tests, and the `make check` command serves as the mandatory gatekeeper. No changes are merged into the codebase without passing the full test suite.

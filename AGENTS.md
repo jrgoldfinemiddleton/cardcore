@@ -9,9 +9,13 @@ Module: `github.com/jrgoldfinemiddleton/cardcore`
 ```
 cardcore/
 ├── card.go              # Suit, Rank, Card, Deck — engine atoms
+├── doc.go               # Package documentation
 ├── hand.go              # Hand — player's cards
 ├── games/
 │   └── hearts/          # Hearts card game
+│       ├── ai/          # Computer-controlled players
+│       │   ├── doc.go   # Package documentation
+│       │   └── random.go # Random legal move player
 │       ├── doc.go       # Package documentation
 │       ├── hearts.go    # Game logic
 │       └── player.go    # Player interface
@@ -47,6 +51,7 @@ cardcore/
 - Follow existing naming conventions: exported types are PascalCase, unexported are camelCase
 - Read the relevant ADRs in `doc/decisions/` before making architectural decisions
 - Follow Rules-Driven Development ([ADR-006](doc/decisions/006-rules-driven-development.md)) when adding a game — write the rules document before implementing
+- Place AI in `games/<game>/ai/` subpackages
 - Keep the Go version in `go.mod` aligned with the minimum version stated in `README.md`
 
 ## 4. Never Do
@@ -71,6 +76,7 @@ cardcore/
 
 ## 6. Key Conventions
 - **Error handling**: functions return `error` as the last return value; callers must check it
+- **Precondition violations**: programming errors by the caller trigger panics; functions return `error` only for conditions the caller cannot prevent — see [Error Handling](doc/design.md#error-handling)
 - **No global state**: all state is in structs passed explicitly
 - **Testing**: use standard `testing` package; test files are `*_test.go` in the same package
   - Every test must execute its assertion — if there's a conditional path to the assertion, the test can silently pass without testing anything; prefer deterministic setups that guarantee the condition under test is reached
