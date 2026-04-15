@@ -13,7 +13,8 @@ cardcore/
 ├── games/
 │   └── hearts/          # Hearts card game
 │       ├── doc.go       # Package documentation
-│       └── hearts.go    # Game logic
+│       ├── hearts.go    # Game logic
+│       └── player.go    # Player interface
 ├── doc/
 │   ├── design.md        # Design principles
 │   ├── architecture.md  # System architecture
