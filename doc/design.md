@@ -17,3 +17,6 @@ The engine's core primitives impose minimal constraints, allowing game subpackag
 
 ## Testing
 Reliability is enforced through comprehensive testing. All packages include unit tests, and the `make check` command serves as the mandatory gatekeeper. No changes are merged into the codebase without passing the full test suite.
+
+## Error Handling
+Functions return errors for conditions the caller cannot prevent or that depend on runtime input (invalid cards, wrong phase transitions, malformed requests). Precondition violations — conditions the caller is responsible for checking before the call — trigger panics. A panic signals a bug in the calling code, not a recoverable situation. This distinction keeps error returns meaningful: every `error` a caller handles represents a genuine failure mode, not a misuse of the API.
