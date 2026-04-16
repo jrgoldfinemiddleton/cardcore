@@ -3,8 +3,13 @@ package ai
 import (
 	"testing"
 
+	"github.com/jrgoldfinemiddleton/cardcore"
 	"github.com/jrgoldfinemiddleton/cardcore/games/hearts"
 )
+
+func c(r cardcore.Rank, s cardcore.Suit) cardcore.Card {
+	return cardcore.Card{Rank: r, Suit: s}
+}
 
 func playRoundWithPlayer(t *testing.T, g *hearts.Game, p hearts.Player, seed uint64) {
 	t.Helper()

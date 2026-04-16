@@ -7,10 +7,6 @@ import (
 	"github.com/jrgoldfinemiddleton/cardcore/games/hearts"
 )
 
-func c(r cardcore.Rank, s cardcore.Suit) cardcore.Card {
-	return cardcore.Card{Rank: r, Suit: s}
-}
-
 func TestAnalyzePlayedCards(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
