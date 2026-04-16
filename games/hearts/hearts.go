@@ -73,16 +73,18 @@ func (tr *Trick) LedSuit() cardcore.Suit {
 
 // Game holds the complete state of a Hearts game.
 type Game struct {
-	Phase        Phase                      // Current phase of the round.
-	Round        int                        // Zero-indexed round number.
-	PassDir      PassDirection              // Pass direction for the current round.
-	Hands        [NumPlayers]*cardcore.Hand // Each player's current hand.
-	Scores       [NumPlayers]int            // Cumulative scores across all rounds.
-	RoundPts     [NumPlayers]int            // Penalty points accumulated this round.
-	Trick        Trick                      // The trick currently in progress.
-	TrickNum     int                        // Zero-indexed trick number within the round.
-	Turn         Seat                       // The seat whose turn it is to play.
-	HeartsBroken bool                       // Whether hearts have been played this round.
+	Phase        Phase                                // Current phase of the round.
+	Round        int                                  // Zero-indexed round number.
+	PassDir      PassDirection                        // Pass direction for the current round.
+	Hands        [NumPlayers]*cardcore.Hand           // Each player's current hand.
+	Scores       [NumPlayers]int                      // Cumulative scores across all rounds.
+	RoundPts     [NumPlayers]int                      // Penalty points accumulated this round.
+	Trick        Trick                                // The trick currently in progress.
+	TrickHistory []Trick                              // Completed tricks this round, in play order.
+	TrickNum     int                                  // Zero-indexed trick number within the round.
+	Turn         Seat                                 // The seat whose turn it is to play.
+	HeartsBroken bool                                 // Whether hearts have been played this round.
+	PassHistory  [NumPlayers][PassCount]cardcore.Card // Cards each seat passed this round.
 
 	// Pending passes: passCards[from] = cards to pass.
 	passCards [NumPlayers][PassCount]cardcore.Card
@@ -104,6 +106,10 @@ func (g *Game) Clone() *Game {
 		if g.Hands[i] != nil {
 			clone.Hands[i] = cardcore.NewHand(g.Hands[i].Cards)
 		}
+	}
+	if len(g.TrickHistory) > 0 {
+		clone.TrickHistory = make([]Trick, len(g.TrickHistory))
+		copy(clone.TrickHistory, g.TrickHistory)
 	}
 	return &clone
 }
@@ -149,6 +155,8 @@ func (g *Game) Deal() error {
 	g.RoundPts = [NumPlayers]int{}
 	g.HeartsBroken = false
 	g.TrickNum = 0
+	g.TrickHistory = nil
+	g.PassHistory = [NumPlayers][PassCount]cardcore.Card{}
 	g.passCards = [NumPlayers][PassCount]cardcore.Card{}
 	g.passReady = [NumPlayers]bool{}
 
@@ -275,6 +283,7 @@ func (g *Game) resolveTrick() {
 	winner := g.trickWinner()
 	pts := g.trickPoints()
 	g.RoundPts[winner] += pts
+	g.TrickHistory = append(g.TrickHistory, g.Trick)
 
 	g.TrickNum++
 	if g.TrickNum == HandSize {
@@ -407,6 +416,8 @@ func (g *Game) executePass() {
 		}
 		g.Hands[i].Sort()
 	}
+
+	g.PassHistory = g.passCards
 }
 
 func (g *Game) passTarget(from Seat) Seat {

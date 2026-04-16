@@ -771,6 +771,149 @@ func TestFullGameIntegration(t *testing.T) {
 	}
 }
 
+func TestPassHistoryAccuracy(t *testing.T) {
+	g := newPassGame(t)
+
+	passedCards := [NumPlayers][PassCount]cardcore.Card{}
+	for i := Seat(0); i < NumPlayers; i++ {
+		copy(passedCards[i][:], g.Hands[i].Cards[:PassCount])
+	}
+
+	for i := Seat(0); i < NumPlayers; i++ {
+		if err := g.SetPass(i, passedCards[i]); err != nil {
+			t.Fatalf("SetPass(%d) error: %v", i, err)
+		}
+	}
+
+	if g.PassHistory != passedCards {
+		t.Fatalf("PassHistory = %v, want %v", g.PassHistory, passedCards)
+	}
+}
+
+func TestPassHistoryResetOnDeal(t *testing.T) {
+	g := New()
+	playRandomRound(t, g)
+
+	// PassHistory should have data from the round just played.
+	// After a new Deal, it should be zeroed.
+	if err := g.Deal(); err != nil {
+		t.Fatalf("Deal error: %v", err)
+	}
+
+	zero := [NumPlayers][PassCount]cardcore.Card{}
+	if g.PassHistory != zero {
+		t.Fatalf("PassHistory after Deal is not zeroed: %v", g.PassHistory)
+	}
+}
+
+func TestPassHistoryHoldRound(t *testing.T) {
+	g := New()
+	g.PassDir = PassHold
+	if err := g.Deal(); err != nil {
+		t.Fatalf("Deal error: %v", err)
+	}
+
+	zero := [NumPlayers][PassCount]cardcore.Card{}
+	if g.PassHistory != zero {
+		t.Fatalf("PassHistory on hold round is not zeroed: %v", g.PassHistory)
+	}
+}
+
+func TestTrickHistoryMidTrick(t *testing.T) {
+	g := setupFixedHands()
+
+	// Play first trick to completion.
+	for g.TrickNum == 0 {
+		playAnyValid(g, g.Turn)
+	}
+	if len(g.TrickHistory) != 1 {
+		t.Fatalf("len(TrickHistory) after trick 1 = %d, want 1", len(g.TrickHistory))
+	}
+
+	// Play 2 of 4 cards in the second trick.
+	playAnyValid(g, g.Turn)
+	playAnyValid(g, g.Turn)
+
+	if len(g.TrickHistory) != 1 {
+		t.Fatalf("len(TrickHistory) mid-trick = %d, want 1 (trick not yet complete)", len(g.TrickHistory))
+	}
+
+	// Complete the second trick.
+	playAnyValid(g, g.Turn)
+	playAnyValid(g, g.Turn)
+
+	if len(g.TrickHistory) != 2 {
+		t.Fatalf("len(TrickHistory) after trick 2 = %d, want 2", len(g.TrickHistory))
+	}
+}
+
+func TestTrickHistoryCloneIndependence(t *testing.T) {
+	g := setupFixedHands()
+
+	// Play 5 tricks.
+	for g.TrickNum < 5 {
+		playAnyValid(g, g.Turn)
+	}
+	if len(g.TrickHistory) != 5 {
+		t.Fatalf("len(TrickHistory) = %d, want 5", len(g.TrickHistory))
+	}
+
+	clone := g.Clone()
+
+	if len(clone.TrickHistory) != 5 {
+		t.Fatalf("clone len(TrickHistory) = %d, want 5", len(clone.TrickHistory))
+	}
+
+	// Mutate clone's TrickHistory.
+	clone.TrickHistory[0].Leader = East
+	clone.TrickHistory[0].Count = 99
+
+	// Original must be unchanged.
+	if g.TrickHistory[0].Leader == East {
+		t.Error("original TrickHistory[0].Leader changed after clone mutation")
+	}
+	if g.TrickHistory[0].Count == 99 {
+		t.Error("original TrickHistory[0].Count changed after clone mutation")
+	}
+}
+
+func TestTrickHistoryResetOnDeal(t *testing.T) {
+	g := New()
+	playRandomRound(t, g)
+
+	if err := g.Deal(); err != nil {
+		t.Fatalf("Deal error: %v", err)
+	}
+	if len(g.TrickHistory) != 0 {
+		t.Fatalf("len(TrickHistory) after Deal = %d, want 0", len(g.TrickHistory))
+	}
+}
+
+func TestTrickHistoryAccumulation(t *testing.T) {
+	g := setupFixedHands()
+
+	for g.Phase == PhasePlay {
+		playAnyValid(g, g.Turn)
+	}
+
+	if len(g.TrickHistory) != HandSize {
+		t.Fatalf("len(TrickHistory) = %d, want %d", len(g.TrickHistory), HandSize)
+	}
+
+	for i, tr := range g.TrickHistory {
+		if tr.Count != NumPlayers {
+			t.Errorf("trick %d: Count = %d, want %d", i, tr.Count, NumPlayers)
+		}
+		ledSuit := tr.Cards[tr.Leader].Suit
+		if tr.LedSuit() != ledSuit {
+			t.Errorf("trick %d: LedSuit() = %v, want %v", i, tr.LedSuit(), ledSuit)
+		}
+	}
+	if pts := trickHistoryPoints(g.TrickHistory); pts != MoonPoints {
+		t.Errorf("total points across TrickHistory = %d, want %d", pts, MoonPoints)
+	}
+}
+
 func TestShootTheMoonIntegration(t *testing.T) {
 	const (
 		numGames  = 5
@@ -1072,6 +1215,13 @@ func playRandomRound(t *testing.T, g *Game) {
 		t.Fatalf("round %d: sum(RoundPts) = %d, want %d", g.Round, roundTotal, MoonPoints)
 	}
 
+	if len(g.TrickHistory) != HandSize {
+		t.Fatalf("round %d: len(TrickHistory) = %d, want %d", g.Round, len(g.TrickHistory), HandSize)
+	}
+	if pts := trickHistoryPoints(g.TrickHistory); pts != MoonPoints {
+		t.Fatalf("round %d: sum(TrickHistory points) = %d, want %d", g.Round, pts, MoonPoints)
+	}
+
 	for i := Seat(0); i < NumPlayers; i++ {
 		if g.Hands[i].Len() != 0 {
 			t.Fatalf("round %d: player %d hand not empty (%d cards)", g.Round, i, g.Hands[i].Len())
@@ -1109,6 +1259,21 @@ func findAnyOtherCard(g *Game, seat Seat, exclude cardcore.Card) cardcore.Card {
 		}
 	}
 	panic("no other card found")
+}
+
+func trickHistoryPoints(history []Trick) int {
+	pts := 0
+	for _, tr := range history {
+		for _, card := range tr.Cards {
+			if card.Suit == hearts {
+				pts++
+			}
+			if card == queenOfSpades {
+				pts += 13
+			}
+		}
+	}
+	return pts
 }
 
 func playAnyValid(g *Game, seat Seat) {
@@ -1154,11 +1319,11 @@ func setupFixedHands() *Game {
 		c(ace, diamonds),
 	})
 	g.Hands[East] = cardcore.NewHand([]cardcore.Card{
-		c(six, clubs), c(nine, clubs), c(ace, clubs),
-		c(five, diamonds), c(nine, diamonds), c(ten, diamonds),
-		c(five, hearts), c(nine, hearts), c(ace, hearts),
-		c(five, spades), c(nine, spades),
-		c(queen, hearts), c(king, hearts),
+		c(six, clubs), c(nine, clubs), c(ten, clubs),
+		c(ace, clubs), c(five, diamonds), c(nine, diamonds),
+		c(ten, diamonds), c(five, hearts), c(nine, hearts),
+		c(queen, hearts), c(ace, hearts), c(five, spades),
+		c(nine, spades),
 	})
 
 	g.Turn = South
