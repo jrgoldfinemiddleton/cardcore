@@ -55,7 +55,90 @@ func (h *Heuristic) ChoosePlay(g *hearts.Game, seat hearts.Seat) cardcore.Card {
 	if err != nil {
 		panic("ai: ChoosePlay called in invalid state: " + err.Error())
 	}
+	if len(legal) == 1 {
+		return legal[0]
+	}
+
+	a := analyze(g, seat)
+
+	if g.Trick.Count == 0 {
+		return h.chooseLead(g, legal, a)
+	}
+
+	// TODO: following strategy (B5).
 	return legal[0]
+}
+
+// chooseLead picks a card to lead a new trick.
+func (h *Heuristic) chooseLead(g *hearts.Game, legal []cardcore.Card, a analysis) cardcore.Card {
+	// Shuffle for random tie-breaking, then stable sort by descending score.
+	candidates := make([]cardcore.Card, len(legal))
+	copy(candidates, legal)
+	h.rng.Shuffle(len(candidates), func(i, j int) {
+		candidates[i], candidates[j] = candidates[j], candidates[i]
+	})
+	slices.SortStableFunc(candidates, func(x, y cardcore.Card) int {
+		return leadScore(y, g, a) - leadScore(x, g, a)
+	})
+	return candidates[0]
+}
+
+// leadScore returns how desirable it is to lead this card.
+// Higher scores are preferred.
+func leadScore(card cardcore.Card, g *hearts.Game, a analysis) int {
+	score := 0
+	suit := card.Suit
+	hand := g.Hands[a.seat]
+	suitLen := len(hand.CardsOfSuit(suit))
+
+	if suitLen <= 3 && suit != cardcore.Hearts {
+		// Short non-heart suit: bonus for voiding.
+		score += (4 - suitLen) * 10
+		// Spade rank preference is handled by the flush section below.
+		if suit != cardcore.Spades {
+			if g.TrickNum <= 3 {
+				// Early tricks: lead high to maintain control while voiding.
+				score += int(card.Rank)
+			} else {
+				// Later tricks: lead low to avoid eating sloughed penalties.
+				score += int(cardcore.Ace) - int(card.Rank)
+			}
+		}
+	} else {
+		// Long suit: prefer low cards (safer leads).
+		score += int(cardcore.Ace) - int(card.Rank)
+	}
+
+	// Unprotected Q♠: extra urgency to void a non-spade suit.
+	if a.queen == queenInHand && !queenProtected(hand) && suit != cardcore.Spades && suitLen <= 3 {
+		score += 15
+	}
+
+	// Opponent void penalty — they may slough penalties on us.
+	// Safe if our card is guaranteed lowest (we can't win the trick).
+	if a.opponentVoidInSuit(suit) && !a.guaranteedLowest(card) {
+		score -= 40
+	}
+
+	// Spade flush: lead spades below Q♠ to draw it out.
+	if suit == cardcore.Spades && a.queen != queenPlayed && a.queen != queenInHand {
+		if hand.Contains(aceOfSpades) || hand.Contains(kingOfSpades) {
+			// High spades at risk — avoid leading spades.
+			score -= 20
+		} else {
+			// No high spades — safe to flush. Prefer highest below Q♠
+			// to maximize chance of winning the trick and leading again.
+			score += 10
+			score += int(card.Rank)
+		}
+	}
+
+	// Hearts: generally avoid leading.
+	if suit == cardcore.Hearts {
+		score -= 15
+	}
+
+	return score
 }
 
 // passScore returns how much the heuristic wants to pass this card.

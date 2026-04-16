@@ -47,7 +47,12 @@ type analysis struct {
 	moonThreat int
 }
 
-var queenOfSpades = cardcore.Card{Rank: cardcore.Queen, Suit: cardcore.Spades}
+var (
+	twoOfClubs    = cardcore.Card{Rank: cardcore.Two, Suit: cardcore.Clubs}
+	aceOfSpades   = cardcore.Card{Rank: cardcore.Ace, Suit: cardcore.Spades}
+	kingOfSpades  = cardcore.Card{Rank: cardcore.King, Suit: cardcore.Spades}
+	queenOfSpades = cardcore.Card{Rank: cardcore.Queen, Suit: cardcore.Spades}
+)
 
 func analyze(g *hearts.Game, seat hearts.Seat) analysis {
 	a := analysis{
@@ -164,6 +169,28 @@ func trickPoints(trick hearts.Trick) int {
 
 func nextSeat(s hearts.Seat) hearts.Seat {
 	return (s + 1) % hearts.NumPlayers
+}
+
+// guaranteedLowest reports whether card is the lowest remaining card
+// of its suit — all lower ranks have already been played.
+func (a *analysis) guaranteedLowest(card cardcore.Card) bool {
+	for r := cardcore.Rank(0); r < card.Rank; r++ {
+		if !a.played[card.Suit][r] {
+			return false
+		}
+	}
+	return true
+}
+
+// opponentVoidInSuit reports whether any opponent of the asking seat
+// is known to be void in the given suit.
+func (a *analysis) opponentVoidInSuit(suit cardcore.Suit) bool {
+	for s := hearts.Seat(0); s < hearts.NumPlayers; s++ {
+		if s != a.seat && a.voids[s][suit] {
+			return true
+		}
+	}
+	return false
 }
 
 func passTarget(from hearts.Seat, dir hearts.PassDirection) hearts.Seat {

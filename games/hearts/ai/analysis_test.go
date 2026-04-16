@@ -156,7 +156,7 @@ func TestAnalyzeQueenPlayed(t *testing.T) {
 		// Trick 1: spade lead, West plays Q♠. South wins with A♠.
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Ace, cardcore.Spades),
+				hearts.South: aceOfSpades,
 				hearts.West:  queenOfSpades,
 				hearts.North: c(cardcore.Five, cardcore.Spades),
 				hearts.East:  c(cardcore.Nine, cardcore.Spades),
@@ -190,7 +190,7 @@ func TestAnalyzeQueenPassed(t *testing.T) {
 
 	g.PassHistory[hearts.South] = [hearts.PassCount]cardcore.Card{
 		queenOfSpades,
-		c(cardcore.King, cardcore.Spades),
+		kingOfSpades,
 		c(cardcore.Ace, cardcore.Hearts),
 	}
 
@@ -217,7 +217,7 @@ func TestAnalyzeQueenPassedThenPlayed(t *testing.T) {
 	// South passed Q♠ to West.
 	g.PassHistory[hearts.South] = [hearts.PassCount]cardcore.Card{
 		queenOfSpades,
-		c(cardcore.King, cardcore.Spades),
+		kingOfSpades,
 		c(cardcore.Ace, cardcore.Hearts),
 	}
 
@@ -235,7 +235,7 @@ func TestAnalyzeQueenPassedThenPlayed(t *testing.T) {
 		},
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Ace, cardcore.Spades),
+				hearts.South: aceOfSpades,
 				hearts.West:  queenOfSpades,
 				hearts.North: c(cardcore.Five, cardcore.Spades),
 				hearts.East:  c(cardcore.Nine, cardcore.Spades),
@@ -379,7 +379,7 @@ func TestAnalyzePointsTaken(t *testing.T) {
 		// South leads A♠, West plays Q♠. South wins (highest spade).
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Ace, cardcore.Spades),
+				hearts.South: aceOfSpades,
 				hearts.West:  queenOfSpades,
 				hearts.North: c(cardcore.Five, cardcore.Spades),
 				hearts.East:  c(cardcore.Nine, cardcore.Spades),
@@ -436,7 +436,7 @@ func TestAnalyzeMoonThreat(t *testing.T) {
 				hearts.South: c(cardcore.Two, cardcore.Spades),
 				hearts.West:  queenOfSpades,
 				hearts.North: c(cardcore.Five, cardcore.Spades),
-				hearts.East:  c(cardcore.Ace, cardcore.Spades),
+				hearts.East:  aceOfSpades,
 			},
 			Leader: hearts.East,
 			Count:  hearts.NumPlayers,
@@ -483,7 +483,7 @@ func TestAnalyzeMoonThreatSplit(t *testing.T) {
 		},
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Ace, cardcore.Spades),
+				hearts.South: aceOfSpades,
 				hearts.West:  queenOfSpades,
 				hearts.North: c(cardcore.Five, cardcore.Spades),
 				hearts.East:  c(cardcore.Nine, cardcore.Spades),
