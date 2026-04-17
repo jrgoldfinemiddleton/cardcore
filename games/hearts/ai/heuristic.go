@@ -65,8 +65,11 @@ func (h *Heuristic) ChoosePlay(g *hearts.Game, seat hearts.Seat) cardcore.Card {
 		return h.chooseLead(g, legal, a)
 	}
 
-	// TODO: following strategy (B5).
-	return legal[0]
+	ledSuit := g.Trick.LedSuit()
+	if g.Hands[seat].HasSuit(ledSuit) {
+		return h.chooseFollow(g, legal, a)
+	}
+	return h.chooseVoid(g, legal, a)
 }
 
 // chooseLead picks a card to lead a new trick.
@@ -81,6 +84,113 @@ func (h *Heuristic) chooseLead(g *hearts.Game, legal []cardcore.Card, a analysis
 		return leadScore(y, g, a) - leadScore(x, g, a)
 	})
 	return candidates[0]
+}
+
+// chooseFollow picks a card when we must follow the led suit.
+func (h *Heuristic) chooseFollow(g *hearts.Game, legal []cardcore.Card, a analysis) cardcore.Card {
+	candidates := make([]cardcore.Card, len(legal))
+	copy(candidates, legal)
+	h.rng.Shuffle(len(candidates), func(i, j int) {
+		candidates[i], candidates[j] = candidates[j], candidates[i]
+	})
+	slices.SortStableFunc(candidates, func(x, y cardcore.Card) int {
+		return followScore(y, g, a) - followScore(x, g, a)
+	})
+	return candidates[0]
+}
+
+// followScore returns how desirable it is to play this card when
+// following suit. Higher scores are preferred.
+func followScore(card cardcore.Card, g *hearts.Game, a analysis) int {
+	winnerRank := currentWinnerRank(g)
+	wouldWin := card.Rank > winnerRank
+	isLast := g.Trick.Count == 3
+	trickPts := currentTrickPoints(g)
+
+	// Q♠ when following spades: dump only if a higher spade already
+	// guarantees we lose the trick.
+	if card == queenOfSpades {
+		for i := g.Trick.Leader; i != a.seat; i = nextSeat(i) {
+			tc := g.Trick.Cards[i]
+			if tc.Suit == cardcore.Spades && tc.Rank > cardcore.Queen {
+				return 100
+			}
+		}
+		return -100
+	}
+
+	// Last to play, trick has points — strongly prefer losing cards;
+	// if forced to win, shed the highest card.
+	if isLast && trickPts > 0 {
+		if !wouldWin {
+			return int(card.Rank) + 50
+		}
+		return int(card.Rank)
+	}
+
+	// Playing under the current winner — safe to shed high cards.
+	if !wouldWin {
+		return int(card.Rank)
+	}
+
+	// Card would win the trick — decide whether that's desirable.
+	if isLast {
+		// Last to play, trick is clean — win it, but discount if
+		// hand is dangerous (winning means leading next).
+		danger := highCardRatio(g.Hands[a.seat])
+		return int(card.Rank) - danger*2
+	}
+
+	// Not last to play — remaining opponents may dump points.
+	if trickPts > 0 {
+		// Points already in trick — duck.
+		return int(cardcore.Ace) - int(card.Rank)
+	}
+
+	// Clean trick, not last — small win bonus scaled down by remaining
+	// players and hand danger.
+	playersLeft := hearts.NumPlayers - 1 - g.Trick.Count
+	danger := highCardRatio(g.Hands[a.seat])
+	bonus := int(card.Rank) - playersLeft*3 - danger*2
+	return bonus
+}
+
+// chooseVoid picks a card when void in the led suit — free to slough anything.
+func (h *Heuristic) chooseVoid(g *hearts.Game, legal []cardcore.Card, a analysis) cardcore.Card {
+	candidates := make([]cardcore.Card, len(legal))
+	copy(candidates, legal)
+	h.rng.Shuffle(len(candidates), func(i, j int) {
+		candidates[i], candidates[j] = candidates[j], candidates[i]
+	})
+	slices.SortStableFunc(candidates, func(x, y cardcore.Card) int {
+		return voidScore(y, g, a) - voidScore(x, g, a)
+	})
+	return candidates[0]
+}
+
+// voidScore returns how desirable it is to slough this card when void
+// in the led suit. Higher scores are preferred.
+func voidScore(card cardcore.Card, g *hearts.Game, a analysis) int {
+	if card == queenOfSpades {
+		return 100
+	}
+
+	if card.Suit == cardcore.Spades && card.Rank > cardcore.Queen {
+		return 50
+	}
+
+	score := int(card.Rank)
+
+	if card.Suit == cardcore.Hearts {
+		score += 10
+	}
+
+	suitLen := len(g.Hands[a.seat].CardsOfSuit(card.Suit))
+	if suitLen <= 3 {
+		score += (4 - suitLen) * 5
+	}
+
+	return score
 }
 
 // leadScore returns how desirable it is to lead this card.

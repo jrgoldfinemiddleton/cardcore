@@ -8,6 +8,8 @@ import (
 	"github.com/jrgoldfinemiddleton/cardcore/games/hearts"
 )
 
+var _ hearts.Player = (*Heuristic)(nil)
+
 func newSeededHeuristic(seed uint64) *Heuristic {
 	return NewHeuristic(rand.New(rand.NewPCG(seed, seed+1)))
 }
@@ -673,6 +675,407 @@ func TestChooseLeadAvoidsHearts(t *testing.T) {
 	}
 }
 
+func TestFollowLastCleanTrickWinsWithHighest(t *testing.T) {
+	g := setupFollowState(hearts.East, 1, []cardcore.Card{
+		c(cardcore.Six, cardcore.Clubs),
+		c(cardcore.Ten, cardcore.Clubs),
+		c(cardcore.Jack, cardcore.Clubs),
+		c(cardcore.Seven, cardcore.Diamonds),
+		c(cardcore.Eight, cardcore.Diamonds),
+		c(cardcore.Nine, cardcore.Diamonds),
+		c(cardcore.Six, cardcore.Spades),
+		c(cardcore.Seven, cardcore.Spades),
+		c(cardcore.Eight, cardcore.Spades),
+		c(cardcore.Nine, cardcore.Spades),
+		c(cardcore.Six, cardcore.Hearts),
+		c(cardcore.Seven, cardcore.Hearts),
+	}, []hearts.Trick{validFirstTrick()},
+		hearts.South,
+		[]trickCard{
+			{hearts.South, c(cardcore.Seven, cardcore.Clubs)},
+			{hearts.West, c(cardcore.Eight, cardcore.Clubs)},
+			{hearts.North, c(cardcore.Nine, cardcore.Clubs)},
+		})
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.East)
+
+	if card != c(cardcore.Jack, cardcore.Clubs) {
+		t.Errorf("expected J♣ (highest to win clean trick), got %v", card)
+	}
+}
+
+func TestFollowLastTrickHasPointsShedsHighest(t *testing.T) {
+	g := setupFollowState(hearts.East, 2, []cardcore.Card{
+		c(cardcore.Six, cardcore.Diamonds),
+		c(cardcore.Seven, cardcore.Diamonds),
+		c(cardcore.Eight, cardcore.Diamonds),
+		c(cardcore.Nine, cardcore.Diamonds),
+		c(cardcore.Six, cardcore.Spades),
+		c(cardcore.Seven, cardcore.Spades),
+		c(cardcore.Eight, cardcore.Spades),
+		c(cardcore.Nine, cardcore.Spades),
+		c(cardcore.Nine, cardcore.Hearts),
+		c(cardcore.Ten, cardcore.Hearts),
+		c(cardcore.Jack, cardcore.Hearts),
+	}, []hearts.Trick{validFirstTrick(), {
+		Leader: hearts.South,
+		Count:  hearts.NumPlayers,
+		Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(cardcore.Six, cardcore.Clubs),
+			hearts.West:  c(cardcore.King, cardcore.Clubs),
+			hearts.North: c(cardcore.Three, cardcore.Hearts),
+			hearts.East:  c(cardcore.Ace, cardcore.Clubs),
+		},
+	}},
+		hearts.South,
+		[]trickCard{
+			{hearts.South, c(cardcore.Six, cardcore.Hearts)},
+			{hearts.West, c(cardcore.Seven, cardcore.Hearts)},
+			{hearts.North, c(cardcore.Eight, cardcore.Hearts)},
+		})
+	g.HeartsBroken = true
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.East)
+
+	if card != c(cardcore.Jack, cardcore.Hearts) {
+		t.Errorf("expected J♥ (forced to win, shed highest), got %v", card)
+	}
+}
+
+// East has 6♣, 8♣ (lose to J♣) and K♣ (wins). North sloughed 5♥
+// so trickPts=1. Losers get +50 bonus: 8♣ scores 56, K♣ scores 11.
+func TestFollowLastTrickHasPointsPrefersDuck(t *testing.T) {
+	g := setupFollowState(hearts.East, 1, []cardcore.Card{
+		c(cardcore.Six, cardcore.Clubs),
+		c(cardcore.Eight, cardcore.Clubs),
+		c(cardcore.King, cardcore.Clubs),
+		c(cardcore.Six, cardcore.Diamonds),
+		c(cardcore.Seven, cardcore.Diamonds),
+		c(cardcore.Eight, cardcore.Diamonds),
+		c(cardcore.Nine, cardcore.Diamonds),
+		c(cardcore.Six, cardcore.Spades),
+		c(cardcore.Seven, cardcore.Spades),
+		c(cardcore.Eight, cardcore.Spades),
+		c(cardcore.Nine, cardcore.Spades),
+		c(cardcore.Six, cardcore.Hearts),
+	}, []hearts.Trick{validFirstTrick()},
+		hearts.South,
+		[]trickCard{
+			{hearts.South, c(cardcore.Ten, cardcore.Clubs)},
+			{hearts.West, c(cardcore.Jack, cardcore.Clubs)},
+			{hearts.North, c(cardcore.Five, cardcore.Hearts)},
+		})
+	g.HeartsBroken = true
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.East)
+
+	if card != c(cardcore.Eight, cardcore.Clubs) {
+		t.Errorf("expected 8♣ (highest loser, +50 duck bonus over K♣), got %v", card)
+	}
+}
+
+// East is last, trick is clean. Both 9♦ and K♦ win; K♦ preferred
+// (higher rank). 3♦ loses (score 1) and should rank below winners.
+func TestFollowLastCleanTrickWins(t *testing.T) {
+	g := setupFollowState(hearts.East, 1, []cardcore.Card{
+		c(cardcore.Six, cardcore.Clubs),
+		c(cardcore.Seven, cardcore.Clubs),
+		c(cardcore.Eight, cardcore.Clubs),
+		c(cardcore.Nine, cardcore.Clubs),
+		c(cardcore.Three, cardcore.Diamonds),
+		c(cardcore.Nine, cardcore.Diamonds),
+		c(cardcore.King, cardcore.Diamonds),
+		c(cardcore.Six, cardcore.Spades),
+		c(cardcore.Seven, cardcore.Spades),
+		c(cardcore.Eight, cardcore.Spades),
+		c(cardcore.Six, cardcore.Hearts),
+		c(cardcore.Seven, cardcore.Hearts),
+	}, []hearts.Trick{validFirstTrick()},
+		hearts.South,
+		[]trickCard{
+			{hearts.South, c(cardcore.Six, cardcore.Diamonds)},
+			{hearts.West, c(cardcore.Seven, cardcore.Diamonds)},
+			{hearts.North, c(cardcore.Eight, cardcore.Diamonds)},
+		})
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.East)
+
+	if card != c(cardcore.King, cardcore.Diamonds) {
+		t.Errorf("expected K♦ (win clean trick, higher rank preferred), got %v", card)
+	}
+}
+
+// East is last, trick is clean, hand is almost all Ten+.
+// highCardRatio = 10*10/12 = 8, so danger*2 = 16.
+// 9♦ wins (score 7-16 = -9), 3♦ loses (score 1).
+// High danger makes losing preferable over winning.
+func TestFollowLastCleanHighDangerPrefersDuck(t *testing.T) {
+	g := setupFollowState(hearts.East, 1, []cardcore.Card{
+		c(cardcore.Ten, cardcore.Clubs),
+		c(cardcore.Three, cardcore.Diamonds),
+		c(cardcore.Nine, cardcore.Diamonds),
+		c(cardcore.Ten, cardcore.Spades),
+		c(cardcore.Jack, cardcore.Spades),
+		c(cardcore.King, cardcore.Spades),
+		c(cardcore.Ace, cardcore.Spades),
+		c(cardcore.Ten, cardcore.Hearts),
+		c(cardcore.Jack, cardcore.Hearts),
+		c(cardcore.Queen, cardcore.Hearts),
+		c(cardcore.King, cardcore.Hearts),
+		c(cardcore.Ace, cardcore.Hearts),
+	}, []hearts.Trick{validFirstTrick()},
+		hearts.South,
+		[]trickCard{
+			{hearts.South, c(cardcore.Six, cardcore.Diamonds)},
+			{hearts.West, c(cardcore.Seven, cardcore.Diamonds)},
+			{hearts.North, c(cardcore.Eight, cardcore.Diamonds)},
+		})
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.East)
+
+	if card != c(cardcore.Three, cardcore.Diamonds) {
+		t.Errorf("expected 3♦ (high danger discourages winning clean trick), got %v", card)
+	}
+}
+
+// North is not last (East still to play). West sloughed 5♥ (1 pt).
+// All of North's diamonds win; prefers lowest winner 8♦ (Ace-Rank = 6).
+func TestFollowNotLastPointsDucksLowestWinner(t *testing.T) {
+	g := setupFollowState(hearts.North, 1, []cardcore.Card{
+		c(cardcore.Six, cardcore.Clubs),
+		c(cardcore.Seven, cardcore.Clubs),
+		c(cardcore.Eight, cardcore.Clubs),
+		c(cardcore.Eight, cardcore.Diamonds),
+		c(cardcore.Jack, cardcore.Diamonds),
+		c(cardcore.King, cardcore.Diamonds),
+		c(cardcore.Six, cardcore.Spades),
+		c(cardcore.Seven, cardcore.Spades),
+		c(cardcore.Eight, cardcore.Spades),
+		c(cardcore.Six, cardcore.Hearts),
+		c(cardcore.Seven, cardcore.Hearts),
+		c(cardcore.Eight, cardcore.Hearts),
+	}, []hearts.Trick{validFirstTrick()},
+		hearts.South,
+		[]trickCard{
+			{hearts.South, c(cardcore.Six, cardcore.Diamonds)},
+			{hearts.West, c(cardcore.Five, cardcore.Hearts)},
+		})
+	g.HeartsBroken = true
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.North)
+
+	if card != c(cardcore.Eight, cardcore.Diamonds) {
+		t.Errorf("expected 8♦ (lowest winner to duck points), got %v", card)
+	}
+}
+
+// West is not last (Count=1, playersLeft=2). Clean trick. Both 8♦
+// and K♦ win; K♦ preferred (higher bonus after playersLeft penalty).
+func TestFollowNotLastCleanWins(t *testing.T) {
+	g := setupFollowState(hearts.West, 1, []cardcore.Card{
+		c(cardcore.Six, cardcore.Clubs),
+		c(cardcore.Seven, cardcore.Clubs),
+		c(cardcore.Eight, cardcore.Clubs),
+		c(cardcore.Nine, cardcore.Clubs),
+		c(cardcore.Ten, cardcore.Clubs),
+		c(cardcore.Eight, cardcore.Diamonds),
+		c(cardcore.King, cardcore.Diamonds),
+		c(cardcore.Six, cardcore.Spades),
+		c(cardcore.Seven, cardcore.Spades),
+		c(cardcore.Eight, cardcore.Spades),
+		c(cardcore.Six, cardcore.Hearts),
+		c(cardcore.Seven, cardcore.Hearts),
+	}, []hearts.Trick{validFirstTrick()},
+		hearts.South,
+		[]trickCard{
+			{hearts.South, c(cardcore.Six, cardcore.Diamonds)},
+		})
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.West)
+
+	if card != c(cardcore.King, cardcore.Diamonds) {
+		t.Errorf("expected K♦ (win clean trick, higher rank preferred), got %v", card)
+	}
+}
+
+// Verifies AI picks 8♣ (highest loser), not J♣/K♣ (winners).
+func TestFollowUnderWinnerShedsHighest(t *testing.T) {
+	g := setupFollowState(hearts.West, 1, []cardcore.Card{
+		c(cardcore.Six, cardcore.Clubs),
+		c(cardcore.Eight, cardcore.Clubs),
+		c(cardcore.Jack, cardcore.Clubs),
+		c(cardcore.King, cardcore.Clubs),
+		c(cardcore.Nine, cardcore.Diamonds),
+		c(cardcore.Ten, cardcore.Diamonds),
+		c(cardcore.Jack, cardcore.Diamonds),
+		c(cardcore.Queen, cardcore.Diamonds),
+		c(cardcore.Six, cardcore.Spades),
+		c(cardcore.Seven, cardcore.Spades),
+		c(cardcore.Eight, cardcore.Spades),
+		c(cardcore.Nine, cardcore.Spades),
+	}, []hearts.Trick{validFirstTrick()},
+		hearts.South,
+		[]trickCard{
+			{hearts.South, c(cardcore.Ten, cardcore.Clubs)},
+		})
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.West)
+
+	if card != c(cardcore.Eight, cardcore.Clubs) {
+		t.Errorf("expected 8♣ (highest that still loses to 10♣), got %v", card)
+	}
+}
+
+func TestFollowQueenOfSpadesDumpsUnderHigherSpade(t *testing.T) {
+	g := setupFollowState(hearts.East, 1, []cardcore.Card{
+		c(cardcore.Six, cardcore.Diamonds),
+		c(cardcore.Seven, cardcore.Diamonds),
+		c(cardcore.Eight, cardcore.Diamonds),
+		c(cardcore.Nine, cardcore.Diamonds),
+		c(cardcore.Ten, cardcore.Diamonds),
+		c(cardcore.Jack, cardcore.Diamonds),
+		c(cardcore.Queen, cardcore.Diamonds),
+		c(cardcore.King, cardcore.Diamonds),
+		c(cardcore.Six, cardcore.Spades),
+		queenOfSpades,
+		c(cardcore.Six, cardcore.Hearts),
+		c(cardcore.Seven, cardcore.Hearts),
+	}, []hearts.Trick{validFirstTrick()},
+		hearts.South,
+		[]trickCard{
+			{hearts.South, c(cardcore.Nine, cardcore.Spades)},
+			{hearts.West, aceOfSpades},
+		})
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.East)
+
+	if card != queenOfSpades {
+		t.Errorf("expected Q♠ (dump under A♠ in trick), got %v", card)
+	}
+}
+
+func TestFollowQueenOfSpadesAvoidsWithoutHigherSpade(t *testing.T) {
+	g := setupFollowState(hearts.East, 1, []cardcore.Card{
+		c(cardcore.Six, cardcore.Diamonds),
+		c(cardcore.Seven, cardcore.Diamonds),
+		c(cardcore.Eight, cardcore.Diamonds),
+		c(cardcore.Nine, cardcore.Diamonds),
+		c(cardcore.Ten, cardcore.Diamonds),
+		c(cardcore.Jack, cardcore.Diamonds),
+		c(cardcore.Queen, cardcore.Diamonds),
+		c(cardcore.King, cardcore.Diamonds),
+		c(cardcore.Six, cardcore.Spades),
+		queenOfSpades,
+		c(cardcore.Six, cardcore.Hearts),
+		c(cardcore.Seven, cardcore.Hearts),
+	}, []hearts.Trick{validFirstTrick()},
+		hearts.South,
+		[]trickCard{
+			{hearts.South, c(cardcore.Eight, cardcore.Spades)},
+			{hearts.West, c(cardcore.Jack, cardcore.Spades)},
+		})
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.East)
+
+	if card == queenOfSpades {
+		t.Errorf("expected non-Q♠ (no spade above queen to hide behind), got Q♠")
+	}
+}
+
+func TestVoidDumpsQueenOfSpades(t *testing.T) {
+	g := setupFollowState(hearts.West, 1, []cardcore.Card{
+		c(cardcore.Six, cardcore.Spades),
+		queenOfSpades,
+		aceOfSpades,
+		c(cardcore.Six, cardcore.Hearts),
+		c(cardcore.Seven, cardcore.Hearts),
+		c(cardcore.Eight, cardcore.Hearts),
+		c(cardcore.Nine, cardcore.Hearts),
+		c(cardcore.Ten, cardcore.Hearts),
+		c(cardcore.Jack, cardcore.Hearts),
+		c(cardcore.Queen, cardcore.Hearts),
+		c(cardcore.King, cardcore.Hearts),
+		c(cardcore.Ace, cardcore.Hearts),
+	}, []hearts.Trick{validFirstTrick()},
+		hearts.South,
+		[]trickCard{
+			{hearts.South, c(cardcore.Six, cardcore.Clubs)},
+		})
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.West)
+
+	if card != queenOfSpades {
+		t.Errorf("expected Q♠ (dump over A♠), got %v", card)
+	}
+}
+
+func TestVoidDumpsAceOfSpades(t *testing.T) {
+	g := setupFollowState(hearts.West, 1, []cardcore.Card{
+		c(cardcore.Six, cardcore.Diamonds),
+		c(cardcore.Seven, cardcore.Diamonds),
+		c(cardcore.Eight, cardcore.Diamonds),
+		c(cardcore.Ace, cardcore.Diamonds),
+		c(cardcore.Six, cardcore.Spades),
+		c(cardcore.Seven, cardcore.Spades),
+		c(cardcore.Eight, cardcore.Spades),
+		aceOfSpades,
+		c(cardcore.Six, cardcore.Hearts),
+		c(cardcore.Seven, cardcore.Hearts),
+		c(cardcore.Eight, cardcore.Hearts),
+		c(cardcore.Ace, cardcore.Hearts),
+	}, []hearts.Trick{validFirstTrick()},
+		hearts.South,
+		[]trickCard{
+			{hearts.South, c(cardcore.Six, cardcore.Clubs)},
+		})
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.West)
+
+	if card != aceOfSpades {
+		t.Errorf("expected A♠ (dump high spade over A♥ and A♦), got %v", card)
+	}
+}
+
+func TestVoidPrefersHeartsOverNonPenalty(t *testing.T) {
+	g := setupFollowState(hearts.West, 1, []cardcore.Card{
+		c(cardcore.Six, cardcore.Diamonds),
+		c(cardcore.Seven, cardcore.Diamonds),
+		c(cardcore.Eight, cardcore.Diamonds),
+		c(cardcore.King, cardcore.Diamonds),
+		c(cardcore.Six, cardcore.Spades),
+		c(cardcore.Seven, cardcore.Spades),
+		c(cardcore.Eight, cardcore.Spades),
+		c(cardcore.Nine, cardcore.Spades),
+		c(cardcore.Six, cardcore.Hearts),
+		c(cardcore.Seven, cardcore.Hearts),
+		c(cardcore.Eight, cardcore.Hearts),
+		c(cardcore.King, cardcore.Hearts),
+	}, []hearts.Trick{validFirstTrick()},
+		hearts.South,
+		[]trickCard{
+			{hearts.South, c(cardcore.Six, cardcore.Clubs)},
+		})
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.West)
+
+	if card != c(cardcore.King, cardcore.Hearts) {
+		t.Errorf("expected K♥ (hearts over same-rank non-penalty), got %v", card)
+	}
+}
+
 func TestHeuristicFullGameIntegration(t *testing.T) {
 	const (
 		numGames  = 10
@@ -708,8 +1111,6 @@ func TestHeuristicFullGameIntegration(t *testing.T) {
 		}
 	}
 }
-
-var _ hearts.Player = (*Heuristic)(nil)
 
 func setupPassHand(t *testing.T, g *hearts.Game, seat hearts.Seat, cards []cardcore.Card) {
 	t.Helper()
@@ -758,4 +1159,37 @@ func validFirstTrick() hearts.Trick {
 			hearts.East:  c(cardcore.Five, cardcore.Clubs),
 		},
 	}
+}
+
+type trickCard struct {
+	seat hearts.Seat
+	card cardcore.Card
+}
+
+func setupFollowState(
+	seat hearts.Seat,
+	trickNum int,
+	hand []cardcore.Card,
+	trickHistory []hearts.Trick,
+	leader hearts.Seat,
+	played []trickCard,
+) *hearts.Game {
+	g := hearts.New()
+	g.Phase = hearts.PhasePlay
+	g.Turn = seat
+	g.TrickNum = trickNum
+	g.TrickHistory = trickHistory
+	g.Hands[seat] = cardcore.NewHand(hand)
+	for s := hearts.Seat(0); s < hearts.NumPlayers; s++ {
+		if s != seat {
+			g.Hands[s] = cardcore.NewHand(nil)
+		}
+	}
+
+	g.Trick = hearts.Trick{Leader: leader}
+	for _, tc := range played {
+		g.Trick.Cards[tc.seat] = tc.card
+	}
+	g.Trick.Count = len(played)
+	return g
 }

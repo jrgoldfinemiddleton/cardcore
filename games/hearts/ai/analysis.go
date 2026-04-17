@@ -193,6 +193,54 @@ func (a *analysis) opponentVoidInSuit(suit cardcore.Suit) bool {
 	return false
 }
 
+// currentTrickPoints returns the penalty points in the in-progress trick.
+func currentTrickPoints(g *hearts.Game) int {
+	pts := 0
+	seat := g.Trick.Leader
+	for range g.Trick.Count {
+		c := g.Trick.Cards[seat]
+		if c.Suit == cardcore.Hearts {
+			pts++
+		}
+		if c == queenOfSpades {
+			pts += 13
+		}
+		seat = nextSeat(seat)
+	}
+	return pts
+}
+
+// currentWinnerRank returns the highest rank of the led suit in the
+// in-progress trick — the rank that must be beaten to win the trick.
+func currentWinnerRank(g *hearts.Game) cardcore.Rank {
+	ledSuit := g.Trick.LedSuit()
+	best := g.Trick.Cards[g.Trick.Leader].Rank
+	seat := nextSeat(g.Trick.Leader)
+	for range g.Trick.Count - 1 {
+		c := g.Trick.Cards[seat]
+		if c.Suit == ledSuit && c.Rank > best {
+			best = c.Rank
+		}
+		seat = nextSeat(seat)
+	}
+	return best
+}
+
+// highCardRatio returns the proportion of cards rank Ten or higher in the
+// hand, scaled to 0–10. It panics if the hand is empty.
+func highCardRatio(hand *cardcore.Hand) int {
+	if hand.Len() == 0 {
+		panic("ai: highCardRatio called with empty hand")
+	}
+	count := 0
+	for _, c := range hand.Cards {
+		if c.Rank >= cardcore.Ten {
+			count++
+		}
+	}
+	return count * 10 / hand.Len()
+}
+
 func passTarget(from hearts.Seat, dir hearts.PassDirection) hearts.Seat {
 	switch dir {
 	case hearts.PassLeft:
