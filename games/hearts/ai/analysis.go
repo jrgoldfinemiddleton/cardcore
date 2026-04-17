@@ -210,20 +210,22 @@ func currentTrickPoints(g *hearts.Game) int {
 	return pts
 }
 
-// currentWinnerRank returns the highest rank of the led suit in the
-// in-progress trick — the rank that must be beaten to win the trick.
-func currentWinnerRank(g *hearts.Game) cardcore.Rank {
+// currentWinner returns the seat and rank currently winning the
+// in-progress trick. Only cards matching the led suit compete.
+func currentWinner(g *hearts.Game) (hearts.Seat, cardcore.Rank) {
 	ledSuit := g.Trick.LedSuit()
 	best := g.Trick.Cards[g.Trick.Leader].Rank
+	winner := g.Trick.Leader
 	seat := nextSeat(g.Trick.Leader)
 	for range g.Trick.Count - 1 {
 		c := g.Trick.Cards[seat]
 		if c.Suit == ledSuit && c.Rank > best {
 			best = c.Rank
+			winner = seat
 		}
 		seat = nextSeat(seat)
 	}
-	return best
+	return winner, best
 }
 
 // highCardRatio returns the proportion of cards rank Ten or higher in the

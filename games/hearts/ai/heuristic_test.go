@@ -1076,6 +1076,255 @@ func TestVoidPrefersHeartsOverNonPenalty(t *testing.T) {
 	}
 }
 
+// --- Moon blocking tests ---
+
+// Moon threat active (East has all pts, trickNum=7). South follows spades.
+// 10♠ would win (beats 6♠). Moon block: rank+30 = 38 vs 2♠ loser = 0.
+// Without moon block, 10♠ would score -1 (not-last clean, danger penalty).
+func TestFollowMoonBlockPrefersWinning(t *testing.T) {
+	g := setupFollowState(hearts.South, 7, []cardcore.Card{
+		c(cardcore.Queen, cardcore.Clubs),
+		c(cardcore.Three, cardcore.Hearts),
+		c(cardcore.Four, cardcore.Hearts),
+		c(cardcore.Five, cardcore.Hearts),
+		c(cardcore.Two, cardcore.Spades),
+		c(cardcore.Ten, cardcore.Spades),
+	}, moonThreatHistory(),
+		hearts.North,
+		[]trickCard{
+			{hearts.North, c(cardcore.Five, cardcore.Spades)},
+			{hearts.East, c(cardcore.Six, cardcore.Spades)},
+		})
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.South)
+
+	if card != c(cardcore.Ten, cardcore.Spades) {
+		t.Errorf("expected 10♠ (moon block prefers winning), got %v", card)
+	}
+}
+
+// Same setup as TestFollowMoonBlockPrefersWinning but trickNum=5 (gate
+// fails). Normal scoring: South ducks with 2♠ (losing card scores higher
+// than winning under danger).
+func TestFollowMoonBlockGateTrickNumTooLow(t *testing.T) {
+	g := setupFollowState(hearts.South, 5, []cardcore.Card{
+		c(cardcore.Queen, cardcore.Clubs),
+		c(cardcore.Three, cardcore.Hearts),
+		c(cardcore.Four, cardcore.Hearts),
+		c(cardcore.Five, cardcore.Hearts),
+		c(cardcore.Six, cardcore.Hearts),
+		c(cardcore.Two, cardcore.Spades),
+		c(cardcore.Four, cardcore.Spades),
+		c(cardcore.Ten, cardcore.Spades),
+	}, earlyMoonThreatHistory(),
+		hearts.East,
+		[]trickCard{
+			{hearts.East, c(cardcore.Five, cardcore.Spades)},
+		})
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.South)
+
+	if card == c(cardcore.Ten, cardcore.Spades) {
+		t.Errorf("expected duck (trickNum < 6, no moon block), got 10♠")
+	}
+}
+
+// East is the moon threat and is following. Self-as-threat gate fails —
+// East uses normal scoring, not moon blocking.
+func TestFollowMoonBlockGateSelfIsThreat(t *testing.T) {
+	g := setupFollowState(hearts.East, 7, []cardcore.Card{
+		c(cardcore.Queen, cardcore.Clubs),
+		c(cardcore.Three, cardcore.Hearts),
+		c(cardcore.Four, cardcore.Hearts),
+		c(cardcore.Five, cardcore.Hearts),
+		c(cardcore.Four, cardcore.Spades),
+		c(cardcore.Ten, cardcore.Spades),
+	}, moonThreatHistory(),
+		hearts.North,
+		[]trickCard{
+			{hearts.North, c(cardcore.Five, cardcore.Spades)},
+		})
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.East)
+
+	if card == c(cardcore.Ten, cardcore.Spades) {
+		t.Errorf("expected normal play (self is threat, no block), got 10♠")
+	}
+}
+
+// Moon threat active. South void in led suit (spades). East (moon
+// threat) is currently winning. Dumping hearts feeds the shooter, so hearts
+// get -10 instead of +10. Q♣ (rank 10 + short suit 15 = 25) beats 3♥
+// (rank 1 - 10 = -9).
+func TestVoidMoonBlockSuppressesHeartsDumpWhenThreatWins(t *testing.T) {
+	g := setupFollowState(hearts.South, 7, []cardcore.Card{
+		c(cardcore.Queen, cardcore.Clubs),
+		c(cardcore.Three, cardcore.Hearts),
+		c(cardcore.Four, cardcore.Hearts),
+		c(cardcore.Five, cardcore.Hearts),
+		c(cardcore.Six, cardcore.Hearts),
+		c(cardcore.Seven, cardcore.Hearts),
+	}, moonThreatHistory(),
+		hearts.North,
+		[]trickCard{
+			{hearts.North, c(cardcore.Five, cardcore.Spades)},
+			{hearts.East, c(cardcore.Ace, cardcore.Spades)},
+		})
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.South)
+
+	if card.Suit == cardcore.Hearts {
+		t.Errorf("expected non-heart (suppress hearts dump when threat wins), got %v", card)
+	}
+}
+
+// Moon threat active but threat (East) is NOT winning the trick. North is
+// winning. South is void in led suit (clubs) and has a non-heart alternative
+// (4♠). Hearts dump allowed: K♥ (+10 + 11 = 21) beats 4♠ (baseline 2 +
+// short suit 15 = 17).
+func TestVoidMoonBlockAllowsHeartsDumpWhenThreatLoses(t *testing.T) {
+	g := setupFollowState(hearts.South, 7, []cardcore.Card{
+		c(cardcore.Eight, cardcore.Hearts),
+		c(cardcore.Nine, cardcore.Hearts),
+		c(cardcore.Ten, cardcore.Hearts),
+		c(cardcore.Jack, cardcore.Hearts),
+		c(cardcore.King, cardcore.Hearts),
+		c(cardcore.Four, cardcore.Spades),
+	}, moonThreatHistory(),
+		hearts.North,
+		[]trickCard{
+			{hearts.North, c(cardcore.Queen, cardcore.Clubs)},
+			{hearts.East, c(cardcore.Six, cardcore.Spades)},
+		})
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.South)
+
+	if card != c(cardcore.King, cardcore.Hearts) {
+		t.Errorf("expected K♥ (highest heart, dump allowed when threat loses), got %v", card)
+	}
+}
+
+// trickNum=5, moon threat exists but gate fails (trickNum < 6). Normal
+// scoring: hearts get +10 dump bonus. South void in led suit (diamonds)
+// and has a non-heart alternative (4♠). K♥ (+10 + 11 = 21) beats 4♠
+// (baseline 2 + short suit 15 = 17).
+func TestVoidMoonBlockGateTrickNumTooLow(t *testing.T) {
+	g := setupFollowState(hearts.South, 5, []cardcore.Card{
+		c(cardcore.Three, cardcore.Hearts),
+		c(cardcore.Four, cardcore.Hearts),
+		c(cardcore.Eight, cardcore.Hearts),
+		c(cardcore.Nine, cardcore.Hearts),
+		c(cardcore.Ten, cardcore.Hearts),
+		c(cardcore.Jack, cardcore.Hearts),
+		c(cardcore.King, cardcore.Hearts),
+		c(cardcore.Four, cardcore.Spades),
+	}, earlyMoonThreatHistory(),
+		hearts.East,
+		[]trickCard{
+			{hearts.East, c(cardcore.Jack, cardcore.Diamonds)},
+		})
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.South)
+
+	if card != c(cardcore.King, cardcore.Hearts) {
+		t.Errorf("expected K♥ (gate fails, normal +10 dump, highest heart), got %v", card)
+	}
+}
+
+// Moon threat active. North leads. A♥ gets +30 (high heart, win the trick
+// to dash shooter's hopes). All hearts in hand — A♥ preferred over low
+// hearts (+15).
+func TestLeadMoonBlockPrefersHighHearts(t *testing.T) {
+	g := setupLeadState(hearts.North, 7, []cardcore.Card{
+		c(cardcore.Three, cardcore.Hearts),
+		c(cardcore.Five, cardcore.Hearts),
+		c(cardcore.Six, cardcore.Hearts),
+		c(cardcore.Seven, cardcore.Hearts),
+		c(cardcore.Eight, cardcore.Hearts),
+		c(cardcore.Ace, cardcore.Hearts),
+	}, moonThreatHistory())
+	g.HeartsBroken = true
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.North)
+
+	if card != c(cardcore.Ace, cardcore.Hearts) {
+		t.Errorf("expected A♥ (high heart moon block lead), got %v", card)
+	}
+}
+
+// Moon threat active. North has only low hearts (no K♥/A♥) plus K♠ and A♠
+// (penalized by flush -20). Low hearts get +15 from moon block, beating the
+// penalized spades.
+func TestLeadMoonBlockLowHeartsStillPreferred(t *testing.T) {
+	g := setupLeadState(hearts.North, 7, []cardcore.Card{
+		c(cardcore.Three, cardcore.Hearts),
+		c(cardcore.Four, cardcore.Hearts),
+		c(cardcore.Five, cardcore.Hearts),
+		c(cardcore.Six, cardcore.Hearts),
+		c(cardcore.King, cardcore.Spades),
+		c(cardcore.Ace, cardcore.Spades),
+	}, moonThreatHistory())
+	g.HeartsBroken = true
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.North)
+
+	if card.Suit != cardcore.Hearts {
+		t.Errorf("expected heart lead (moon block, +15 bonus), got %v", card)
+	}
+}
+
+// No moon threat (penalties distributed to North and West). Hearts get
+// normal -15 lead penalty. East should avoid leading hearts.
+func TestLeadNoMoonThreatNormalHeartPenalty(t *testing.T) {
+	cleanHistory := moonThreatHistory()
+	cleanHistory = cleanHistory[:4]
+	cleanHistory = append(cleanHistory,
+		hearts.Trick{Leader: hearts.North, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(cardcore.Queen, cardcore.Diamonds),
+			hearts.West:  c(cardcore.Seven, cardcore.Hearts),
+			hearts.North: c(cardcore.Ace, cardcore.Diamonds),
+			hearts.East:  c(cardcore.King, cardcore.Diamonds),
+		}},
+		hearts.Trick{Leader: hearts.North, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(cardcore.Two, cardcore.Hearts),
+			hearts.West:  c(cardcore.Three, cardcore.Spades),
+			hearts.North: c(cardcore.Two, cardcore.Spades),
+			hearts.East:  c(cardcore.Ace, cardcore.Clubs),
+		}},
+		hearts.Trick{Leader: hearts.West, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(cardcore.Four, cardcore.Spades),
+			hearts.West:  c(cardcore.Five, cardcore.Spades),
+			hearts.North: c(cardcore.Six, cardcore.Spades),
+			hearts.East:  c(cardcore.Seven, cardcore.Spades),
+		}},
+	)
+
+	g := setupLeadState(hearts.East, 7, []cardcore.Card{
+		c(cardcore.Three, cardcore.Hearts),
+		c(cardcore.Four, cardcore.Hearts),
+		c(cardcore.Five, cardcore.Hearts),
+		c(cardcore.Six, cardcore.Hearts),
+		c(cardcore.Eight, cardcore.Spades),
+		c(cardcore.Nine, cardcore.Spades),
+	}, cleanHistory)
+	g.HeartsBroken = true
+
+	h := newSeededHeuristic(42)
+	card := h.ChoosePlay(g, hearts.East)
+
+	if card.Suit == cardcore.Hearts {
+		t.Errorf("expected non-heart (no moon threat, -15 penalty), got %v", card)
+	}
+}
+
 func TestHeuristicFullGameIntegration(t *testing.T) {
 	const (
 		numGames  = 10
@@ -1192,4 +1441,67 @@ func setupFollowState(
 	}
 	g.Trick.Count = len(played)
 	return g
+}
+
+// earlyMoonThreatHistory returns 5 completed tricks where East wins all
+// penalty points (2♥ in trick 4). For use with trickNum=5 gate tests.
+//
+// Cards used: 2♣–J♣, K♣, 3♦–10♦, 2♥ (20 cards).
+func earlyMoonThreatHistory() []hearts.Trick {
+	return []hearts.Trick{
+		validFirstTrick(),
+		// Trick 1: East leads clubs, North wins (clean).
+		{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(cardcore.Seven, cardcore.Clubs),
+			hearts.West:  c(cardcore.Eight, cardcore.Clubs),
+			hearts.North: c(cardcore.Nine, cardcore.Clubs),
+			hearts.East:  c(cardcore.Six, cardcore.Clubs),
+		}},
+		// Trick 2: North leads diamonds, East wins (clean).
+		{Leader: hearts.North, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(cardcore.Four, cardcore.Diamonds),
+			hearts.West:  c(cardcore.Five, cardcore.Diamonds),
+			hearts.North: c(cardcore.Three, cardcore.Diamonds),
+			hearts.East:  c(cardcore.Eight, cardcore.Diamonds),
+		}},
+		// Trick 3: East leads diamonds, North wins (clean).
+		{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(cardcore.Seven, cardcore.Diamonds),
+			hearts.West:  c(cardcore.Nine, cardcore.Diamonds),
+			hearts.North: c(cardcore.Ten, cardcore.Diamonds),
+			hearts.East:  c(cardcore.Six, cardcore.Diamonds),
+		}},
+		// Trick 4: North leads clubs, East wins. West sloughs 2♥ (1 pt → East).
+		{Leader: hearts.North, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(cardcore.Jack, cardcore.Clubs),
+			hearts.West:  c(cardcore.Two, cardcore.Hearts),
+			hearts.North: c(cardcore.Ten, cardcore.Clubs),
+			hearts.East:  c(cardcore.King, cardcore.Clubs),
+		}},
+	}
+}
+
+// moonThreatHistory returns 7 completed tricks where East wins all penalty
+// points. Extends earlyMoonThreatHistory with 2 clean tricks.
+//
+// Cards used: 2♣–J♣, K♣, A♣, 2♦–A♦, 2♠, 3♠, 2♥ (28 cards).
+// Available for hands: Q♣, spades (4♠–A♠), hearts (3♥–A♥).
+func moonThreatHistory() []hearts.Trick {
+	h := earlyMoonThreatHistory()
+	return append(h,
+		// Trick 5: East leads diamonds, North wins (clean).
+		hearts.Trick{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(cardcore.Queen, cardcore.Diamonds),
+			hearts.West:  c(cardcore.Jack, cardcore.Diamonds),
+			hearts.North: c(cardcore.Ace, cardcore.Diamonds),
+			hearts.East:  c(cardcore.King, cardcore.Diamonds),
+		}},
+		// Trick 6: North leads diamonds, North wins (clean).
+		hearts.Trick{Leader: hearts.North, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(cardcore.Ace, cardcore.Clubs),
+			hearts.West:  c(cardcore.Three, cardcore.Spades),
+			hearts.North: c(cardcore.Two, cardcore.Diamonds),
+			hearts.East:  c(cardcore.Two, cardcore.Spades),
+		}},
+	)
 }

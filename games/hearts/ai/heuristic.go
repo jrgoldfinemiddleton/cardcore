@@ -102,7 +102,7 @@ func (h *Heuristic) chooseFollow(g *hearts.Game, legal []cardcore.Card, a analys
 // followScore returns how desirable it is to play this card when
 // following suit. Higher scores are preferred.
 func followScore(card cardcore.Card, g *hearts.Game, a analysis) int {
-	winnerRank := currentWinnerRank(g)
+	_, winnerRank := currentWinner(g)
 	wouldWin := card.Rank > winnerRank
 	isLast := g.Trick.Count == 3
 	trickPts := currentTrickPoints(g)
@@ -117,6 +117,13 @@ func followScore(card cardcore.Card, g *hearts.Game, a analysis) int {
 			}
 		}
 		return -100
+	}
+
+	// Moon blocking — prefer winning tricks to deny the shooter
+	// lead control. Winning cards get a bonus; losing cards are neutral.
+	moonBlock := a.moonThreat >= 0 && a.moonThreat != int(a.seat) && g.TrickNum >= 6
+	if moonBlock && wouldWin {
+		return int(card.Rank) + 30
 	}
 
 	// Last to play, trick has points — strongly prefer losing cards;
@@ -181,8 +188,16 @@ func voidScore(card cardcore.Card, g *hearts.Game, a analysis) int {
 
 	score := int(card.Rank)
 
+	// Under moon threat, avoid dumping hearts when the threat
+	// seat is winning — that feeds their moon attempt.
+	moonBlock := a.moonThreat >= 0 && a.moonThreat != int(a.seat) && g.TrickNum >= 6
 	if card.Suit == cardcore.Hearts {
-		score += 10
+		winnerSeat, _ := currentWinner(g)
+		if moonBlock && winnerSeat == hearts.Seat(a.moonThreat) {
+			score -= 10
+		} else {
+			score += 10
+		}
 	}
 
 	suitLen := len(g.Hands[a.seat].CardsOfSuit(card.Suit))
@@ -244,8 +259,19 @@ func leadScore(card cardcore.Card, g *hearts.Game, a analysis) int {
 	}
 
 	// Hearts: generally avoid leading.
+	// Under moon threat, lead hearts to block. High hearts
+	// (A♥, K♥) win the trick outright; low hearts open the contest.
+	moonBlock := a.moonThreat >= 0 && a.moonThreat != int(a.seat) && g.TrickNum >= 6
 	if suit == cardcore.Hearts {
-		score -= 15
+		if moonBlock {
+			if card.Rank >= cardcore.King {
+				score += 30
+			} else {
+				score += 15
+			}
+		} else {
+			score -= 15
+		}
 	}
 
 	return score

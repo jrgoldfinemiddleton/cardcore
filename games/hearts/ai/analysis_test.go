@@ -538,3 +538,58 @@ func TestAnalyzeNoTrickHistory(t *testing.T) {
 		}
 	}
 }
+
+// Leader played A♦, others played lower diamonds. Leader wins.
+func TestCurrentWinnerLeaderWins(t *testing.T) {
+	g := hearts.New()
+	g.Trick = hearts.Trick{
+		Leader: hearts.South,
+		Count:  3,
+		Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(cardcore.Ace, cardcore.Diamonds),
+			hearts.West:  c(cardcore.Five, cardcore.Diamonds),
+			hearts.North: c(cardcore.Nine, cardcore.Diamonds),
+		},
+	}
+
+	if seat, _ := currentWinner(g); seat != hearts.South {
+		t.Errorf("currentWinner seat = %d, want %d (South)", seat, hearts.South)
+	}
+}
+
+// West played highest diamond, beats leader and North.
+func TestCurrentWinnerNonLeaderWins(t *testing.T) {
+	g := hearts.New()
+	g.Trick = hearts.Trick{
+		Leader: hearts.South,
+		Count:  3,
+		Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(cardcore.Five, cardcore.Diamonds),
+			hearts.West:  c(cardcore.King, cardcore.Diamonds),
+			hearts.North: c(cardcore.Nine, cardcore.Diamonds),
+		},
+	}
+
+	if seat, _ := currentWinner(g); seat != hearts.West {
+		t.Errorf("currentWinner seat = %d, want %d (West)", seat, hearts.West)
+	}
+}
+
+// West played A♠ off-suit (void in diamonds). Highest diamond
+// is North's 9♦, so North wins.
+func TestCurrentWinnerOffSuitIgnored(t *testing.T) {
+	g := hearts.New()
+	g.Trick = hearts.Trick{
+		Leader: hearts.South,
+		Count:  3,
+		Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(cardcore.Five, cardcore.Diamonds),
+			hearts.West:  c(cardcore.Ace, cardcore.Spades),
+			hearts.North: c(cardcore.Nine, cardcore.Diamonds),
+		},
+	}
+
+	if seat, _ := currentWinner(g); seat != hearts.North {
+		t.Errorf("currentWinner seat = %d, want %d (North)", seat, hearts.North)
+	}
+}
