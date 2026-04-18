@@ -2,6 +2,7 @@ package cardcore
 
 import "testing"
 
+// TestAllSuits verifies that AllSuits returns all four suits in iota order.
 func TestAllSuits(t *testing.T) {
 	suits := AllSuits()
 	if len(suits) != NumSuits {
@@ -14,6 +15,7 @@ func TestAllSuits(t *testing.T) {
 	}
 }
 
+// TestSuitString verifies the human-readable name for each suit.
 func TestSuitString(t *testing.T) {
 	tests := []struct {
 		suit Suit
@@ -31,6 +33,7 @@ func TestSuitString(t *testing.T) {
 	}
 }
 
+// TestSuitSymbol verifies the Unicode symbol for each suit.
 func TestSuitSymbol(t *testing.T) {
 	tests := []struct {
 		suit Suit
@@ -48,6 +51,7 @@ func TestSuitSymbol(t *testing.T) {
 	}
 }
 
+// TestInvalidSuit verifies that out-of-range suit values produce fallback strings.
 func TestInvalidSuit(t *testing.T) {
 	s := Suit(99)
 	if got := s.String(); got != "Suit(99)" {
@@ -58,6 +62,7 @@ func TestInvalidSuit(t *testing.T) {
 	}
 }
 
+// TestAllRanks verifies that AllRanks returns all thirteen ranks in iota order.
 func TestAllRanks(t *testing.T) {
 	ranks := AllRanks()
 	if len(ranks) != NumRanks {
@@ -70,6 +75,7 @@ func TestAllRanks(t *testing.T) {
 	}
 }
 
+// TestRankString verifies the short display string for a sample of ranks.
 func TestRankString(t *testing.T) {
 	tests := []struct {
 		rank Rank
@@ -89,6 +95,7 @@ func TestRankString(t *testing.T) {
 	}
 }
 
+// TestInvalidRank verifies that an out-of-range rank value produces a fallback string.
 func TestInvalidRank(t *testing.T) {
 	r := Rank(99)
 	if got := r.String(); got != "Rank(99)" {
@@ -96,15 +103,16 @@ func TestInvalidRank(t *testing.T) {
 	}
 }
 
+// TestCardString verifies the combined rank+suit display string for cards across all four suits.
 func TestCardString(t *testing.T) {
 	tests := []struct {
 		card Card
 		want string
 	}{
-		{Card{Ace, Spades}, "A♠"},
-		{Card{Queen, Hearts}, "Q♥"},
 		{Card{Two, Clubs}, "2♣"},
 		{Card{Ten, Diamonds}, "10♦"},
+		{Card{Queen, Hearts}, "Q♥"},
+		{Card{Ace, Spades}, "A♠"},
 	}
 	for _, tt := range tests {
 		if got := tt.card.String(); got != tt.want {
@@ -113,6 +121,7 @@ func TestCardString(t *testing.T) {
 	}
 }
 
+// TestCardEqual verifies that Equal returns true for identical cards and false for different ones.
 func TestCardEqual(t *testing.T) {
 	a := Card{Ace, Spades}
 	b := Card{Ace, Spades}
@@ -126,6 +135,7 @@ func TestCardEqual(t *testing.T) {
 	}
 }
 
+// TestNewStandardDeck verifies that a new deck has 52 unique cards ordered by suit then rank.
 func TestNewStandardDeck(t *testing.T) {
 	d := NewStandardDeck()
 
@@ -151,6 +161,7 @@ func TestNewStandardDeck(t *testing.T) {
 	}
 }
 
+// TestDeckShuffle verifies that Shuffle randomizes card order while preserving all 52 cards.
 func TestDeckShuffle(t *testing.T) {
 	d := NewStandardDeck()
 	original := make([]Card, DeckSize)
@@ -183,6 +194,8 @@ func TestDeckShuffle(t *testing.T) {
 	}
 }
 
+// TestDeckDeal verifies dealing cards removes them from the deck, including edge cases
+// for dealing zero cards and exhausting the deck.
 func TestDeckDeal(t *testing.T) {
 	d := NewStandardDeck()
 
@@ -238,6 +251,7 @@ func TestDeckDeal(t *testing.T) {
 	}
 }
 
+// TestDeckDealErrors verifies that Deal returns errors for negative and over-size requests.
 func TestDeckDealErrors(t *testing.T) {
 	d := NewStandardDeck()
 
@@ -250,6 +264,7 @@ func TestDeckDealErrors(t *testing.T) {
 	}
 }
 
+// TestDeckContains verifies that Contains reports card presence before and after dealing.
 func TestDeckContains(t *testing.T) {
 	d := NewStandardDeck()
 

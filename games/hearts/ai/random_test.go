@@ -7,10 +7,10 @@ import (
 	"github.com/jrgoldfinemiddleton/cardcore/games/hearts"
 )
 
-func newSeededRandom(seed uint64) *Random {
-	return NewRandom(rand.New(rand.NewPCG(seed, seed+1)))
-}
+// Compile-time check that Random satisfies hearts.Player.
+var _ hearts.Player = (*Random)(nil)
 
+// TestChoosePassReturnsDistinctCardsFromHand verifies that ChoosePass returns three distinct cards that exist in the player's hand.
 func TestChoosePassReturnsDistinctCardsFromHand(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -35,6 +35,7 @@ func TestChoosePassReturnsDistinctCardsFromHand(t *testing.T) {
 	}
 }
 
+// TestChoosePlayReturnsLegalCard verifies that ChoosePlay returns a card accepted by PlayCard.
 func TestChoosePlayReturnsLegalCard(t *testing.T) {
 	g := hearts.New()
 	g.PassDir = hearts.PassHold
@@ -51,6 +52,7 @@ func TestChoosePlayReturnsLegalCard(t *testing.T) {
 	}
 }
 
+// TestDeterminism verifies that identical seeds produce identical ChoosePass and ChoosePlay results.
 func TestDeterminism(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -86,6 +88,7 @@ func TestDeterminism(t *testing.T) {
 	}
 }
 
+// TestLegalityAcrossGames verifies that Random produces legal moves across 200 seeded games.
 func TestLegalityAcrossGames(t *testing.T) {
 	for seed := uint64(0); seed < 200; seed++ {
 		rng := rand.New(rand.NewPCG(seed, seed+1))
@@ -96,6 +99,7 @@ func TestLegalityAcrossGames(t *testing.T) {
 	}
 }
 
+// TestFullGameIntegration runs 10 complete games with Random players and verifies structural invariants: games terminate, winner has the lowest score.
 func TestFullGameIntegration(t *testing.T) {
 	const (
 		numGames  = 10
@@ -133,5 +137,7 @@ func TestFullGameIntegration(t *testing.T) {
 	}
 }
 
-// Compile-time check that Random satisfies hearts.Player.
-var _ hearts.Player = (*Random)(nil)
+// newSeededRandom creates a Random player with a deterministic RNG for test reproducibility.
+func newSeededRandom(seed uint64) *Random {
+	return NewRandom(rand.New(rand.NewPCG(seed, seed+1)))
+}

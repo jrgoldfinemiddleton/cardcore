@@ -99,6 +99,19 @@ func (h *Heuristic) chooseFollow(g *hearts.Game, legal []cardcore.Card, a analys
 	return candidates[0]
 }
 
+// chooseVoid picks a card when void in the led suit — free to slough anything.
+func (h *Heuristic) chooseVoid(g *hearts.Game, legal []cardcore.Card, a analysis) cardcore.Card {
+	candidates := make([]cardcore.Card, len(legal))
+	copy(candidates, legal)
+	h.rng.Shuffle(len(candidates), func(i, j int) {
+		candidates[i], candidates[j] = candidates[j], candidates[i]
+	})
+	slices.SortStableFunc(candidates, func(x, y cardcore.Card) int {
+		return voidScore(y, g, a) - voidScore(x, g, a)
+	})
+	return candidates[0]
+}
+
 // followScore returns how desirable it is to play this card when
 // following suit. Higher scores are preferred.
 func followScore(card cardcore.Card, g *hearts.Game, a analysis) int {
@@ -160,19 +173,6 @@ func followScore(card cardcore.Card, g *hearts.Game, a analysis) int {
 	danger := highCardRatio(g.Hands[a.seat])
 	bonus := int(card.Rank) - playersLeft*3 - danger*2
 	return bonus
-}
-
-// chooseVoid picks a card when void in the led suit — free to slough anything.
-func (h *Heuristic) chooseVoid(g *hearts.Game, legal []cardcore.Card, a analysis) cardcore.Card {
-	candidates := make([]cardcore.Card, len(legal))
-	copy(candidates, legal)
-	h.rng.Shuffle(len(candidates), func(i, j int) {
-		candidates[i], candidates[j] = candidates[j], candidates[i]
-	})
-	slices.SortStableFunc(candidates, func(x, y cardcore.Card) int {
-		return voidScore(y, g, a) - voidScore(x, g, a)
-	})
-	return candidates[0]
 }
 
 // voidScore returns how desirable it is to slough this card when void

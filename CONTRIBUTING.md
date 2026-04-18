@@ -104,6 +104,66 @@ categories:
 - **Run `make check`** before pushing. It runs formatting, vetting, linting, and tests.
 - **Update the changelog.** Add a note under the `## [Unreleased]` section in `CHANGELOG.md` for user-facing changes.
 
+## Code Conventions
+
+This project enforces code conventions automatically via tests in the
+root package (`convention_test.go`). All checks run as part of
+`make check`. See
+[ADR-007](doc/decisions/007-automated-convention-enforcement.md) for
+the rationale behind automated enforcement.
+
+Cardcore aims to be approachable by contributors who are new to Go.
+Consistent structure and thorough doc comments help newcomers navigate
+unfamiliar code without assuming prior Go experience. The conventions
+below exist to lower the barrier to entry, not to create busywork —
+`make check` gives you immediate, specific feedback when something is
+out of place.
+
+### Doc comments
+
+Every function and method — exported and unexported — must have a doc
+comment. The comment must begin with the function or method name:
+
+```go
+// processHand evaluates the cards and returns a score.
+func processHand(h *Hand) int {
+```
+
+This applies to test helpers too. A one-line comment stating intent is
+sufficient for small functions.
+
+### Function ordering
+
+#### Declarations before functions
+
+All type, const, and var declarations must appear before any function
+or method declarations. Never define a type, const, or var between
+functions.
+
+#### Production files
+
+1. Constructor functions (`New*`)
+2. Exported methods — grouped by receiver type
+3. Exported package-level functions
+4. Unexported methods — grouped by receiver type
+5. Unexported package-level functions
+
+Methods on the same receiver must be contiguous — never interleave
+methods from different receivers.
+
+#### Test files
+
+1. Compile-time interface checks (`var _ T = (*Impl)(nil)`)
+2. Unit tests (`func Test*`)
+3. Integration tests (`func Test*Integration`, `func Test*FullGame*`)
+4. Test helpers and setup functions (at the bottom)
+
+### Before every commit
+
+Scan the **entire** file you changed, not just newly added sections.
+The convention tests cover all `.go` files in the module — a violation
+anywhere will fail `make check`.
+
 ## Reporting Bugs
 
 Use the [bug report template](https://github.com/jrgoldfinemiddleton/cardcore/issues/new?template=bug_report.yml) on GitHub.

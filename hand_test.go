@@ -2,8 +2,9 @@ package cardcore
 
 import "testing"
 
+// TestNewHand verifies that NewHand creates a hand with the correct size and copies the input slice.
 func TestNewHand(t *testing.T) {
-	cards := []Card{{Ace, Spades}, {Queen, Hearts}}
+	cards := []Card{{Queen, Hearts}, {Ace, Spades}}
 	h := NewHand(cards)
 
 	if h.Len() != 2 {
@@ -12,11 +13,12 @@ func TestNewHand(t *testing.T) {
 
 	// NewHand should copy, not alias the input slice.
 	cards[0] = Card{Two, Clubs}
-	if h.Cards[0].Suit != Spades {
+	if h.Cards[0].Suit != Hearts {
 		t.Error("NewHand should copy cards, not alias")
 	}
 }
 
+// TestHandAdd verifies that Add appends cards and they are retrievable via Contains.
 func TestHandAdd(t *testing.T) {
 	h := NewHand(nil)
 	h.Add(Card{Ace, Spades})
@@ -33,11 +35,12 @@ func TestHandAdd(t *testing.T) {
 	}
 }
 
+// TestHandRemove verifies that Remove deletes a card and returns false for absent cards.
 func TestHandRemove(t *testing.T) {
 	h := NewHand([]Card{
-		{Ace, Spades},
-		{Queen, Hearts},
 		{Two, Clubs},
+		{Queen, Hearts},
+		{Ace, Spades},
 	})
 
 	if !h.Remove(Card{Queen, Hearts}) {
@@ -55,8 +58,9 @@ func TestHandRemove(t *testing.T) {
 	}
 }
 
+// TestHandContains verifies that Contains reports presence and absence correctly.
 func TestHandContains(t *testing.T) {
-	h := NewHand([]Card{{Ace, Spades}, {Queen, Hearts}})
+	h := NewHand([]Card{{Queen, Hearts}, {Ace, Spades}})
 
 	if !h.Contains(Card{Ace, Spades}) {
 		t.Error("hand should contain A♠")
@@ -66,8 +70,9 @@ func TestHandContains(t *testing.T) {
 	}
 }
 
+// TestHandHasSuit verifies that HasSuit detects suits present in the hand.
 func TestHandHasSuit(t *testing.T) {
-	h := NewHand([]Card{{Ace, Spades}, {Queen, Hearts}})
+	h := NewHand([]Card{{Queen, Hearts}, {Ace, Spades}})
 
 	if !h.HasSuit(Spades) {
 		t.Error("hand should have spades")
@@ -77,12 +82,13 @@ func TestHandHasSuit(t *testing.T) {
 	}
 }
 
+// TestHandCardsOfSuit verifies that CardsOfSuit returns matching cards and an empty slice for absent suits.
 func TestHandCardsOfSuit(t *testing.T) {
 	h := NewHand([]Card{
-		{Ace, Spades},
-		{King, Spades},
-		{Queen, Hearts},
 		{Two, Clubs},
+		{Queen, Hearts},
+		{King, Spades},
+		{Ace, Spades},
 	})
 
 	spades := h.CardsOfSuit(Spades)
@@ -96,6 +102,7 @@ func TestHandCardsOfSuit(t *testing.T) {
 	}
 }
 
+// TestHandSort verifies that Sort orders cards by suit then rank ascending.
 func TestHandSort(t *testing.T) {
 	h := NewHand([]Card{
 		{Ace, Spades},

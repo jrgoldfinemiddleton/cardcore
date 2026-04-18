@@ -54,20 +54,7 @@ var (
 	queenOfSpades = cardcore.Card{Rank: cardcore.Queen, Suit: cardcore.Spades}
 )
 
-func analyze(g *hearts.Game, seat hearts.Seat) analysis {
-	a := analysis{
-		seat:       seat,
-		moonThreat: -1,
-	}
-
-	a.scanTrickHistory(g)
-	a.scanHandVoids(g, seat)
-	a.locateQueen(g, seat)
-	a.detectMoonThreat()
-
-	return a
-}
-
+// scanTrickHistory records played cards, opponent voids, hearts count, and points from completed tricks.
 func (a *analysis) scanTrickHistory(g *hearts.Game) {
 	for _, trick := range g.TrickHistory {
 		ledSuit := trick.LedSuit()
@@ -90,6 +77,7 @@ func (a *analysis) scanTrickHistory(g *hearts.Game) {
 	}
 }
 
+// scanHandVoids marks suits missing from the seat's own hand as void.
 func (a *analysis) scanHandVoids(g *hearts.Game, seat hearts.Seat) {
 	for suit := cardcore.Suit(0); suit < cardcore.NumSuits; suit++ {
 		if !g.Hands[seat].HasSuit(suit) {
@@ -98,6 +86,7 @@ func (a *analysis) scanHandVoids(g *hearts.Game, seat hearts.Seat) {
 	}
 }
 
+// locateQueen determines the Q♠ location from the seat's perspective.
 func (a *analysis) locateQueen(g *hearts.Game, seat hearts.Seat) {
 	if a.played[cardcore.Spades][cardcore.Queen] {
 		a.queen = queenPlayed
@@ -118,6 +107,7 @@ func (a *analysis) locateQueen(g *hearts.Game, seat hearts.Seat) {
 	}
 }
 
+// detectMoonThreat checks whether a single player holds all distributed penalty points.
 func (a *analysis) detectMoonThreat() {
 	totalDistributed := 0
 	for i := range hearts.NumPlayers {
@@ -134,41 +124,6 @@ func (a *analysis) detectMoonThreat() {
 			return
 		}
 	}
-}
-
-func trickWinner(trick hearts.Trick) hearts.Seat {
-	ledSuit := trick.LedSuit()
-	winner := trick.Leader
-	highRank := trick.Cards[winner].Rank
-
-	seat := nextSeat(trick.Leader)
-	for range hearts.NumPlayers - 1 {
-		c := trick.Cards[seat]
-		if c.Suit == ledSuit && c.Rank > highRank {
-			winner = seat
-			highRank = c.Rank
-		}
-		seat = nextSeat(seat)
-	}
-
-	return winner
-}
-
-func trickPoints(trick hearts.Trick) int {
-	pts := 0
-	for _, c := range trick.Cards {
-		if c.Suit == cardcore.Hearts {
-			pts++
-		}
-		if c == queenOfSpades {
-			pts += 13
-		}
-	}
-	return pts
-}
-
-func nextSeat(s hearts.Seat) hearts.Seat {
-	return (s + 1) % hearts.NumPlayers
 }
 
 // guaranteedLowest reports whether card is the lowest remaining card
@@ -191,6 +146,59 @@ func (a *analysis) opponentVoidInSuit(suit cardcore.Suit) bool {
 		}
 	}
 	return false
+}
+
+// analyze builds a fresh analysis of the visible game state from the given seat's perspective.
+func analyze(g *hearts.Game, seat hearts.Seat) analysis {
+	a := analysis{
+		seat:       seat,
+		moonThreat: -1,
+	}
+
+	a.scanTrickHistory(g)
+	a.scanHandVoids(g, seat)
+	a.locateQueen(g, seat)
+	a.detectMoonThreat()
+
+	return a
+}
+
+// trickWinner returns the seat that won the given completed trick.
+func trickWinner(trick hearts.Trick) hearts.Seat {
+	ledSuit := trick.LedSuit()
+	winner := trick.Leader
+	highRank := trick.Cards[winner].Rank
+
+	seat := nextSeat(trick.Leader)
+	for range hearts.NumPlayers - 1 {
+		c := trick.Cards[seat]
+		if c.Suit == ledSuit && c.Rank > highRank {
+			winner = seat
+			highRank = c.Rank
+		}
+		seat = nextSeat(seat)
+	}
+
+	return winner
+}
+
+// trickPoints returns the total penalty points in the given trick.
+func trickPoints(trick hearts.Trick) int {
+	pts := 0
+	for _, c := range trick.Cards {
+		if c.Suit == cardcore.Hearts {
+			pts++
+		}
+		if c == queenOfSpades {
+			pts += 13
+		}
+	}
+	return pts
+}
+
+// nextSeat returns the next seat in clockwise order.
+func nextSeat(s hearts.Seat) hearts.Seat {
+	return (s + 1) % hearts.NumPlayers
 }
 
 // currentTrickPoints returns the penalty points in the in-progress trick.
@@ -243,6 +251,7 @@ func highCardRatio(hand *cardcore.Hand) int {
 	return count * 10 / hand.Len()
 }
 
+// passTarget returns the seat that receives cards from the given seat for the given pass direction.
 func passTarget(from hearts.Seat, dir hearts.PassDirection) hearts.Seat {
 	switch dir {
 	case hearts.PassLeft:

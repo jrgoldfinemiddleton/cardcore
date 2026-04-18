@@ -10,10 +10,12 @@ import (
 
 var _ hearts.Player = (*Heuristic)(nil)
 
-func newSeededHeuristic(seed uint64) *Heuristic {
-	return NewHeuristic(rand.New(rand.NewPCG(seed, seed+1)))
+type trickCard struct {
+	seat hearts.Seat
+	card cardcore.Card
 }
 
+// TestHeuristicChoosePassReturnsDistinctCardsFromHand verifies that ChoosePass returns three distinct cards that exist in the player's hand.
 func TestHeuristicChoosePassReturnsDistinctCardsFromHand(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -38,6 +40,7 @@ func TestHeuristicChoosePassReturnsDistinctCardsFromHand(t *testing.T) {
 	}
 }
 
+// TestHeuristicChoosePlayReturnsLegalCard verifies that ChoosePlay returns a card accepted by PlayCard.
 func TestHeuristicChoosePlayReturnsLegalCard(t *testing.T) {
 	g := hearts.New()
 	g.PassDir = hearts.PassHold
@@ -54,20 +57,21 @@ func TestHeuristicChoosePlayReturnsLegalCard(t *testing.T) {
 	}
 }
 
+// TestPassScoreUnprotectedQueen verifies that Q♠ scores 100 when fewer than 4 low spades protect it. Hand has only 2 low spades (3♠, 5♠), so Q♠ is unprotected.
 func TestPassScoreUnprotectedQueen(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
-		c(cardcore.Two, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Clubs),
-		c(cardcore.Four, cardcore.Clubs),
-		c(cardcore.Five, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Spades),
-		c(cardcore.Five, cardcore.Spades),
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rTen, sClubs),
+		c(rJack, sClubs),
+		c(rThree, sSpades),
+		c(rFive, sSpades),
 		queenOfSpades,
 	})
 
@@ -77,20 +81,21 @@ func TestPassScoreUnprotectedQueen(t *testing.T) {
 	}
 }
 
+// TestPassScoreProtectedQueen verifies that Q♠ scores 2 when 4+ low spades protect it. Hand has 4 low spades (2♠, 3♠, 5♠, 6♠), making Q♠ an asset to keep.
 func TestPassScoreProtectedQueen(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
-		c(cardcore.Two, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Clubs),
-		c(cardcore.Four, cardcore.Clubs),
-		c(cardcore.Five, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Two, cardcore.Spades),
-		c(cardcore.Three, cardcore.Spades),
-		c(cardcore.Five, cardcore.Spades),
-		c(cardcore.Six, cardcore.Spades),
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+		c(rFive, sSpades),
+		c(rSix, sSpades),
 		queenOfSpades,
 	})
 
@@ -100,26 +105,27 @@ func TestPassScoreProtectedQueen(t *testing.T) {
 	}
 }
 
+// TestPassScoreHighSpades verifies that A♠ and K♠ receive a +20 bonus when Q♠ is not in hand (unprotected spade context). Both should outscore a low club.
 func TestPassScoreHighSpades(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
-		c(cardcore.Five, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.Two, cardcore.Diamonds),
-		c(cardcore.Two, cardcore.Spades),
-		c(cardcore.Three, cardcore.Spades),
-		c(cardcore.Four, cardcore.Spades),
+		c(rFive, sClubs),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rTen, sClubs),
+		c(rJack, sClubs),
+		c(rTwo, sDiamonds),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+		c(rFour, sSpades),
 		kingOfSpades,
 		aceOfSpades,
 	})
 
 	aceScore := passScore(aceOfSpades, hand)
 	kingScore := passScore(kingOfSpades, hand)
-	lowClubScore := passScore(c(cardcore.Five, cardcore.Clubs), hand)
+	lowClubScore := passScore(c(rFive, sClubs), hand)
 
 	if aceScore <= lowClubScore {
 		t.Errorf("A♠ score (%d) should exceed low club score (%d)", aceScore, lowClubScore)
@@ -129,56 +135,59 @@ func TestPassScoreHighSpades(t *testing.T) {
 	}
 }
 
+// TestPassScoreHeartsBonus verifies that hearts receive a +10 bonus. A♥ (rank 12 + hearts 10 = 22) should outscore A♦ (rank 12, no bonus).
 func TestPassScoreHeartsBonus(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
-		c(cardcore.Two, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Clubs),
-		c(cardcore.Four, cardcore.Clubs),
-		c(cardcore.Five, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.Queen, cardcore.Clubs),
-		c(cardcore.Ace, cardcore.Diamonds),
-		c(cardcore.Ace, cardcore.Hearts),
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rTen, sClubs),
+		c(rJack, sClubs),
+		c(rQueen, sClubs),
+		c(rAce, sDiamonds),
+		c(rAce, sHearts),
 	})
 
-	heartScore := passScore(c(cardcore.Ace, cardcore.Hearts), hand)
-	diamondScore := passScore(c(cardcore.Ace, cardcore.Diamonds), hand)
+	heartScore := passScore(c(rAce, sHearts), hand)
+	diamondScore := passScore(c(rAce, sDiamonds), hand)
 
 	if heartScore <= diamondScore {
 		t.Errorf("A♥ score (%d) should exceed A♦ score (%d)", heartScore, diamondScore)
 	}
 }
 
+// TestPassScoreShortSuitBonus verifies that singletons get a short-suit bonus of (4-1)*5 = 15. Singleton A♦ (rank 12 + short 15 = 27) outscores long-suit K♣ (rank 11).
 func TestPassScoreShortSuitBonus(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
-		c(cardcore.Two, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Clubs),
-		c(cardcore.Four, cardcore.Clubs),
-		c(cardcore.Five, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.Queen, cardcore.Clubs),
-		c(cardcore.King, cardcore.Clubs),
-		c(cardcore.Ace, cardcore.Diamonds),
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rTen, sClubs),
+		c(rJack, sClubs),
+		c(rQueen, sClubs),
+		c(rKing, sClubs),
+		c(rAce, sDiamonds),
 	})
 
-	singletonScore := passScore(c(cardcore.Ace, cardcore.Diamonds), hand)
-	longSuitScore := passScore(c(cardcore.King, cardcore.Clubs), hand)
+	singletonScore := passScore(c(rAce, sDiamonds), hand)
+	longSuitScore := passScore(c(rKing, sClubs), hand)
 
 	if singletonScore <= longSuitScore {
 		t.Errorf("singleton A♦ score (%d) should exceed long-suit K♣ score (%d)", singletonScore, longSuitScore)
 	}
 }
 
+// TestChoosePassPassesUnprotectedQueen verifies that ChoosePass includes Q♠ when it is unprotected (only 1 low spade: 2♠).
 func TestChoosePassPassesUnprotectedQueen(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -186,18 +195,18 @@ func TestChoosePassPassesUnprotectedQueen(t *testing.T) {
 	}
 
 	setupPassHand(t, g, hearts.South, []cardcore.Card{
-		c(cardcore.Two, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Clubs),
-		c(cardcore.Four, cardcore.Clubs),
-		c(cardcore.Five, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.Two, cardcore.Diamonds),
-		c(cardcore.Two, cardcore.Spades),
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rTen, sClubs),
+		c(rJack, sClubs),
+		c(rTwo, sDiamonds),
+		c(rTwo, sSpades),
 		queenOfSpades,
 	})
 
@@ -209,6 +218,7 @@ func TestChoosePassPassesUnprotectedQueen(t *testing.T) {
 	}
 }
 
+// TestChoosePassKeepsProtectedQueen verifies that ChoosePass keeps Q♠ when 5+ low spades protect it. Hand: 5 low spades + Q♠ + 7 hearts.
 func TestChoosePassKeepsProtectedQueen(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -216,18 +226,18 @@ func TestChoosePassKeepsProtectedQueen(t *testing.T) {
 	}
 
 	setupPassHand(t, g, hearts.South, []cardcore.Card{
-		c(cardcore.Eight, cardcore.Hearts),
-		c(cardcore.Nine, cardcore.Hearts),
-		c(cardcore.Ten, cardcore.Hearts),
-		c(cardcore.Jack, cardcore.Hearts),
-		c(cardcore.Queen, cardcore.Hearts),
-		c(cardcore.King, cardcore.Hearts),
-		c(cardcore.Ace, cardcore.Hearts),
-		c(cardcore.Two, cardcore.Spades),
-		c(cardcore.Three, cardcore.Spades),
-		c(cardcore.Four, cardcore.Spades),
-		c(cardcore.Five, cardcore.Spades),
-		c(cardcore.Six, cardcore.Spades),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+		c(rFour, sSpades),
+		c(rFive, sSpades),
+		c(rSix, sSpades),
 		queenOfSpades,
 	})
 
@@ -239,6 +249,7 @@ func TestChoosePassKeepsProtectedQueen(t *testing.T) {
 	}
 }
 
+// TestChoosePassKeepsHighSpadesWithProtectedQueen verifies that A♠ and K♠ are kept when Q♠ is protected. No +20 bonus applies when queen is safe.
 func TestChoosePassKeepsHighSpadesWithProtectedQueen(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -246,16 +257,16 @@ func TestChoosePassKeepsHighSpadesWithProtectedQueen(t *testing.T) {
 	}
 
 	setupPassHand(t, g, hearts.South, []cardcore.Card{
-		c(cardcore.Ace, cardcore.Hearts),
-		c(cardcore.King, cardcore.Hearts),
-		c(cardcore.Queen, cardcore.Hearts),
-		c(cardcore.Jack, cardcore.Hearts),
-		c(cardcore.Ten, cardcore.Hearts),
-		c(cardcore.Two, cardcore.Spades),
-		c(cardcore.Three, cardcore.Spades),
-		c(cardcore.Four, cardcore.Spades),
-		c(cardcore.Five, cardcore.Spades),
-		c(cardcore.Six, cardcore.Spades),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+		c(rFour, sSpades),
+		c(rFive, sSpades),
+		c(rSix, sSpades),
 		queenOfSpades,
 		kingOfSpades,
 		aceOfSpades,
@@ -272,6 +283,7 @@ func TestChoosePassKeepsHighSpadesWithProtectedQueen(t *testing.T) {
 	}
 }
 
+// TestChoosePassPrefersHighSpades verifies that A♠ and K♠ are passed when Q♠ is absent and spades are unprotected. The +20 high-spade bonus makes them top pass candidates.
 func TestChoosePassPrefersHighSpades(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -279,17 +291,17 @@ func TestChoosePassPrefersHighSpades(t *testing.T) {
 	}
 
 	setupPassHand(t, g, hearts.South, []cardcore.Card{
-		c(cardcore.Two, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Clubs),
-		c(cardcore.Four, cardcore.Clubs),
-		c(cardcore.Five, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.King, cardcore.Diamonds),
-		c(cardcore.Ace, cardcore.Diamonds),
-		c(cardcore.Two, cardcore.Spades),
-		c(cardcore.Three, cardcore.Spades),
-		c(cardcore.Four, cardcore.Spades),
-		c(cardcore.Five, cardcore.Spades),
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rSix, sClubs),
+		c(rKing, sDiamonds),
+		c(rAce, sDiamonds),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+		c(rFour, sSpades),
+		c(rFive, sSpades),
 		kingOfSpades,
 		aceOfSpades,
 	})
@@ -305,6 +317,7 @@ func TestChoosePassPrefersHighSpades(t *testing.T) {
 	}
 }
 
+// TestChoosePassVoidsShortSuit verifies that a singleton in a non-club suit is passed to create a void. Singleton 7♦ gets short-suit bonus (4-1)*5 = 15.
 func TestChoosePassVoidsShortSuit(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -312,29 +325,30 @@ func TestChoosePassVoidsShortSuit(t *testing.T) {
 	}
 
 	setupPassHand(t, g, hearts.South, []cardcore.Card{
-		c(cardcore.Two, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Clubs),
-		c(cardcore.Four, cardcore.Clubs),
-		c(cardcore.Five, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.Queen, cardcore.Clubs),
-		c(cardcore.King, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Diamonds),
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rTen, sClubs),
+		c(rJack, sClubs),
+		c(rQueen, sClubs),
+		c(rKing, sClubs),
+		c(rSeven, sDiamonds),
 	})
 
 	h := newSeededHeuristic(42)
 	cards := h.ChoosePass(g, hearts.South)
 
-	if !passedContains(cards, c(cardcore.Seven, cardcore.Diamonds)) {
+	if !passedContains(cards, c(rSeven, sDiamonds)) {
 		t.Errorf("expected singleton 7♦ to be passed, got %v", cards)
 	}
 }
 
+// TestChoosePassVoidsTwoShortSuits verifies that two singletons (3♦, 2♥) are both passed when the hand has two short suits.
 func TestChoosePassVoidsTwoShortSuits(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -342,50 +356,51 @@ func TestChoosePassVoidsTwoShortSuits(t *testing.T) {
 	}
 
 	setupPassHand(t, g, hearts.South, []cardcore.Card{
-		c(cardcore.Two, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Clubs),
-		c(cardcore.Four, cardcore.Clubs),
-		c(cardcore.Five, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Diamonds),
-		c(cardcore.Two, cardcore.Hearts),
-		c(cardcore.Two, cardcore.Spades),
-		c(cardcore.Three, cardcore.Spades),
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rTen, sClubs),
+		c(rThree, sDiamonds),
+		c(rTwo, sHearts),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
 	})
 
 	h := newSeededHeuristic(42)
 	cards := h.ChoosePass(g, hearts.South)
 
-	if !passedContains(cards, c(cardcore.Three, cardcore.Diamonds)) {
+	if !passedContains(cards, c(rThree, sDiamonds)) {
 		t.Errorf("expected singleton 3♦ to be passed, got %v", cards)
 	}
-	if !passedContains(cards, c(cardcore.Two, cardcore.Hearts)) {
+	if !passedContains(cards, c(rTwo, sHearts)) {
 		t.Errorf("expected singleton 2♥ to be passed, got %v", cards)
 	}
 }
 
+// TestChoosePassTieBreaking verifies that RNG-based shuffle produces varied selections among tied-score cards across different seeds.
 func TestChoosePassTieBreaking(t *testing.T) {
 	// 5 clubs + 4 diamonds + 4 spades (all low): 6♣ is the unique
 	// highest (score 4), but 5♣, 5♦, 5♠ all tie at score 3. Only 2 of
 	// the 3 tied cards can be passed, so the rng should vary which pair.
 	hand := []cardcore.Card{
-		c(cardcore.Two, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Clubs),
-		c(cardcore.Four, cardcore.Clubs),
-		c(cardcore.Five, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Two, cardcore.Diamonds),
-		c(cardcore.Three, cardcore.Diamonds),
-		c(cardcore.Four, cardcore.Diamonds),
-		c(cardcore.Five, cardcore.Diamonds),
-		c(cardcore.Two, cardcore.Spades),
-		c(cardcore.Three, cardcore.Spades),
-		c(cardcore.Four, cardcore.Spades),
-		c(cardcore.Five, cardcore.Spades),
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rSix, sClubs),
+		c(rTwo, sDiamonds),
+		c(rThree, sDiamonds),
+		c(rFour, sDiamonds),
+		c(rFive, sDiamonds),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+		c(rFour, sSpades),
+		c(rFive, sSpades),
 	}
 
 	seen := make(map[cardcore.Card]bool)
@@ -408,77 +423,79 @@ func TestChoosePassTieBreaking(t *testing.T) {
 	}
 }
 
+// TestLeadScorePrefersLowFromLongSuit verifies that low cards are preferred from long suits. 6♣ (from 5-card club suit) outscores A♣ because long suits prefer safe low leads.
 func TestLeadScorePrefersLowFromLongSuit(t *testing.T) {
 	g := setupLeadState(hearts.South, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.Queen, cardcore.Clubs),
-		c(cardcore.Ace, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Diamonds),
-		c(cardcore.Six, cardcore.Diamonds),
-		c(cardcore.Nine, cardcore.Diamonds),
-		c(cardcore.King, cardcore.Diamonds),
-		c(cardcore.Seven, cardcore.Hearts),
-		c(cardcore.Eight, cardcore.Hearts),
-		c(cardcore.Nine, cardcore.Hearts),
+		c(rSix, sClubs),
+		c(rEight, sClubs),
+		c(rJack, sClubs),
+		c(rQueen, sClubs),
+		c(rAce, sClubs),
+		c(rThree, sDiamonds),
+		c(rSix, sDiamonds),
+		c(rNine, sDiamonds),
+		c(rKing, sDiamonds),
+		c(rSeven, sHearts),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
 	}, []hearts.Trick{validFirstTrick()})
 
 	a := analyze(g, hearts.South)
-	sixScore := leadScore(c(cardcore.Six, cardcore.Clubs), g, a)
-	aceScore := leadScore(c(cardcore.Ace, cardcore.Clubs), g, a)
+	sixScore := leadScore(c(rSix, sClubs), g, a)
+	aceScore := leadScore(c(rAce, sClubs), g, a)
 
 	if sixScore <= aceScore {
 		t.Errorf("6♣ lead score (%d) should exceed A♣ lead score (%d) from long suit", sixScore, aceScore)
 	}
 }
 
+// TestLeadScorePrefersHighFromShortSuitEarly verifies that high cards are preferred from short suits in early tricks (trickNum ≤ 3). K♦ (from 3-card diamond suit) outscores 3♦ to void the suit quickly.
 func TestLeadScorePrefersHighFromShortSuitEarly(t *testing.T) {
 	g := setupLeadState(hearts.South, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.Queen, cardcore.Clubs),
-		c(cardcore.King, cardcore.Clubs),
-		c(cardcore.Ace, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Diamonds),
-		c(cardcore.Three, cardcore.Diamonds),
-		c(cardcore.King, cardcore.Diamonds),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rTen, sClubs),
+		c(rJack, sClubs),
+		c(rQueen, sClubs),
+		c(rKing, sClubs),
+		c(rAce, sClubs),
+		c(rThree, sDiamonds),
+		c(rSix, sDiamonds),
+		c(rKing, sDiamonds),
 	}, []hearts.Trick{validFirstTrick()})
 
 	a := analyze(g, hearts.South)
-	kingScore := leadScore(c(cardcore.King, cardcore.Diamonds), g, a)
-	threeScore := leadScore(c(cardcore.Three, cardcore.Diamonds), g, a)
+	kingScore := leadScore(c(rKing, sDiamonds), g, a)
+	threeScore := leadScore(c(rThree, sDiamonds), g, a)
 
 	if kingScore <= threeScore {
 		t.Errorf("K♦ lead score (%d) should exceed 3♦ lead score (%d) from short suit early", kingScore, threeScore)
 	}
 }
 
-// trickHistory is nil for brevity — only g.TrickNum matters for the
-// early/late threshold under test.
+// TestLeadScorePrefersLowFromShortSuitLate verifies that low cards are preferred from short suits in late-game leads. TrickHistory is nil for brevity — only g.TrickNum matters for the early/late threshold.
 func TestLeadScorePrefersLowFromShortSuitLate(t *testing.T) {
 	g := setupLeadState(hearts.South, 7, []cardcore.Card{
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Diamonds),
-		c(cardcore.King, cardcore.Diamonds),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rSix, sDiamonds),
+		c(rKing, sDiamonds),
 	}, nil)
 
 	a := analyze(g, hearts.South)
-	sixScore := leadScore(c(cardcore.Six, cardcore.Diamonds), g, a)
-	kingScore := leadScore(c(cardcore.King, cardcore.Diamonds), g, a)
+	sixScore := leadScore(c(rSix, sDiamonds), g, a)
+	kingScore := leadScore(c(rKing, sDiamonds), g, a)
 
 	if sixScore <= kingScore {
 		t.Errorf("6♦ lead score (%d) should exceed K♦ score (%d) from short suit late game", sixScore, kingScore)
 	}
 }
 
+// TestLeadScoreAvoidsOpponentVoidSuit verifies the -40 opponent-void penalty. East is known void in diamonds from trick history. Both K♦ and 6♦ score below 10♣ because of the void penalty.
 func TestLeadScoreAvoidsOpponentVoidSuit(t *testing.T) {
 	// East is known void in diamonds from trick history.
 	trickHistory := []hearts.Trick{
@@ -487,33 +504,33 @@ func TestLeadScoreAvoidsOpponentVoidSuit(t *testing.T) {
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Three, cardcore.Diamonds),
-				hearts.West:  c(cardcore.Four, cardcore.Diamonds),
-				hearts.North: c(cardcore.Five, cardcore.Diamonds),
-				hearts.East:  c(cardcore.Two, cardcore.Hearts), // void in diamonds
+				hearts.South: c(rThree, sDiamonds),
+				hearts.West:  c(rFour, sDiamonds),
+				hearts.North: c(rFive, sDiamonds),
+				hearts.East:  c(rTwo, sHearts), // void in diamonds
 			},
 		},
 	}
 
 	g := setupLeadState(hearts.South, 2, []cardcore.Card{
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.Queen, cardcore.Clubs),
-		c(cardcore.King, cardcore.Clubs),
-		c(cardcore.Ace, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Diamonds),
-		c(cardcore.King, cardcore.Diamonds),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rTen, sClubs),
+		c(rJack, sClubs),
+		c(rQueen, sClubs),
+		c(rKing, sClubs),
+		c(rAce, sClubs),
+		c(rSix, sDiamonds),
+		c(rKing, sDiamonds),
 	}, trickHistory)
 	g.HeartsBroken = true
 
 	a := analyze(g, hearts.South)
-	kingDiamondScore := leadScore(c(cardcore.King, cardcore.Diamonds), g, a)
-	clubScore := leadScore(c(cardcore.Ten, cardcore.Clubs), g, a)
-	sixDiamondScore := leadScore(c(cardcore.Six, cardcore.Diamonds), g, a)
+	kingDiamondScore := leadScore(c(rKing, sDiamonds), g, a)
+	clubScore := leadScore(c(rTen, sClubs), g, a)
+	sixDiamondScore := leadScore(c(rSix, sDiamonds), g, a)
 
 	if kingDiamondScore >= clubScore {
 		t.Errorf("K♦ lead score (%d) should be less than 10♣ lead score (%d) when opponent void in diamonds",
@@ -525,6 +542,7 @@ func TestLeadScoreAvoidsOpponentVoidSuit(t *testing.T) {
 	}
 }
 
+// TestLeadScoreSafeWhenGuaranteedLowest verifies that the guaranteed-lowest exemption overrides the opponent-void penalty. 4♦ is the lowest remaining diamond (2♦, 3♦ already played) so the -40 penalty is skipped.
 func TestLeadScoreSafeWhenGuaranteedLowest(t *testing.T) {
 	// 2♦ and 3♦ already played, so 4♦ is guaranteed lowest diamond.
 	// Leading 4♦ is safe even if opponent is void in diamonds.
@@ -534,58 +552,59 @@ func TestLeadScoreSafeWhenGuaranteedLowest(t *testing.T) {
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Two, cardcore.Diamonds),
-				hearts.West:  c(cardcore.Three, cardcore.Diamonds),
-				hearts.North: c(cardcore.Five, cardcore.Diamonds),
-				hearts.East:  c(cardcore.Two, cardcore.Hearts), // void in diamonds
+				hearts.South: c(rTwo, sDiamonds),
+				hearts.West:  c(rThree, sDiamonds),
+				hearts.North: c(rFive, sDiamonds),
+				hearts.East:  c(rTwo, sHearts), // void in diamonds
 			},
 		},
 	}
 
 	g := setupLeadState(hearts.South, 2, []cardcore.Card{
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.Queen, cardcore.Clubs),
-		c(cardcore.King, cardcore.Clubs),
-		c(cardcore.Ace, cardcore.Clubs),
-		c(cardcore.Four, cardcore.Diamonds),
-		c(cardcore.Seven, cardcore.Hearts),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rTen, sClubs),
+		c(rJack, sClubs),
+		c(rQueen, sClubs),
+		c(rKing, sClubs),
+		c(rAce, sClubs),
+		c(rFour, sDiamonds),
+		c(rSeven, sHearts),
 	}, trickHistory)
 	g.HeartsBroken = true
 
 	a := analyze(g, hearts.South)
-	fourDiamondScore := leadScore(c(cardcore.Four, cardcore.Diamonds), g, a)
-	clubScore := leadScore(c(cardcore.Six, cardcore.Clubs), g, a)
+	fourDiamondScore := leadScore(c(rFour, sDiamonds), g, a)
+	clubScore := leadScore(c(rSix, sClubs), g, a)
 
 	if fourDiamondScore < clubScore {
 		t.Errorf("guaranteed lowest 4♦ lead score (%d) should be >= 6♣ score (%d) despite opponent void", fourDiamondScore, clubScore)
 	}
 }
 
+// TestLeadScoreUnprotectedQueenUrgency verifies the void-urgency bonus for short non-spade suits when Q♠ is unprotected. Singleton K♦ gets a bonus to accelerate voiding.
 func TestLeadScoreUnprotectedQueenUrgency(t *testing.T) {
 	g := setupLeadState(hearts.South, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.Queen, cardcore.Clubs),
-		c(cardcore.King, cardcore.Clubs),
-		c(cardcore.Ace, cardcore.Clubs),
-		c(cardcore.King, cardcore.Diamonds),
-		c(cardcore.Six, cardcore.Spades),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rTen, sClubs),
+		c(rJack, sClubs),
+		c(rQueen, sClubs),
+		c(rKing, sClubs),
+		c(rAce, sClubs),
+		c(rKing, sDiamonds),
+		c(rSix, sSpades),
 		queenOfSpades,
 	}, []hearts.Trick{validFirstTrick()})
 
 	a := analyze(g, hearts.South)
 	// K♦ is a singleton non-spade — should get Q♠ urgency bonus.
-	kingDiamondScore := leadScore(c(cardcore.King, cardcore.Diamonds), g, a)
-	lowClubScore := leadScore(c(cardcore.Six, cardcore.Clubs), g, a)
+	kingDiamondScore := leadScore(c(rKing, sDiamonds), g, a)
+	lowClubScore := leadScore(c(rSix, sClubs), g, a)
 
 	if kingDiamondScore <= lowClubScore {
 		t.Errorf("K♦ lead score (%d) should exceed 2♣ score (%d) with unprotected Q♠ urgency",
@@ -593,25 +612,26 @@ func TestLeadScoreUnprotectedQueenUrgency(t *testing.T) {
 	}
 }
 
+// TestLeadScoreAvoidsSpadesWithHighSpades verifies the -20 spade-flush penalty when holding A♠ or K♠. Leading 6♠ risks pulling Q♠ onto the player's own high spades.
 func TestLeadScoreAvoidsSpadesWithHighSpades(t *testing.T) {
 	g := setupLeadState(hearts.South, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.Queen, cardcore.Clubs),
-		c(cardcore.King, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Spades),
-		c(cardcore.Eight, cardcore.Spades),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rTen, sClubs),
+		c(rJack, sClubs),
+		c(rQueen, sClubs),
+		c(rKing, sClubs),
+		c(rSix, sSpades),
+		c(rEight, sSpades),
 		kingOfSpades,
 		aceOfSpades,
 	}, []hearts.Trick{validFirstTrick()})
 
 	a := analyze(g, hearts.South)
-	spadeScore := leadScore(c(cardcore.Six, cardcore.Spades), g, a)
-	clubScore := leadScore(c(cardcore.Six, cardcore.Clubs), g, a)
+	spadeScore := leadScore(c(rSix, sSpades), g, a)
+	clubScore := leadScore(c(rSix, sClubs), g, a)
 
 	if spadeScore >= clubScore {
 		t.Errorf("6♠ lead score (%d) should be less than 6♣ score (%d) when holding A♠/K♠",
@@ -619,26 +639,27 @@ func TestLeadScoreAvoidsSpadesWithHighSpades(t *testing.T) {
 	}
 }
 
+// TestLeadScoreFlushesQueenWithoutHighSpades verifies that spade leads are preferred when Q♠ is not in hand and no A♠/K♠ are held. J♠ (highest below Q♠) is preferred to flush Q♠ from opponents.
 func TestLeadScoreFlushesQueenWithoutHighSpades(t *testing.T) {
 	g := setupLeadState(hearts.South, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.Queen, cardcore.Clubs),
-		c(cardcore.King, cardcore.Clubs),
-		c(cardcore.Ace, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Spades),
-		c(cardcore.Eight, cardcore.Spades),
-		c(cardcore.Jack, cardcore.Spades),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rTen, sClubs),
+		c(rJack, sClubs),
+		c(rQueen, sClubs),
+		c(rKing, sClubs),
+		c(rAce, sClubs),
+		c(rSix, sSpades),
+		c(rEight, sSpades),
+		c(rJack, sSpades),
 	}, []hearts.Trick{validFirstTrick()})
 
 	a := analyze(g, hearts.South)
-	jackSpadeScore := leadScore(c(cardcore.Jack, cardcore.Spades), g, a)
-	sixSpadeScore := leadScore(c(cardcore.Six, cardcore.Spades), g, a)
-	clubScore := leadScore(c(cardcore.Jack, cardcore.Clubs), g, a)
+	jackSpadeScore := leadScore(c(rJack, sSpades), g, a)
+	sixSpadeScore := leadScore(c(rSix, sSpades), g, a)
+	clubScore := leadScore(c(rJack, sClubs), g, a)
 
 	if jackSpadeScore <= clubScore {
 		t.Errorf("J♠ flush score (%d) should exceed J♣ score (%d) when flushing Q♠ safely",
@@ -650,308 +671,305 @@ func TestLeadScoreFlushesQueenWithoutHighSpades(t *testing.T) {
 	}
 }
 
+// TestChooseLeadAvoidsHearts verifies the -15 heart lead penalty. Even with hearts broken, the AI prefers non-heart leads when alternatives exist.
 func TestChooseLeadAvoidsHearts(t *testing.T) {
 	g := setupLeadState(hearts.South, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.Queen, cardcore.Clubs),
-		c(cardcore.King, cardcore.Clubs),
-		c(cardcore.Ace, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Diamonds),
-		c(cardcore.Six, cardcore.Hearts),
-		c(cardcore.Seven, cardcore.Hearts),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rTen, sClubs),
+		c(rJack, sClubs),
+		c(rQueen, sClubs),
+		c(rKing, sClubs),
+		c(rAce, sClubs),
+		c(rSix, sDiamonds),
+		c(rSix, sHearts),
+		c(rSeven, sHearts),
 	}, []hearts.Trick{validFirstTrick()})
 	g.HeartsBroken = true
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.South)
 
-	if card.Suit == cardcore.Hearts {
+	if card.Suit == sHearts {
 		t.Errorf("expected non-heart lead, got %v", card)
 	}
 }
 
+// TestFollowLastCleanTrickWinsWithHighest verifies the last-player clean-trick branch. East plays last into a clean club trick. J♣ (highest club, wins trick) is preferred: score = rank - danger*2.
 func TestFollowLastCleanTrickWinsWithHighest(t *testing.T) {
 	g := setupFollowState(hearts.East, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Diamonds),
-		c(cardcore.Eight, cardcore.Diamonds),
-		c(cardcore.Nine, cardcore.Diamonds),
-		c(cardcore.Six, cardcore.Spades),
-		c(cardcore.Seven, cardcore.Spades),
-		c(cardcore.Eight, cardcore.Spades),
-		c(cardcore.Nine, cardcore.Spades),
-		c(cardcore.Six, cardcore.Hearts),
-		c(cardcore.Seven, cardcore.Hearts),
+		c(rSix, sClubs),
+		c(rTen, sClubs),
+		c(rJack, sClubs),
+		c(rSeven, sDiamonds),
+		c(rEight, sDiamonds),
+		c(rNine, sDiamonds),
+		c(rSix, sHearts),
+		c(rSeven, sHearts),
+		c(rSix, sSpades),
+		c(rSeven, sSpades),
+		c(rEight, sSpades),
+		c(rNine, sSpades),
 	}, []hearts.Trick{validFirstTrick()},
 		hearts.South,
 		[]trickCard{
-			{hearts.South, c(cardcore.Seven, cardcore.Clubs)},
-			{hearts.West, c(cardcore.Eight, cardcore.Clubs)},
-			{hearts.North, c(cardcore.Nine, cardcore.Clubs)},
+			{hearts.South, c(rSeven, sClubs)},
+			{hearts.West, c(rEight, sClubs)},
+			{hearts.North, c(rNine, sClubs)},
 		})
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.East)
 
-	if card != c(cardcore.Jack, cardcore.Clubs) {
+	if card != c(rJack, sClubs) {
 		t.Errorf("expected J♣ (highest to win clean trick), got %v", card)
 	}
 }
 
+// TestFollowLastTrickHasPointsShedsHighest verifies the last-player forced-win branch when points are present. East must win (all cards beat the current winner). Forced to win → shed highest: J♥ (rank 9).
 func TestFollowLastTrickHasPointsShedsHighest(t *testing.T) {
 	g := setupFollowState(hearts.East, 2, []cardcore.Card{
-		c(cardcore.Six, cardcore.Diamonds),
-		c(cardcore.Seven, cardcore.Diamonds),
-		c(cardcore.Eight, cardcore.Diamonds),
-		c(cardcore.Nine, cardcore.Diamonds),
-		c(cardcore.Six, cardcore.Spades),
-		c(cardcore.Seven, cardcore.Spades),
-		c(cardcore.Eight, cardcore.Spades),
-		c(cardcore.Nine, cardcore.Spades),
-		c(cardcore.Nine, cardcore.Hearts),
-		c(cardcore.Ten, cardcore.Hearts),
-		c(cardcore.Jack, cardcore.Hearts),
+		c(rSix, sDiamonds),
+		c(rSeven, sDiamonds),
+		c(rEight, sDiamonds),
+		c(rNine, sDiamonds),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rSix, sSpades),
+		c(rSeven, sSpades),
+		c(rEight, sSpades),
+		c(rNine, sSpades),
 	}, []hearts.Trick{validFirstTrick(), {
 		Leader: hearts.South,
 		Count:  hearts.NumPlayers,
 		Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(cardcore.Six, cardcore.Clubs),
-			hearts.West:  c(cardcore.King, cardcore.Clubs),
-			hearts.North: c(cardcore.Three, cardcore.Hearts),
-			hearts.East:  c(cardcore.Ace, cardcore.Clubs),
+			hearts.South: c(rSix, sClubs),
+			hearts.West:  c(rKing, sClubs),
+			hearts.North: c(rThree, sHearts),
+			hearts.East:  c(rAce, sClubs),
 		},
 	}},
 		hearts.South,
 		[]trickCard{
-			{hearts.South, c(cardcore.Six, cardcore.Hearts)},
-			{hearts.West, c(cardcore.Seven, cardcore.Hearts)},
-			{hearts.North, c(cardcore.Eight, cardcore.Hearts)},
+			{hearts.South, c(rSix, sHearts)},
+			{hearts.West, c(rSeven, sHearts)},
+			{hearts.North, c(rEight, sHearts)},
 		})
 	g.HeartsBroken = true
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.East)
 
-	if card != c(cardcore.Jack, cardcore.Hearts) {
+	if card != c(rJack, sHearts) {
 		t.Errorf("expected J♥ (forced to win, shed highest), got %v", card)
 	}
 }
 
-// East has 6♣, 8♣ (lose to J♣) and K♣ (wins). North sloughed 5♥
-// so trickPts=1. Losers get +50 bonus: 8♣ scores 56, K♣ scores 11.
+// TestFollowLastTrickHasPointsPrefersDuck verifies that the highest losing card is preferred when the trick contains penalty points. East has 6♣, 8♣ (lose to J♣) and K♣ (wins). North sloughed 5♥ so trickPts=1. Losers get +50 bonus: 8♣ scores 56, K♣ scores 11.
 func TestFollowLastTrickHasPointsPrefersDuck(t *testing.T) {
 	g := setupFollowState(hearts.East, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.King, cardcore.Clubs),
-		c(cardcore.Six, cardcore.Diamonds),
-		c(cardcore.Seven, cardcore.Diamonds),
-		c(cardcore.Eight, cardcore.Diamonds),
-		c(cardcore.Nine, cardcore.Diamonds),
-		c(cardcore.Six, cardcore.Spades),
-		c(cardcore.Seven, cardcore.Spades),
-		c(cardcore.Eight, cardcore.Spades),
-		c(cardcore.Nine, cardcore.Spades),
-		c(cardcore.Six, cardcore.Hearts),
+		c(rSix, sClubs),
+		c(rEight, sClubs),
+		c(rKing, sClubs),
+		c(rSix, sDiamonds),
+		c(rSeven, sDiamonds),
+		c(rEight, sDiamonds),
+		c(rNine, sDiamonds),
+		c(rSix, sHearts),
+		c(rSix, sSpades),
+		c(rSeven, sSpades),
+		c(rEight, sSpades),
+		c(rNine, sSpades),
 	}, []hearts.Trick{validFirstTrick()},
 		hearts.South,
 		[]trickCard{
-			{hearts.South, c(cardcore.Ten, cardcore.Clubs)},
-			{hearts.West, c(cardcore.Jack, cardcore.Clubs)},
-			{hearts.North, c(cardcore.Five, cardcore.Hearts)},
+			{hearts.South, c(rTen, sClubs)},
+			{hearts.West, c(rJack, sClubs)},
+			{hearts.North, c(rFive, sHearts)},
 		})
 	g.HeartsBroken = true
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.East)
 
-	if card != c(cardcore.Eight, cardcore.Clubs) {
+	if card != c(rEight, sClubs) {
 		t.Errorf("expected 8♣ (highest loser, +50 duck bonus over K♣), got %v", card)
 	}
 }
 
-// East is last, trick is clean. Both 9♦ and K♦ win; K♦ preferred
-// (higher rank). 3♦ loses (score 1) and should rank below winners.
+// TestFollowLastCleanTrickWins verifies that the highest winning card is preferred when the trick is clean and we play last. East is last, trick is clean. Both 9♦ and K♦ win; K♦ preferred (higher rank). 3♦ loses (score 1) and should rank below winners.
 func TestFollowLastCleanTrickWins(t *testing.T) {
 	g := setupFollowState(hearts.East, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Diamonds),
-		c(cardcore.Nine, cardcore.Diamonds),
-		c(cardcore.King, cardcore.Diamonds),
-		c(cardcore.Six, cardcore.Spades),
-		c(cardcore.Seven, cardcore.Spades),
-		c(cardcore.Eight, cardcore.Spades),
-		c(cardcore.Six, cardcore.Hearts),
-		c(cardcore.Seven, cardcore.Hearts),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rThree, sDiamonds),
+		c(rNine, sDiamonds),
+		c(rKing, sDiamonds),
+		c(rSix, sHearts),
+		c(rSeven, sHearts),
+		c(rSix, sSpades),
+		c(rSeven, sSpades),
+		c(rEight, sSpades),
 	}, []hearts.Trick{validFirstTrick()},
 		hearts.South,
 		[]trickCard{
-			{hearts.South, c(cardcore.Six, cardcore.Diamonds)},
-			{hearts.West, c(cardcore.Seven, cardcore.Diamonds)},
-			{hearts.North, c(cardcore.Eight, cardcore.Diamonds)},
+			{hearts.South, c(rSix, sDiamonds)},
+			{hearts.West, c(rSeven, sDiamonds)},
+			{hearts.North, c(rEight, sDiamonds)},
 		})
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.East)
 
-	if card != c(cardcore.King, cardcore.Diamonds) {
+	if card != c(rKing, sDiamonds) {
 		t.Errorf("expected K♦ (win clean trick, higher rank preferred), got %v", card)
 	}
 }
 
-// East is last, trick is clean, hand is almost all Ten+.
-// highCardRatio = 10*10/12 = 8, so danger*2 = 16.
-// 9♦ wins (score 7-16 = -9), 3♦ loses (score 1).
-// High danger makes losing preferable over winning.
+// TestFollowLastCleanHighDangerPrefersDuck verifies that high hand danger discourages winning a clean trick when playing last. East is last, trick is clean, hand is almost all Ten+. highCardRatio = 10*10/12 = 8, so danger*2 = 16. 9♦ wins (score 7-16 = -9), 3♦ loses (score 1). High danger makes losing preferable over winning.
 func TestFollowLastCleanHighDangerPrefersDuck(t *testing.T) {
 	g := setupFollowState(hearts.East, 1, []cardcore.Card{
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Diamonds),
-		c(cardcore.Nine, cardcore.Diamonds),
-		c(cardcore.Ten, cardcore.Spades),
-		c(cardcore.Jack, cardcore.Spades),
-		c(cardcore.King, cardcore.Spades),
-		c(cardcore.Ace, cardcore.Spades),
-		c(cardcore.Ten, cardcore.Hearts),
-		c(cardcore.Jack, cardcore.Hearts),
-		c(cardcore.Queen, cardcore.Hearts),
-		c(cardcore.King, cardcore.Hearts),
-		c(cardcore.Ace, cardcore.Hearts),
+		c(rTen, sClubs),
+		c(rThree, sDiamonds),
+		c(rNine, sDiamonds),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTen, sSpades),
+		c(rJack, sSpades),
+		c(rKing, sSpades),
+		c(rAce, sSpades),
 	}, []hearts.Trick{validFirstTrick()},
 		hearts.South,
 		[]trickCard{
-			{hearts.South, c(cardcore.Six, cardcore.Diamonds)},
-			{hearts.West, c(cardcore.Seven, cardcore.Diamonds)},
-			{hearts.North, c(cardcore.Eight, cardcore.Diamonds)},
+			{hearts.South, c(rSix, sDiamonds)},
+			{hearts.West, c(rSeven, sDiamonds)},
+			{hearts.North, c(rEight, sDiamonds)},
 		})
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.East)
 
-	if card != c(cardcore.Three, cardcore.Diamonds) {
+	if card != c(rThree, sDiamonds) {
 		t.Errorf("expected 3♦ (high danger discourages winning clean trick), got %v", card)
 	}
 }
 
-// North is not last (East still to play). West sloughed 5♥ (1 pt).
-// All of North's diamonds win; prefers lowest winner 8♦ (Ace-Rank = 6).
+// TestFollowNotLastPointsDucksLowestWinner verifies that the lowest winning card is preferred when not last and the trick has points. North is not last (East still to play). West sloughed 5♥ (1 pt). All of North's diamonds win; prefers lowest winner 8♦ (Ace-Rank = 6).
 func TestFollowNotLastPointsDucksLowestWinner(t *testing.T) {
 	g := setupFollowState(hearts.North, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Diamonds),
-		c(cardcore.Jack, cardcore.Diamonds),
-		c(cardcore.King, cardcore.Diamonds),
-		c(cardcore.Six, cardcore.Spades),
-		c(cardcore.Seven, cardcore.Spades),
-		c(cardcore.Eight, cardcore.Spades),
-		c(cardcore.Six, cardcore.Hearts),
-		c(cardcore.Seven, cardcore.Hearts),
-		c(cardcore.Eight, cardcore.Hearts),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rEight, sDiamonds),
+		c(rJack, sDiamonds),
+		c(rKing, sDiamonds),
+		c(rSix, sHearts),
+		c(rSeven, sHearts),
+		c(rEight, sHearts),
+		c(rSix, sSpades),
+		c(rSeven, sSpades),
+		c(rEight, sSpades),
 	}, []hearts.Trick{validFirstTrick()},
 		hearts.South,
 		[]trickCard{
-			{hearts.South, c(cardcore.Six, cardcore.Diamonds)},
-			{hearts.West, c(cardcore.Five, cardcore.Hearts)},
+			{hearts.South, c(rSix, sDiamonds)},
+			{hearts.West, c(rFive, sHearts)},
 		})
 	g.HeartsBroken = true
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.North)
 
-	if card != c(cardcore.Eight, cardcore.Diamonds) {
+	if card != c(rEight, sDiamonds) {
 		t.Errorf("expected 8♦ (lowest winner to duck points), got %v", card)
 	}
 }
 
-// West is not last (Count=1, playersLeft=2). Clean trick. Both 8♦
-// and K♦ win; K♦ preferred (higher bonus after playersLeft penalty).
+// TestFollowNotLastCleanWins verifies that the highest winning card is preferred when not last and the trick is clean. West is not last (Count=1, playersLeft=2). Clean trick. Both 8♦ and K♦ win; K♦ preferred (higher bonus after playersLeft penalty).
 func TestFollowNotLastCleanWins(t *testing.T) {
 	g := setupFollowState(hearts.West, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Seven, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Clubs),
-		c(cardcore.Ten, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Diamonds),
-		c(cardcore.King, cardcore.Diamonds),
-		c(cardcore.Six, cardcore.Spades),
-		c(cardcore.Seven, cardcore.Spades),
-		c(cardcore.Eight, cardcore.Spades),
-		c(cardcore.Six, cardcore.Hearts),
-		c(cardcore.Seven, cardcore.Hearts),
+		c(rSix, sClubs),
+		c(rSeven, sClubs),
+		c(rEight, sClubs),
+		c(rNine, sClubs),
+		c(rTen, sClubs),
+		c(rEight, sDiamonds),
+		c(rKing, sDiamonds),
+		c(rSix, sHearts),
+		c(rSeven, sHearts),
+		c(rSix, sSpades),
+		c(rSeven, sSpades),
+		c(rEight, sSpades),
 	}, []hearts.Trick{validFirstTrick()},
 		hearts.South,
 		[]trickCard{
-			{hearts.South, c(cardcore.Six, cardcore.Diamonds)},
+			{hearts.South, c(rSix, sDiamonds)},
 		})
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.West)
 
-	if card != c(cardcore.King, cardcore.Diamonds) {
+	if card != c(rKing, sDiamonds) {
 		t.Errorf("expected K♦ (win clean trick, higher rank preferred), got %v", card)
 	}
 }
 
-// Verifies AI picks 8♣ (highest loser), not J♣/K♣ (winners).
+// TestFollowUnderWinnerShedsHighest verifies that the highest losing card is preferred when playing under the current winner.
 func TestFollowUnderWinnerShedsHighest(t *testing.T) {
 	g := setupFollowState(hearts.West, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Clubs),
-		c(cardcore.Eight, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.King, cardcore.Clubs),
-		c(cardcore.Nine, cardcore.Diamonds),
-		c(cardcore.Ten, cardcore.Diamonds),
-		c(cardcore.Jack, cardcore.Diamonds),
-		c(cardcore.Queen, cardcore.Diamonds),
-		c(cardcore.Six, cardcore.Spades),
-		c(cardcore.Seven, cardcore.Spades),
-		c(cardcore.Eight, cardcore.Spades),
-		c(cardcore.Nine, cardcore.Spades),
+		c(rSix, sClubs),
+		c(rEight, sClubs),
+		c(rJack, sClubs),
+		c(rKing, sClubs),
+		c(rNine, sDiamonds),
+		c(rTen, sDiamonds),
+		c(rJack, sDiamonds),
+		c(rQueen, sDiamonds),
+		c(rSix, sSpades),
+		c(rSeven, sSpades),
+		c(rEight, sSpades),
+		c(rNine, sSpades),
 	}, []hearts.Trick{validFirstTrick()},
 		hearts.South,
 		[]trickCard{
-			{hearts.South, c(cardcore.Ten, cardcore.Clubs)},
+			{hearts.South, c(rTen, sClubs)},
 		})
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.West)
 
-	if card != c(cardcore.Eight, cardcore.Clubs) {
+	if card != c(rEight, sClubs) {
 		t.Errorf("expected 8♣ (highest that still loses to 10♣), got %v", card)
 	}
 }
 
+// TestFollowQueenOfSpadesDumpsUnderHigherSpade verifies the Q♠ early-return in followScore. When A♠ is in the trick, Q♠ gets score 200 (dump it safely under a higher spade).
 func TestFollowQueenOfSpadesDumpsUnderHigherSpade(t *testing.T) {
 	g := setupFollowState(hearts.East, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Diamonds),
-		c(cardcore.Seven, cardcore.Diamonds),
-		c(cardcore.Eight, cardcore.Diamonds),
-		c(cardcore.Nine, cardcore.Diamonds),
-		c(cardcore.Ten, cardcore.Diamonds),
-		c(cardcore.Jack, cardcore.Diamonds),
-		c(cardcore.Queen, cardcore.Diamonds),
-		c(cardcore.King, cardcore.Diamonds),
-		c(cardcore.Six, cardcore.Spades),
+		c(rSix, sDiamonds),
+		c(rSeven, sDiamonds),
+		c(rEight, sDiamonds),
+		c(rNine, sDiamonds),
+		c(rTen, sDiamonds),
+		c(rJack, sDiamonds),
+		c(rQueen, sDiamonds),
+		c(rKing, sDiamonds),
+		c(rSix, sHearts),
+		c(rSeven, sHearts),
+		c(rSix, sSpades),
 		queenOfSpades,
-		c(cardcore.Six, cardcore.Hearts),
-		c(cardcore.Seven, cardcore.Hearts),
 	}, []hearts.Trick{validFirstTrick()},
 		hearts.South,
 		[]trickCard{
-			{hearts.South, c(cardcore.Nine, cardcore.Spades)},
+			{hearts.South, c(rNine, sSpades)},
 			{hearts.West, aceOfSpades},
 		})
 
@@ -963,25 +981,26 @@ func TestFollowQueenOfSpadesDumpsUnderHigherSpade(t *testing.T) {
 	}
 }
 
+// TestFollowQueenOfSpadesAvoidsWithoutHigherSpade verifies the Q♠ penalty when no higher spade is in the trick. Q♠ gets -100, making the AI avoid playing it.
 func TestFollowQueenOfSpadesAvoidsWithoutHigherSpade(t *testing.T) {
 	g := setupFollowState(hearts.East, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Diamonds),
-		c(cardcore.Seven, cardcore.Diamonds),
-		c(cardcore.Eight, cardcore.Diamonds),
-		c(cardcore.Nine, cardcore.Diamonds),
-		c(cardcore.Ten, cardcore.Diamonds),
-		c(cardcore.Jack, cardcore.Diamonds),
-		c(cardcore.Queen, cardcore.Diamonds),
-		c(cardcore.King, cardcore.Diamonds),
-		c(cardcore.Six, cardcore.Spades),
+		c(rSix, sDiamonds),
+		c(rSeven, sDiamonds),
+		c(rEight, sDiamonds),
+		c(rNine, sDiamonds),
+		c(rTen, sDiamonds),
+		c(rJack, sDiamonds),
+		c(rQueen, sDiamonds),
+		c(rKing, sDiamonds),
+		c(rSix, sHearts),
+		c(rSeven, sHearts),
+		c(rSix, sSpades),
 		queenOfSpades,
-		c(cardcore.Six, cardcore.Hearts),
-		c(cardcore.Seven, cardcore.Hearts),
 	}, []hearts.Trick{validFirstTrick()},
 		hearts.South,
 		[]trickCard{
-			{hearts.South, c(cardcore.Eight, cardcore.Spades)},
-			{hearts.West, c(cardcore.Jack, cardcore.Spades)},
+			{hearts.South, c(rEight, sSpades)},
+			{hearts.West, c(rJack, sSpades)},
 		})
 
 	h := newSeededHeuristic(42)
@@ -992,24 +1011,25 @@ func TestFollowQueenOfSpadesAvoidsWithoutHigherSpade(t *testing.T) {
 	}
 }
 
+// TestVoidDumpsQueenOfSpades verifies the Q♠ priority in voidScore. Q♠ always scores +100, making it the first card dumped when void in the led suit.
 func TestVoidDumpsQueenOfSpades(t *testing.T) {
 	g := setupFollowState(hearts.West, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Spades),
+		c(rSix, sHearts),
+		c(rSeven, sHearts),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rSix, sSpades),
 		queenOfSpades,
 		aceOfSpades,
-		c(cardcore.Six, cardcore.Hearts),
-		c(cardcore.Seven, cardcore.Hearts),
-		c(cardcore.Eight, cardcore.Hearts),
-		c(cardcore.Nine, cardcore.Hearts),
-		c(cardcore.Ten, cardcore.Hearts),
-		c(cardcore.Jack, cardcore.Hearts),
-		c(cardcore.Queen, cardcore.Hearts),
-		c(cardcore.King, cardcore.Hearts),
-		c(cardcore.Ace, cardcore.Hearts),
 	}, []hearts.Trick{validFirstTrick()},
 		hearts.South,
 		[]trickCard{
-			{hearts.South, c(cardcore.Six, cardcore.Clubs)},
+			{hearts.South, c(rSix, sClubs)},
 		})
 
 	h := newSeededHeuristic(42)
@@ -1020,24 +1040,25 @@ func TestVoidDumpsQueenOfSpades(t *testing.T) {
 	}
 }
 
+// TestVoidDumpsAceOfSpades verifies the A♠/K♠ priority in voidScore. A♠ scores +50, outranking hearts and non-penalty cards.
 func TestVoidDumpsAceOfSpades(t *testing.T) {
 	g := setupFollowState(hearts.West, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Diamonds),
-		c(cardcore.Seven, cardcore.Diamonds),
-		c(cardcore.Eight, cardcore.Diamonds),
-		c(cardcore.Ace, cardcore.Diamonds),
-		c(cardcore.Six, cardcore.Spades),
-		c(cardcore.Seven, cardcore.Spades),
-		c(cardcore.Eight, cardcore.Spades),
+		c(rSix, sDiamonds),
+		c(rSeven, sDiamonds),
+		c(rEight, sDiamonds),
+		c(rAce, sDiamonds),
+		c(rSix, sHearts),
+		c(rSeven, sHearts),
+		c(rEight, sHearts),
+		c(rAce, sHearts),
+		c(rSix, sSpades),
+		c(rSeven, sSpades),
+		c(rEight, sSpades),
 		aceOfSpades,
-		c(cardcore.Six, cardcore.Hearts),
-		c(cardcore.Seven, cardcore.Hearts),
-		c(cardcore.Eight, cardcore.Hearts),
-		c(cardcore.Ace, cardcore.Hearts),
 	}, []hearts.Trick{validFirstTrick()},
 		hearts.South,
 		[]trickCard{
-			{hearts.South, c(cardcore.Six, cardcore.Clubs)},
+			{hearts.South, c(rSix, sClubs)},
 		})
 
 	h := newSeededHeuristic(42)
@@ -1048,283 +1069,266 @@ func TestVoidDumpsAceOfSpades(t *testing.T) {
 	}
 }
 
+// TestVoidPrefersHeartsOverNonPenalty verifies the hearts dump bonus in voidScore. K♥ (+10 + rank 11 = 21) outscores K♦ (baseline rank 11) because hearts carry a +10 dump bonus.
 func TestVoidPrefersHeartsOverNonPenalty(t *testing.T) {
 	g := setupFollowState(hearts.West, 1, []cardcore.Card{
-		c(cardcore.Six, cardcore.Diamonds),
-		c(cardcore.Seven, cardcore.Diamonds),
-		c(cardcore.Eight, cardcore.Diamonds),
-		c(cardcore.King, cardcore.Diamonds),
-		c(cardcore.Six, cardcore.Spades),
-		c(cardcore.Seven, cardcore.Spades),
-		c(cardcore.Eight, cardcore.Spades),
-		c(cardcore.Nine, cardcore.Spades),
-		c(cardcore.Six, cardcore.Hearts),
-		c(cardcore.Seven, cardcore.Hearts),
-		c(cardcore.Eight, cardcore.Hearts),
-		c(cardcore.King, cardcore.Hearts),
+		c(rSix, sDiamonds),
+		c(rSeven, sDiamonds),
+		c(rEight, sDiamonds),
+		c(rKing, sDiamonds),
+		c(rSix, sHearts),
+		c(rSeven, sHearts),
+		c(rEight, sHearts),
+		c(rKing, sHearts),
+		c(rSix, sSpades),
+		c(rSeven, sSpades),
+		c(rEight, sSpades),
+		c(rNine, sSpades),
 	}, []hearts.Trick{validFirstTrick()},
 		hearts.South,
 		[]trickCard{
-			{hearts.South, c(cardcore.Six, cardcore.Clubs)},
+			{hearts.South, c(rSix, sClubs)},
 		})
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.West)
 
-	if card != c(cardcore.King, cardcore.Hearts) {
+	if card != c(rKing, sHearts) {
 		t.Errorf("expected K♥ (hearts over same-rank non-penalty), got %v", card)
 	}
 }
 
 // --- Moon blocking tests ---
 
-// Moon threat active (East has all pts, trickNum=7). South follows spades.
-// 10♠ would win (beats 6♠). Moon block: rank+30 = 38 vs 2♠ loser = 0.
-// Without moon block, 10♠ would score -1 (not-last clean, danger penalty).
+// TestFollowMoonBlockPrefersWinning verifies that the moon-block heuristic prefers winning the trick to deny the shooter lead control. Moon threat active (East has all pts, trickNum=7). South follows spades. 10♠ would win (beats 6♠). Moon block: rank+30 = 38 vs 2♠ loser = 0. Without moon block, 10♠ would score -1 (not-last clean, danger penalty).
 func TestFollowMoonBlockPrefersWinning(t *testing.T) {
 	g := setupFollowState(hearts.South, 7, []cardcore.Card{
-		c(cardcore.Queen, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Hearts),
-		c(cardcore.Four, cardcore.Hearts),
-		c(cardcore.Five, cardcore.Hearts),
-		c(cardcore.Two, cardcore.Spades),
-		c(cardcore.Ten, cardcore.Spades),
+		c(rQueen, sClubs),
+		c(rThree, sHearts),
+		c(rFour, sHearts),
+		c(rFive, sHearts),
+		c(rTwo, sSpades),
+		c(rTen, sSpades),
 	}, moonThreatHistory(),
 		hearts.North,
 		[]trickCard{
-			{hearts.North, c(cardcore.Five, cardcore.Spades)},
-			{hearts.East, c(cardcore.Six, cardcore.Spades)},
+			{hearts.North, c(rFive, sSpades)},
+			{hearts.East, c(rSix, sSpades)},
 		})
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.South)
 
-	if card != c(cardcore.Ten, cardcore.Spades) {
+	if card != c(rTen, sSpades) {
 		t.Errorf("expected 10♠ (moon block prefers winning), got %v", card)
 	}
 }
 
-// Same setup as TestFollowMoonBlockPrefersWinning but trickNum=5 (gate
-// fails). Normal scoring: South ducks with 2♠ (losing card scores higher
-// than winning under danger).
+// TestFollowMoonBlockGateTrickNumTooLow verifies that the moon-block heuristic does not activate before trick 6. Same setup as TestFollowMoonBlockPrefersWinning but trickNum=5 (gate fails). Normal scoring: South ducks with 2♠.
 func TestFollowMoonBlockGateTrickNumTooLow(t *testing.T) {
 	g := setupFollowState(hearts.South, 5, []cardcore.Card{
-		c(cardcore.Queen, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Hearts),
-		c(cardcore.Four, cardcore.Hearts),
-		c(cardcore.Five, cardcore.Hearts),
-		c(cardcore.Six, cardcore.Hearts),
-		c(cardcore.Two, cardcore.Spades),
-		c(cardcore.Four, cardcore.Spades),
-		c(cardcore.Ten, cardcore.Spades),
+		c(rQueen, sClubs),
+		c(rThree, sHearts),
+		c(rFour, sHearts),
+		c(rFive, sHearts),
+		c(rSix, sHearts),
+		c(rTwo, sSpades),
+		c(rFour, sSpades),
+		c(rTen, sSpades),
 	}, earlyMoonThreatHistory(),
 		hearts.East,
 		[]trickCard{
-			{hearts.East, c(cardcore.Five, cardcore.Spades)},
+			{hearts.East, c(rFive, sSpades)},
 		})
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.South)
 
-	if card == c(cardcore.Ten, cardcore.Spades) {
+	if card == c(rTen, sSpades) {
 		t.Errorf("expected duck (trickNum < 6, no moon block), got 10♠")
 	}
 }
 
-// East is the moon threat and is following. Self-as-threat gate fails —
-// East uses normal scoring, not moon blocking.
+// TestFollowMoonBlockGateSelfIsThreat verifies that the moon-block heuristic does not activate when the player is the threat. East is the moon threat and is following — self-as-threat gate fails, normal scoring used.
 func TestFollowMoonBlockGateSelfIsThreat(t *testing.T) {
 	g := setupFollowState(hearts.East, 7, []cardcore.Card{
-		c(cardcore.Queen, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Hearts),
-		c(cardcore.Four, cardcore.Hearts),
-		c(cardcore.Five, cardcore.Hearts),
-		c(cardcore.Four, cardcore.Spades),
-		c(cardcore.Ten, cardcore.Spades),
+		c(rQueen, sClubs),
+		c(rThree, sHearts),
+		c(rFour, sHearts),
+		c(rFive, sHearts),
+		c(rFour, sSpades),
+		c(rTen, sSpades),
 	}, moonThreatHistory(),
 		hearts.North,
 		[]trickCard{
-			{hearts.North, c(cardcore.Five, cardcore.Spades)},
+			{hearts.North, c(rFive, sSpades)},
 		})
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.East)
 
-	if card == c(cardcore.Ten, cardcore.Spades) {
+	if card == c(rTen, sSpades) {
 		t.Errorf("expected normal play (self is threat, no block), got 10♠")
 	}
 }
 
-// Moon threat active. South void in led suit (spades). East (moon
-// threat) is currently winning. Dumping hearts feeds the shooter, so hearts
-// get -10 instead of +10. Q♣ (rank 10 + short suit 15 = 25) beats 3♥
-// (rank 1 - 10 = -9).
+// TestVoidMoonBlockSuppressesHeartsDumpWhenThreatWins verifies that hearts are suppressed when void and the moon-threat seat is winning. Moon threat active. South void in led suit (spades). East (moon threat) is currently winning. Dumping hearts feeds the shooter, so hearts get -10 instead of +10. Q♣ (rank 10 + short suit 15 = 25) beats 3♥ (rank 1 - 10 = -9).
 func TestVoidMoonBlockSuppressesHeartsDumpWhenThreatWins(t *testing.T) {
 	g := setupFollowState(hearts.South, 7, []cardcore.Card{
-		c(cardcore.Queen, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Hearts),
-		c(cardcore.Four, cardcore.Hearts),
-		c(cardcore.Five, cardcore.Hearts),
-		c(cardcore.Six, cardcore.Hearts),
-		c(cardcore.Seven, cardcore.Hearts),
+		c(rQueen, sClubs),
+		c(rThree, sHearts),
+		c(rFour, sHearts),
+		c(rFive, sHearts),
+		c(rSix, sHearts),
+		c(rSeven, sHearts),
 	}, moonThreatHistory(),
 		hearts.North,
 		[]trickCard{
-			{hearts.North, c(cardcore.Five, cardcore.Spades)},
-			{hearts.East, c(cardcore.Ace, cardcore.Spades)},
+			{hearts.North, c(rFive, sSpades)},
+			{hearts.East, c(rAce, sSpades)},
 		})
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.South)
 
-	if card.Suit == cardcore.Hearts {
+	if card.Suit == sHearts {
 		t.Errorf("expected non-heart (suppress hearts dump when threat wins), got %v", card)
 	}
 }
 
-// Moon threat active but threat (East) is NOT winning the trick. North is
-// winning. South is void in led suit (clubs) and has a non-heart alternative
-// (4♠). Hearts dump allowed: K♥ (+10 + 11 = 21) beats 4♠ (baseline 2 +
-// short suit 15 = 17).
+// TestVoidMoonBlockAllowsHeartsDumpWhenThreatLoses verifies that hearts dumping is allowed when the moon-threat seat is not winning. Moon threat active but threat (East) is NOT winning the trick. North is winning. South is void in led suit (clubs) and has a non-heart alternative (4♠). Hearts dump allowed: K♥ (+10 + 11 = 21) beats 4♠ (baseline 2 + short suit 15 = 17).
 func TestVoidMoonBlockAllowsHeartsDumpWhenThreatLoses(t *testing.T) {
 	g := setupFollowState(hearts.South, 7, []cardcore.Card{
-		c(cardcore.Eight, cardcore.Hearts),
-		c(cardcore.Nine, cardcore.Hearts),
-		c(cardcore.Ten, cardcore.Hearts),
-		c(cardcore.Jack, cardcore.Hearts),
-		c(cardcore.King, cardcore.Hearts),
-		c(cardcore.Four, cardcore.Spades),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rKing, sHearts),
+		c(rFour, sSpades),
 	}, moonThreatHistory(),
 		hearts.North,
 		[]trickCard{
-			{hearts.North, c(cardcore.Queen, cardcore.Clubs)},
-			{hearts.East, c(cardcore.Six, cardcore.Spades)},
+			{hearts.North, c(rQueen, sClubs)},
+			{hearts.East, c(rSix, sSpades)},
 		})
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.South)
 
-	if card != c(cardcore.King, cardcore.Hearts) {
+	if card != c(rKing, sHearts) {
 		t.Errorf("expected K♥ (highest heart, dump allowed when threat loses), got %v", card)
 	}
 }
 
-// trickNum=5, moon threat exists but gate fails (trickNum < 6). Normal
-// scoring: hearts get +10 dump bonus. South void in led suit (diamonds)
-// and has a non-heart alternative (4♠). K♥ (+10 + 11 = 21) beats 4♠
-// (baseline 2 + short suit 15 = 17).
+// TestVoidMoonBlockGateTrickNumTooLow verifies that the void moon-block heuristic does not activate before trick 6. trickNum=5, moon threat exists but gate fails. Normal scoring: hearts get +10 dump bonus. South void in diamonds, K♥ (+10 + 11 = 21) beats 4♠ (baseline 2 + short suit 15 = 17).
 func TestVoidMoonBlockGateTrickNumTooLow(t *testing.T) {
 	g := setupFollowState(hearts.South, 5, []cardcore.Card{
-		c(cardcore.Three, cardcore.Hearts),
-		c(cardcore.Four, cardcore.Hearts),
-		c(cardcore.Eight, cardcore.Hearts),
-		c(cardcore.Nine, cardcore.Hearts),
-		c(cardcore.Ten, cardcore.Hearts),
-		c(cardcore.Jack, cardcore.Hearts),
-		c(cardcore.King, cardcore.Hearts),
-		c(cardcore.Four, cardcore.Spades),
+		c(rThree, sHearts),
+		c(rFour, sHearts),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rKing, sHearts),
+		c(rFour, sSpades),
 	}, earlyMoonThreatHistory(),
 		hearts.East,
 		[]trickCard{
-			{hearts.East, c(cardcore.Jack, cardcore.Diamonds)},
+			{hearts.East, c(rJack, sDiamonds)},
 		})
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.South)
 
-	if card != c(cardcore.King, cardcore.Hearts) {
+	if card != c(rKing, sHearts) {
 		t.Errorf("expected K♥ (gate fails, normal +10 dump, highest heart), got %v", card)
 	}
 }
 
-// Moon threat active. North leads. A♥ gets +30 (high heart, win the trick
-// to dash shooter's hopes). All hearts in hand — A♥ preferred over low
-// hearts (+15).
+// TestLeadMoonBlockPrefersHighHearts verifies that high hearts are preferred when leading under an active moon threat. A♥ gets +30 (high heart, win the trick to dash shooter's hopes). All hearts in hand — A♥ preferred over low hearts (+15).
 func TestLeadMoonBlockPrefersHighHearts(t *testing.T) {
 	g := setupLeadState(hearts.North, 7, []cardcore.Card{
-		c(cardcore.Three, cardcore.Hearts),
-		c(cardcore.Five, cardcore.Hearts),
-		c(cardcore.Six, cardcore.Hearts),
-		c(cardcore.Seven, cardcore.Hearts),
-		c(cardcore.Eight, cardcore.Hearts),
-		c(cardcore.Ace, cardcore.Hearts),
+		c(rThree, sHearts),
+		c(rFive, sHearts),
+		c(rSix, sHearts),
+		c(rSeven, sHearts),
+		c(rEight, sHearts),
+		c(rAce, sHearts),
 	}, moonThreatHistory())
 	g.HeartsBroken = true
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.North)
 
-	if card != c(cardcore.Ace, cardcore.Hearts) {
+	if card != c(rAce, sHearts) {
 		t.Errorf("expected A♥ (high heart moon block lead), got %v", card)
 	}
 }
 
-// Moon threat active. North has only low hearts (no K♥/A♥) plus K♠ and A♠
-// (penalized by flush -20). Low hearts get +15 from moon block, beating the
-// penalized spades.
+// TestLeadMoonBlockLowHeartsStillPreferred verifies that even low hearts are preferred over penalized spades under a moon threat. North has only low hearts (no K♥/A♥) plus K♠ and A♠ (penalized by flush -20). Low hearts get +15 from moon block, beating the penalized spades.
 func TestLeadMoonBlockLowHeartsStillPreferred(t *testing.T) {
 	g := setupLeadState(hearts.North, 7, []cardcore.Card{
-		c(cardcore.Three, cardcore.Hearts),
-		c(cardcore.Four, cardcore.Hearts),
-		c(cardcore.Five, cardcore.Hearts),
-		c(cardcore.Six, cardcore.Hearts),
-		c(cardcore.King, cardcore.Spades),
-		c(cardcore.Ace, cardcore.Spades),
+		c(rThree, sHearts),
+		c(rFour, sHearts),
+		c(rFive, sHearts),
+		c(rSix, sHearts),
+		c(rKing, sSpades),
+		c(rAce, sSpades),
 	}, moonThreatHistory())
 	g.HeartsBroken = true
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.North)
 
-	if card.Suit != cardcore.Hearts {
+	if card.Suit != sHearts {
 		t.Errorf("expected heart lead (moon block, +15 bonus), got %v", card)
 	}
 }
 
-// No moon threat (penalties distributed to North and West). Hearts get
-// normal -15 lead penalty. East should avoid leading hearts.
+// TestLeadNoMoonThreatNormalHeartPenalty verifies that hearts are penalized for leading when no moon threat exists. No moon threat (penalties distributed to North and West). Hearts get normal -15 lead penalty.
 func TestLeadNoMoonThreatNormalHeartPenalty(t *testing.T) {
 	cleanHistory := moonThreatHistory()
 	cleanHistory = cleanHistory[:4]
 	cleanHistory = append(cleanHistory,
 		hearts.Trick{Leader: hearts.North, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(cardcore.Queen, cardcore.Diamonds),
-			hearts.West:  c(cardcore.Seven, cardcore.Hearts),
-			hearts.North: c(cardcore.Ace, cardcore.Diamonds),
-			hearts.East:  c(cardcore.King, cardcore.Diamonds),
+			hearts.South: c(rQueen, sDiamonds),
+			hearts.West:  c(rSeven, sHearts),
+			hearts.North: c(rAce, sDiamonds),
+			hearts.East:  c(rKing, sDiamonds),
 		}},
 		hearts.Trick{Leader: hearts.North, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(cardcore.Two, cardcore.Hearts),
-			hearts.West:  c(cardcore.Three, cardcore.Spades),
-			hearts.North: c(cardcore.Two, cardcore.Spades),
-			hearts.East:  c(cardcore.Ace, cardcore.Clubs),
+			hearts.South: c(rTwo, sHearts),
+			hearts.West:  c(rThree, sSpades),
+			hearts.North: c(rTwo, sSpades),
+			hearts.East:  c(rAce, sClubs),
 		}},
 		hearts.Trick{Leader: hearts.West, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(cardcore.Four, cardcore.Spades),
-			hearts.West:  c(cardcore.Five, cardcore.Spades),
-			hearts.North: c(cardcore.Six, cardcore.Spades),
-			hearts.East:  c(cardcore.Seven, cardcore.Spades),
+			hearts.South: c(rFour, sSpades),
+			hearts.West:  c(rFive, sSpades),
+			hearts.North: c(rSix, sSpades),
+			hearts.East:  c(rSeven, sSpades),
 		}},
 	)
 
 	g := setupLeadState(hearts.East, 7, []cardcore.Card{
-		c(cardcore.Three, cardcore.Hearts),
-		c(cardcore.Four, cardcore.Hearts),
-		c(cardcore.Five, cardcore.Hearts),
-		c(cardcore.Six, cardcore.Hearts),
-		c(cardcore.Eight, cardcore.Spades),
-		c(cardcore.Nine, cardcore.Spades),
+		c(rThree, sHearts),
+		c(rFour, sHearts),
+		c(rFive, sHearts),
+		c(rSix, sHearts),
+		c(rEight, sSpades),
+		c(rNine, sSpades),
 	}, cleanHistory)
 	g.HeartsBroken = true
 
 	h := newSeededHeuristic(42)
 	card := h.ChoosePlay(g, hearts.East)
 
-	if card.Suit == cardcore.Hearts {
+	if card.Suit == sHearts {
 		t.Errorf("expected non-heart (no moon threat, -15 penalty), got %v", card)
 	}
 }
 
+// TestHeuristicFullGameIntegration runs 10 complete games with Heuristic players and verifies structural invariants: games terminate, winner has the lowest score.
 func TestHeuristicFullGameIntegration(t *testing.T) {
 	const (
 		numGames  = 10
@@ -1361,11 +1365,18 @@ func TestHeuristicFullGameIntegration(t *testing.T) {
 	}
 }
 
+// newSeededHeuristic creates a Heuristic player with a deterministic RNG for test reproducibility.
+func newSeededHeuristic(seed uint64) *Heuristic {
+	return NewHeuristic(rand.New(rand.NewPCG(seed, seed+1)))
+}
+
+// setupPassHand replaces a player's hand with the given cards for pass testing.
 func setupPassHand(t *testing.T, g *hearts.Game, seat hearts.Seat, cards []cardcore.Card) {
 	t.Helper()
 	g.Hands[seat] = cardcore.NewHand(cards)
 }
 
+// passedContains reports whether target appears in the passed cards array.
 func passedContains(cards [hearts.PassCount]cardcore.Card, target cardcore.Card) bool {
 	for _, c := range cards {
 		if c == target {
@@ -1403,18 +1414,14 @@ func validFirstTrick() hearts.Trick {
 		Count:  hearts.NumPlayers,
 		Cards: [hearts.NumPlayers]cardcore.Card{
 			hearts.South: twoOfClubs,
-			hearts.West:  c(cardcore.Three, cardcore.Clubs),
-			hearts.North: c(cardcore.Four, cardcore.Clubs),
-			hearts.East:  c(cardcore.Five, cardcore.Clubs),
+			hearts.West:  c(rThree, sClubs),
+			hearts.North: c(rFour, sClubs),
+			hearts.East:  c(rFive, sClubs),
 		},
 	}
 }
 
-type trickCard struct {
-	seat hearts.Seat
-	card cardcore.Card
-}
-
+// setupFollowState creates a game in PhasePlay where seat must play into an in-progress trick. The leader and played cards define the partial trick state.
 func setupFollowState(
 	seat hearts.Seat,
 	trickNum int,
@@ -1452,31 +1459,31 @@ func earlyMoonThreatHistory() []hearts.Trick {
 		validFirstTrick(),
 		// Trick 1: East leads clubs, North wins (clean).
 		{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(cardcore.Seven, cardcore.Clubs),
-			hearts.West:  c(cardcore.Eight, cardcore.Clubs),
-			hearts.North: c(cardcore.Nine, cardcore.Clubs),
-			hearts.East:  c(cardcore.Six, cardcore.Clubs),
+			hearts.South: c(rSeven, sClubs),
+			hearts.West:  c(rEight, sClubs),
+			hearts.North: c(rNine, sClubs),
+			hearts.East:  c(rSix, sClubs),
 		}},
 		// Trick 2: North leads diamonds, East wins (clean).
 		{Leader: hearts.North, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(cardcore.Four, cardcore.Diamonds),
-			hearts.West:  c(cardcore.Five, cardcore.Diamonds),
-			hearts.North: c(cardcore.Three, cardcore.Diamonds),
-			hearts.East:  c(cardcore.Eight, cardcore.Diamonds),
+			hearts.South: c(rFour, sDiamonds),
+			hearts.West:  c(rFive, sDiamonds),
+			hearts.North: c(rThree, sDiamonds),
+			hearts.East:  c(rEight, sDiamonds),
 		}},
 		// Trick 3: East leads diamonds, North wins (clean).
 		{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(cardcore.Seven, cardcore.Diamonds),
-			hearts.West:  c(cardcore.Nine, cardcore.Diamonds),
-			hearts.North: c(cardcore.Ten, cardcore.Diamonds),
-			hearts.East:  c(cardcore.Six, cardcore.Diamonds),
+			hearts.South: c(rSeven, sDiamonds),
+			hearts.West:  c(rNine, sDiamonds),
+			hearts.North: c(rTen, sDiamonds),
+			hearts.East:  c(rSix, sDiamonds),
 		}},
 		// Trick 4: North leads clubs, East wins. West sloughs 2♥ (1 pt → East).
 		{Leader: hearts.North, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(cardcore.Jack, cardcore.Clubs),
-			hearts.West:  c(cardcore.Two, cardcore.Hearts),
-			hearts.North: c(cardcore.Ten, cardcore.Clubs),
-			hearts.East:  c(cardcore.King, cardcore.Clubs),
+			hearts.South: c(rJack, sClubs),
+			hearts.West:  c(rTwo, sHearts),
+			hearts.North: c(rTen, sClubs),
+			hearts.East:  c(rKing, sClubs),
 		}},
 	}
 }
@@ -1491,17 +1498,17 @@ func moonThreatHistory() []hearts.Trick {
 	return append(h,
 		// Trick 5: East leads diamonds, North wins (clean).
 		hearts.Trick{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(cardcore.Queen, cardcore.Diamonds),
-			hearts.West:  c(cardcore.Jack, cardcore.Diamonds),
-			hearts.North: c(cardcore.Ace, cardcore.Diamonds),
-			hearts.East:  c(cardcore.King, cardcore.Diamonds),
+			hearts.South: c(rQueen, sDiamonds),
+			hearts.West:  c(rJack, sDiamonds),
+			hearts.North: c(rAce, sDiamonds),
+			hearts.East:  c(rKing, sDiamonds),
 		}},
 		// Trick 6: North leads diamonds, North wins (clean).
 		hearts.Trick{Leader: hearts.North, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(cardcore.Ace, cardcore.Clubs),
-			hearts.West:  c(cardcore.Three, cardcore.Spades),
-			hearts.North: c(cardcore.Two, cardcore.Diamonds),
-			hearts.East:  c(cardcore.Two, cardcore.Spades),
+			hearts.South: c(rAce, sClubs),
+			hearts.West:  c(rThree, sSpades),
+			hearts.North: c(rTwo, sDiamonds),
+			hearts.East:  c(rTwo, sSpades),
 		}},
 	)
 }

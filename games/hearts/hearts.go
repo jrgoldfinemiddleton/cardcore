@@ -66,11 +66,6 @@ type Trick struct {
 	Count  int                       // The number of cards played so far.
 }
 
-// LedSuit returns the suit that was led.
-func (tr *Trick) LedSuit() cardcore.Suit {
-	return tr.Cards[tr.Leader].Suit
-}
-
 // Game holds the complete state of a Hearts game.
 type Game struct {
 	Phase        Phase                                // Current phase of the round.
@@ -96,6 +91,11 @@ func New() *Game {
 	return &Game{
 		Phase: PhaseDeal,
 	}
+}
+
+// LedSuit returns the suit that was led.
+func (tr *Trick) LedSuit() cardcore.Suit {
+	return tr.Cards[tr.Leader].Suit
 }
 
 // Clone returns a deep copy of the game state. The returned Game is
@@ -231,6 +231,42 @@ func (g *Game) PlayCard(seat Seat, card cardcore.Card) error {
 	return nil
 }
 
+// EndRound advances past the scoring phase. If any player has reached
+// MaxScore the game ends; otherwise a new round begins.
+func (g *Game) EndRound() error {
+	if g.Phase != PhaseScore {
+		return fmt.Errorf("cannot end round in phase %d", g.Phase)
+	}
+
+	for i := range NumPlayers {
+		if g.Scores[i] >= MaxScore {
+			g.Phase = PhaseEnd
+			return nil
+		}
+	}
+
+	g.Round++
+	g.PassDir = PassDirection(g.Round % NumPassDirections)
+	g.Phase = PhaseDeal
+
+	return nil
+}
+
+// Winner returns the seat with the lowest score. Only valid when Phase == PhaseEnd.
+func (g *Game) Winner() (Seat, error) {
+	if g.Phase != PhaseEnd {
+		return 0, fmt.Errorf("game not over")
+	}
+	best := Seat(0)
+	for i := Seat(1); i < NumPlayers; i++ {
+		if g.Scores[i] < g.Scores[best] {
+			best = i
+		}
+	}
+	return best, nil
+}
+
+// validatePlay checks that card is a legal play for seat in the current trick.
 func (g *Game) validatePlay(seat Seat, card cardcore.Card) error {
 	if !g.Hands[seat].Contains(card) {
 		return fmt.Errorf("player %d does not have %v", seat, card)
@@ -279,6 +315,7 @@ func (g *Game) validatePlay(seat Seat, card cardcore.Card) error {
 	return nil
 }
 
+// resolveTrick scores the completed trick and starts the next one.
 func (g *Game) resolveTrick() {
 	winner := g.trickWinner()
 	pts := g.trickPoints()
@@ -293,6 +330,7 @@ func (g *Game) resolveTrick() {
 	}
 }
 
+// trickWinner returns the seat that won the current trick.
 func (g *Game) trickWinner() Seat {
 	ledSuit := g.Trick.LedSuit()
 	winner := g.Trick.Leader
@@ -311,6 +349,7 @@ func (g *Game) trickWinner() Seat {
 	return winner
 }
 
+// trickPoints returns the total penalty points in the current trick.
 func (g *Game) trickPoints() int {
 	pts := 0
 	for _, c := range g.Trick.Cards {
@@ -324,6 +363,7 @@ func (g *Game) trickPoints() int {
 	return pts
 }
 
+// scoreRound applies round points to cumulative scores, handling shoot-the-moon.
 func (g *Game) scoreRound() {
 	g.Phase = PhaseScore
 
@@ -348,37 +388,19 @@ func (g *Game) scoreRound() {
 	}
 }
 
-// EndRound advances past the scoring phase. If any player has reached
-// MaxScore the game ends; otherwise a new round begins.
-func (g *Game) EndRound() error {
-	if g.Phase != PhaseScore {
-		return fmt.Errorf("cannot end round in phase %d", g.Phase)
-	}
-
-	for i := range NumPlayers {
-		if g.Scores[i] >= MaxScore {
-			g.Phase = PhaseEnd
-			return nil
-		}
-	}
-
-	g.Round++
-	g.PassDir = PassDirection(g.Round % NumPassDirections)
-	g.Phase = PhaseDeal
-
-	return nil
-}
-
+// startFirstTrick begins the first trick, led by whoever holds 2♣.
 func (g *Game) startFirstTrick() {
 	holder := g.findTwoOfClubs()
 	g.startTrick(holder)
 }
 
+// startTrick begins a new trick with the given seat leading.
 func (g *Game) startTrick(lead Seat) {
 	g.Trick = Trick{Leader: lead}
 	g.Turn = lead
 }
 
+// findTwoOfClubs returns the seat holding the two of clubs.
 func (g *Game) findTwoOfClubs() Seat {
 	for i := range NumPlayers {
 		if g.Hands[i].Contains(twoOfClubs) {
@@ -388,6 +410,7 @@ func (g *Game) findTwoOfClubs() Seat {
 	panic("no player has 2♣")
 }
 
+// allPassesReady reports whether all four players have submitted their passes.
 func (g *Game) allPassesReady() bool {
 	for i := range NumPlayers {
 		if !g.passReady[i] {
@@ -397,6 +420,7 @@ func (g *Game) allPassesReady() bool {
 	return true
 }
 
+// executePass transfers passed cards between players and sorts hands.
 func (g *Game) executePass() {
 	received := [NumPlayers][PassCount]cardcore.Card{}
 
@@ -420,6 +444,7 @@ func (g *Game) executePass() {
 	g.PassHistory = g.passCards
 }
 
+// passTarget returns the seat that receives cards from the given seat.
 func (g *Game) passTarget(from Seat) Seat {
 	switch g.PassDir {
 	case PassLeft:
@@ -433,6 +458,7 @@ func (g *Game) passTarget(from Seat) Seat {
 	}
 }
 
+// onlyHasHearts reports whether the seat's hand contains only hearts.
 func (g *Game) onlyHasHearts(seat Seat) bool {
 	for _, c := range g.Hands[seat].Cards {
 		if c.Suit != cardcore.Hearts {
@@ -442,6 +468,7 @@ func (g *Game) onlyHasHearts(seat Seat) bool {
 	return true
 }
 
+// hasNonPointCards reports whether the seat has any non-penalty card to play.
 func (g *Game) hasNonPointCards(seat Seat) bool {
 	for _, c := range g.Hands[seat].Cards {
 		if c.Suit != cardcore.Hearts && c != queenOfSpades {
@@ -451,20 +478,7 @@ func (g *Game) hasNonPointCards(seat Seat) bool {
 	return false
 }
 
+// nextSeat returns the next seat in clockwise order.
 func nextSeat(s Seat) Seat {
 	return (s + 1) % NumPlayers
-}
-
-// Winner returns the seat with the lowest score. Only valid when Phase == PhaseEnd.
-func (g *Game) Winner() (Seat, error) {
-	if g.Phase != PhaseEnd {
-		return 0, fmt.Errorf("game not over")
-	}
-	best := Seat(0)
-	for i := Seat(1); i < NumPlayers; i++ {
-		if g.Scores[i] < g.Scores[best] {
-			best = i
-		}
-	}
-	return best, nil
 }

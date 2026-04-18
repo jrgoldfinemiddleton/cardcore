@@ -1,7 +1,7 @@
 # Design Principles and Philosophy
 
 ## Overview
-cardcore is a minimal, composable card game engine written in Go. It is designed as a library, not a standalone application. The engine provides the core logic and state management for card games, intended to be consumed by future HTTP or WebSocket APIs that will facilitate client-server interaction.
+`cardcore` is a minimal, composable card game engine written in Go. It is designed as a library, not a standalone application. The engine provides the core logic and state management for card games, intended to be consumed by future HTTP or WebSocket APIs that will facilitate client-server interaction.
 
 ## Suckless Philosophy
 We adhere to the [suckless philosophy](https://suckless.org/philosophy/): maintaining a small, readable codebase with zero external runtime dependencies. We avoid premature abstraction; generics and shared interfaces for entities like `Player` or `GameState` are deferred until they become necessary. Following the "rule of two games," we will only extract common abstractions after building at least two distinct games.

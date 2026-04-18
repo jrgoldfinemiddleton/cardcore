@@ -7,6 +7,7 @@ import (
 	"github.com/jrgoldfinemiddleton/cardcore/games/hearts"
 )
 
+// TestAnalyzePlayedCards verifies that cards from completed tricks are marked as played in the analysis.
 func TestAnalyzePlayedCards(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -19,10 +20,10 @@ func TestAnalyzePlayedCards(t *testing.T) {
 	g.TrickHistory = []hearts.Trick{
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Two, cardcore.Clubs),
-				hearts.West:  c(cardcore.Five, cardcore.Clubs),
-				hearts.North: c(cardcore.Jack, cardcore.Clubs),
-				hearts.East:  c(cardcore.Ace, cardcore.Clubs),
+				hearts.South: c(rTwo, sClubs),
+				hearts.West:  c(rFive, sClubs),
+				hearts.North: c(rJack, sClubs),
+				hearts.East:  c(rAce, sClubs),
 			},
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
@@ -32,10 +33,10 @@ func TestAnalyzePlayedCards(t *testing.T) {
 	a := analyze(g, hearts.South)
 
 	want := []cardcore.Card{
-		c(cardcore.Two, cardcore.Clubs),
-		c(cardcore.Five, cardcore.Clubs),
-		c(cardcore.Jack, cardcore.Clubs),
-		c(cardcore.Ace, cardcore.Clubs),
+		c(rTwo, sClubs),
+		c(rFive, sClubs),
+		c(rJack, sClubs),
+		c(rAce, sClubs),
 	}
 	for _, card := range want {
 		if !a.played[card.Suit][card.Rank] {
@@ -43,11 +44,12 @@ func TestAnalyzePlayedCards(t *testing.T) {
 		}
 	}
 
-	if a.played[cardcore.Diamonds][cardcore.Two] {
+	if a.played[sDiamonds][rTwo] {
 		t.Error("2♦ should not be marked played")
 	}
 }
 
+// TestAnalyzeVoidDetection verifies that failing to follow suit marks a player as void. West played a diamond when clubs were led.
 func TestAnalyzeVoidDetection(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -61,10 +63,10 @@ func TestAnalyzeVoidDetection(t *testing.T) {
 	g.TrickHistory = []hearts.Trick{
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Two, cardcore.Clubs),
-				hearts.West:  c(cardcore.Three, cardcore.Diamonds),
-				hearts.North: c(cardcore.Five, cardcore.Clubs),
-				hearts.East:  c(cardcore.Nine, cardcore.Clubs),
+				hearts.South: c(rTwo, sClubs),
+				hearts.West:  c(rThree, sDiamonds),
+				hearts.North: c(rFive, sClubs),
+				hearts.East:  c(rNine, sClubs),
 			},
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
@@ -73,19 +75,20 @@ func TestAnalyzeVoidDetection(t *testing.T) {
 
 	a := analyze(g, hearts.South)
 
-	if !a.voids[hearts.West][cardcore.Clubs] {
+	if !a.voids[hearts.West][sClubs] {
 		t.Error("West should be detected as void in clubs")
 	}
 
-	if a.voids[hearts.North][cardcore.Clubs] {
+	if a.voids[hearts.North][sClubs] {
 		t.Error("North followed suit, should not be marked void")
 	}
 
-	if a.voids[hearts.West][cardcore.Diamonds] {
+	if a.voids[hearts.West][sDiamonds] {
 		t.Error("West played a diamond, should not be marked void in diamonds")
 	}
 }
 
+// TestAnalyzeVoidFromOwnHand verifies that suits missing from the player's own hand are marked as void.
 func TestAnalyzeVoidFromOwnHand(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -93,8 +96,8 @@ func TestAnalyzeVoidFromOwnHand(t *testing.T) {
 
 	// South has only clubs and diamonds — void in hearts and spades.
 	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
-		c(cardcore.Two, cardcore.Clubs),
-		c(cardcore.Three, cardcore.Diamonds),
+		c(rTwo, sClubs),
+		c(rThree, sDiamonds),
 	})
 	g.Hands[hearts.West] = cardcore.NewHand(nil)
 	g.Hands[hearts.North] = cardcore.NewHand(nil)
@@ -102,20 +105,21 @@ func TestAnalyzeVoidFromOwnHand(t *testing.T) {
 
 	a := analyze(g, hearts.South)
 
-	if !a.voids[hearts.South][cardcore.Hearts] {
+	if !a.voids[hearts.South][sHearts] {
 		t.Error("South has no hearts, should be void in hearts")
 	}
-	if !a.voids[hearts.South][cardcore.Spades] {
+	if !a.voids[hearts.South][sSpades] {
 		t.Error("South has no spades, should be void in spades")
 	}
-	if a.voids[hearts.South][cardcore.Clubs] {
+	if a.voids[hearts.South][sClubs] {
 		t.Error("South has clubs, should not be void in clubs")
 	}
-	if a.voids[hearts.South][cardcore.Diamonds] {
+	if a.voids[hearts.South][sDiamonds] {
 		t.Error("South has diamonds, should not be void in diamonds")
 	}
 }
 
+// TestAnalyzeQueenInHand verifies that holding Q♠ sets queen to queenInHand.
 func TestAnalyzeQueenInHand(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -132,6 +136,7 @@ func TestAnalyzeQueenInHand(t *testing.T) {
 	}
 }
 
+// TestAnalyzeQueenPlayed verifies that Q♠ appearing in trick history sets queen to queenPlayed for all observers.
 func TestAnalyzeQueenPlayed(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -145,10 +150,10 @@ func TestAnalyzeQueenPlayed(t *testing.T) {
 		// Trick 0: valid 2♣ lead.
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Two, cardcore.Clubs),
-				hearts.West:  c(cardcore.Five, cardcore.Clubs),
-				hearts.North: c(cardcore.Jack, cardcore.Clubs),
-				hearts.East:  c(cardcore.Ace, cardcore.Clubs),
+				hearts.South: c(rTwo, sClubs),
+				hearts.West:  c(rFive, sClubs),
+				hearts.North: c(rJack, sClubs),
+				hearts.East:  c(rAce, sClubs),
 			},
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
@@ -158,8 +163,8 @@ func TestAnalyzeQueenPlayed(t *testing.T) {
 			Cards: [hearts.NumPlayers]cardcore.Card{
 				hearts.South: aceOfSpades,
 				hearts.West:  queenOfSpades,
-				hearts.North: c(cardcore.Five, cardcore.Spades),
-				hearts.East:  c(cardcore.Nine, cardcore.Spades),
+				hearts.North: c(rFive, sSpades),
+				hearts.East:  c(rNine, sSpades),
 			},
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
@@ -178,6 +183,7 @@ func TestAnalyzeQueenPlayed(t *testing.T) {
 	}
 }
 
+// TestAnalyzeQueenPassed verifies that passing Q♠ sets queen to queenPassed with the correct queenHolder (pass target).
 func TestAnalyzeQueenPassed(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -191,7 +197,7 @@ func TestAnalyzeQueenPassed(t *testing.T) {
 	g.PassHistory[hearts.South] = [hearts.PassCount]cardcore.Card{
 		queenOfSpades,
 		kingOfSpades,
-		c(cardcore.Ace, cardcore.Hearts),
+		c(rAce, sHearts),
 	}
 
 	a := analyze(g, hearts.South)
@@ -204,6 +210,7 @@ func TestAnalyzeQueenPassed(t *testing.T) {
 	}
 }
 
+// TestAnalyzeQueenPassedThenPlayed verifies that queenPlayed takes priority over queenPassed when Q♠ appears in both pass history and trick history.
 func TestAnalyzeQueenPassedThenPlayed(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -218,17 +225,17 @@ func TestAnalyzeQueenPassedThenPlayed(t *testing.T) {
 	g.PassHistory[hearts.South] = [hearts.PassCount]cardcore.Card{
 		queenOfSpades,
 		kingOfSpades,
-		c(cardcore.Ace, cardcore.Hearts),
+		c(rAce, sHearts),
 	}
 
 	// Q♠ later appeared in trick history.
 	g.TrickHistory = []hearts.Trick{
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Two, cardcore.Clubs),
-				hearts.West:  c(cardcore.Five, cardcore.Clubs),
-				hearts.North: c(cardcore.Jack, cardcore.Clubs),
-				hearts.East:  c(cardcore.Ace, cardcore.Clubs),
+				hearts.South: c(rTwo, sClubs),
+				hearts.West:  c(rFive, sClubs),
+				hearts.North: c(rJack, sClubs),
+				hearts.East:  c(rAce, sClubs),
 			},
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
@@ -237,8 +244,8 @@ func TestAnalyzeQueenPassedThenPlayed(t *testing.T) {
 			Cards: [hearts.NumPlayers]cardcore.Card{
 				hearts.South: aceOfSpades,
 				hearts.West:  queenOfSpades,
-				hearts.North: c(cardcore.Five, cardcore.Spades),
-				hearts.East:  c(cardcore.Nine, cardcore.Spades),
+				hearts.North: c(rFive, sSpades),
+				hearts.East:  c(rNine, sSpades),
 			},
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
@@ -252,6 +259,7 @@ func TestAnalyzeQueenPassedThenPlayed(t *testing.T) {
 	}
 }
 
+// TestAnalyzeQueenReceivedViaPass verifies that receiving Q♠ via a pass results in queenInHand (the hand check runs before pass history).
 func TestAnalyzeQueenReceivedViaPass(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -271,6 +279,7 @@ func TestAnalyzeQueenReceivedViaPass(t *testing.T) {
 	}
 }
 
+// TestAnalyzeQueenUnknown verifies that Q♠ defaults to queenUnknown when not in hand, not passed, and not played.
 func TestAnalyzeQueenUnknown(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -287,6 +296,7 @@ func TestAnalyzeQueenUnknown(t *testing.T) {
 	}
 }
 
+// TestAnalyzeQueenHoldRound verifies that Q♠ remains queenUnknown during a hold round (no passing occurs).
 func TestAnalyzeQueenHoldRound(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -304,6 +314,7 @@ func TestAnalyzeQueenHoldRound(t *testing.T) {
 	}
 }
 
+// TestAnalyzeHeartsPlayedAcrossMultipleTricks verifies that heartsPlayed accumulates across multiple tricks. Three hearts across tricks 1-2.
 func TestAnalyzeHeartsPlayedAcrossMultipleTricks(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -317,10 +328,10 @@ func TestAnalyzeHeartsPlayedAcrossMultipleTricks(t *testing.T) {
 		// Trick 0: no hearts.
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Two, cardcore.Clubs),
-				hearts.West:  c(cardcore.Five, cardcore.Clubs),
-				hearts.North: c(cardcore.Jack, cardcore.Clubs),
-				hearts.East:  c(cardcore.Ace, cardcore.Clubs),
+				hearts.South: c(rTwo, sClubs),
+				hearts.West:  c(rFive, sClubs),
+				hearts.North: c(rJack, sClubs),
+				hearts.East:  c(rAce, sClubs),
 			},
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
@@ -328,10 +339,10 @@ func TestAnalyzeHeartsPlayedAcrossMultipleTricks(t *testing.T) {
 		// Trick 1: one heart discarded.
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.King, cardcore.Diamonds),
-				hearts.West:  c(cardcore.Two, cardcore.Hearts),
-				hearts.North: c(cardcore.Three, cardcore.Diamonds),
-				hearts.East:  c(cardcore.Five, cardcore.Diamonds),
+				hearts.South: c(rKing, sDiamonds),
+				hearts.West:  c(rTwo, sHearts),
+				hearts.North: c(rThree, sDiamonds),
+				hearts.East:  c(rFive, sDiamonds),
 			},
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
@@ -339,10 +350,10 @@ func TestAnalyzeHeartsPlayedAcrossMultipleTricks(t *testing.T) {
 		// Trick 2: two more hearts.
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Ace, cardcore.Diamonds),
-				hearts.West:  c(cardcore.Three, cardcore.Hearts),
-				hearts.North: c(cardcore.Four, cardcore.Hearts),
-				hearts.East:  c(cardcore.Six, cardcore.Diamonds),
+				hearts.South: c(rAce, sDiamonds),
+				hearts.West:  c(rThree, sHearts),
+				hearts.North: c(rFour, sHearts),
+				hearts.East:  c(rSix, sDiamonds),
 			},
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
@@ -356,6 +367,7 @@ func TestAnalyzeHeartsPlayedAcrossMultipleTricks(t *testing.T) {
 	}
 }
 
+// TestAnalyzePointsTaken verifies that pointsTaken tracks penalty points per seat. South wins Q♠ (13) and 2♥ (1) = 14 points.
 func TestAnalyzePointsTaken(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -368,10 +380,10 @@ func TestAnalyzePointsTaken(t *testing.T) {
 	g.TrickHistory = []hearts.Trick{
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Two, cardcore.Clubs),
-				hearts.West:  c(cardcore.Five, cardcore.Clubs),
-				hearts.North: c(cardcore.Jack, cardcore.Clubs),
-				hearts.East:  c(cardcore.Ace, cardcore.Clubs),
+				hearts.South: c(rTwo, sClubs),
+				hearts.West:  c(rFive, sClubs),
+				hearts.North: c(rJack, sClubs),
+				hearts.East:  c(rAce, sClubs),
 			},
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
@@ -381,8 +393,8 @@ func TestAnalyzePointsTaken(t *testing.T) {
 			Cards: [hearts.NumPlayers]cardcore.Card{
 				hearts.South: aceOfSpades,
 				hearts.West:  queenOfSpades,
-				hearts.North: c(cardcore.Five, cardcore.Spades),
-				hearts.East:  c(cardcore.Nine, cardcore.Spades),
+				hearts.North: c(rFive, sSpades),
+				hearts.East:  c(rNine, sSpades),
 			},
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
@@ -390,10 +402,10 @@ func TestAnalyzePointsTaken(t *testing.T) {
 		// South leads K♦, West discards 2♥. South wins.
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.King, cardcore.Diamonds),
-				hearts.West:  c(cardcore.Two, cardcore.Hearts),
-				hearts.North: c(cardcore.Three, cardcore.Diamonds),
-				hearts.East:  c(cardcore.Five, cardcore.Diamonds),
+				hearts.South: c(rKing, sDiamonds),
+				hearts.West:  c(rTwo, sHearts),
+				hearts.North: c(rThree, sDiamonds),
+				hearts.East:  c(rFive, sDiamonds),
 			},
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
@@ -410,6 +422,7 @@ func TestAnalyzePointsTaken(t *testing.T) {
 	}
 }
 
+// TestAnalyzeMoonThreat verifies that moonThreat identifies the seat holding all distributed penalty points. East wins both point tricks.
 func TestAnalyzeMoonThreat(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -423,19 +436,19 @@ func TestAnalyzeMoonThreat(t *testing.T) {
 	g.TrickHistory = []hearts.Trick{
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Two, cardcore.Clubs),
-				hearts.West:  c(cardcore.Five, cardcore.Clubs),
-				hearts.North: c(cardcore.Jack, cardcore.Clubs),
-				hearts.East:  c(cardcore.Ace, cardcore.Clubs),
+				hearts.South: c(rTwo, sClubs),
+				hearts.West:  c(rFive, sClubs),
+				hearts.North: c(rJack, sClubs),
+				hearts.East:  c(rAce, sClubs),
 			},
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
 		},
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Two, cardcore.Spades),
+				hearts.South: c(rTwo, sSpades),
 				hearts.West:  queenOfSpades,
-				hearts.North: c(cardcore.Five, cardcore.Spades),
+				hearts.North: c(rFive, sSpades),
 				hearts.East:  aceOfSpades,
 			},
 			Leader: hearts.East,
@@ -443,10 +456,10 @@ func TestAnalyzeMoonThreat(t *testing.T) {
 		},
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Three, cardcore.Diamonds),
-				hearts.West:  c(cardcore.Two, cardcore.Hearts),
-				hearts.North: c(cardcore.Five, cardcore.Diamonds),
-				hearts.East:  c(cardcore.Ace, cardcore.Diamonds),
+				hearts.South: c(rThree, sDiamonds),
+				hearts.West:  c(rTwo, sHearts),
+				hearts.North: c(rFive, sDiamonds),
+				hearts.East:  c(rAce, sDiamonds),
 			},
 			Leader: hearts.East,
 			Count:  hearts.NumPlayers,
@@ -460,6 +473,7 @@ func TestAnalyzeMoonThreat(t *testing.T) {
 	}
 }
 
+// TestAnalyzeMoonThreatSplit verifies that moonThreat is -1 when penalty points are split between multiple players.
 func TestAnalyzeMoonThreatSplit(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -473,10 +487,10 @@ func TestAnalyzeMoonThreatSplit(t *testing.T) {
 	g.TrickHistory = []hearts.Trick{
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Two, cardcore.Clubs),
-				hearts.West:  c(cardcore.Five, cardcore.Clubs),
-				hearts.North: c(cardcore.Jack, cardcore.Clubs),
-				hearts.East:  c(cardcore.Ace, cardcore.Clubs),
+				hearts.South: c(rTwo, sClubs),
+				hearts.West:  c(rFive, sClubs),
+				hearts.North: c(rJack, sClubs),
+				hearts.East:  c(rAce, sClubs),
 			},
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
@@ -485,18 +499,18 @@ func TestAnalyzeMoonThreatSplit(t *testing.T) {
 			Cards: [hearts.NumPlayers]cardcore.Card{
 				hearts.South: aceOfSpades,
 				hearts.West:  queenOfSpades,
-				hearts.North: c(cardcore.Five, cardcore.Spades),
-				hearts.East:  c(cardcore.Nine, cardcore.Spades),
+				hearts.North: c(rFive, sSpades),
+				hearts.East:  c(rNine, sSpades),
 			},
 			Leader: hearts.East,
 			Count:  hearts.NumPlayers,
 		},
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(cardcore.Three, cardcore.Diamonds),
-				hearts.West:  c(cardcore.Five, cardcore.Diamonds),
-				hearts.North: c(cardcore.Two, cardcore.Hearts),
-				hearts.East:  c(cardcore.Ace, cardcore.Diamonds),
+				hearts.South: c(rThree, sDiamonds),
+				hearts.West:  c(rFive, sDiamonds),
+				hearts.North: c(rTwo, sHearts),
+				hearts.East:  c(rAce, sDiamonds),
 			},
 			Leader: hearts.East,
 			Count:  hearts.NumPlayers,
@@ -510,12 +524,13 @@ func TestAnalyzeMoonThreatSplit(t *testing.T) {
 	}
 }
 
+// TestAnalyzeNoTrickHistory verifies the zero-value analysis state with no trick history: no hearts played, no moon threat, queen unknown.
 func TestAnalyzeNoTrickHistory(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 0
 	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
-		c(cardcore.Two, cardcore.Clubs),
+		c(rTwo, sClubs),
 	})
 	g.Hands[hearts.West] = cardcore.NewHand(nil)
 	g.Hands[hearts.North] = cardcore.NewHand(nil)
@@ -539,16 +554,16 @@ func TestAnalyzeNoTrickHistory(t *testing.T) {
 	}
 }
 
-// Leader played A♦, others played lower diamonds. Leader wins.
+// TestCurrentWinnerLeaderWins verifies that the leader wins when they play the highest card of the led suit.
 func TestCurrentWinnerLeaderWins(t *testing.T) {
 	g := hearts.New()
 	g.Trick = hearts.Trick{
 		Leader: hearts.South,
 		Count:  3,
 		Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(cardcore.Ace, cardcore.Diamonds),
-			hearts.West:  c(cardcore.Five, cardcore.Diamonds),
-			hearts.North: c(cardcore.Nine, cardcore.Diamonds),
+			hearts.South: c(rAce, sDiamonds),
+			hearts.West:  c(rFive, sDiamonds),
+			hearts.North: c(rNine, sDiamonds),
 		},
 	}
 
@@ -557,16 +572,16 @@ func TestCurrentWinnerLeaderWins(t *testing.T) {
 	}
 }
 
-// West played highest diamond, beats leader and North.
+// TestCurrentWinnerNonLeaderWins verifies that a non-leader wins when they play the highest card of the led suit.
 func TestCurrentWinnerNonLeaderWins(t *testing.T) {
 	g := hearts.New()
 	g.Trick = hearts.Trick{
 		Leader: hearts.South,
 		Count:  3,
 		Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(cardcore.Five, cardcore.Diamonds),
-			hearts.West:  c(cardcore.King, cardcore.Diamonds),
-			hearts.North: c(cardcore.Nine, cardcore.Diamonds),
+			hearts.South: c(rFive, sDiamonds),
+			hearts.West:  c(rKing, sDiamonds),
+			hearts.North: c(rNine, sDiamonds),
 		},
 	}
 
@@ -575,17 +590,17 @@ func TestCurrentWinnerNonLeaderWins(t *testing.T) {
 	}
 }
 
-// West played A♠ off-suit (void in diamonds). Highest diamond
-// is North's 9♦, so North wins.
+// TestCurrentWinnerOffSuitIgnored verifies that off-suit cards are ignored
+// when determining the trick winner.
 func TestCurrentWinnerOffSuitIgnored(t *testing.T) {
 	g := hearts.New()
 	g.Trick = hearts.Trick{
 		Leader: hearts.South,
 		Count:  3,
 		Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(cardcore.Five, cardcore.Diamonds),
-			hearts.West:  c(cardcore.Ace, cardcore.Spades),
-			hearts.North: c(cardcore.Nine, cardcore.Diamonds),
+			hearts.South: c(rFive, sDiamonds),
+			hearts.West:  c(rAce, sSpades),
+			hearts.North: c(rNine, sDiamonds),
 		},
 	}
 
