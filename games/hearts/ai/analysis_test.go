@@ -1156,11 +1156,8 @@ func TestHoldsHighestHeartMidRankNegative(t *testing.T) {
 // unplayed heart and must terminate cleanly at Two.
 func TestHoldsHighestHeartAllPlayed(t *testing.T) {
 	a := analysis{}
-	for rank := cardcore.Ace; ; rank-- {
-		a.played[cardcore.Hearts][rank] = true
-		if rank == cardcore.Two {
-			break
-		}
+	for rank := rTwo; rank <= rAce; rank++ {
+		a.played[sHearts][rank] = true
 	}
 
 	hand := cardcore.NewHand([]cardcore.Card{
