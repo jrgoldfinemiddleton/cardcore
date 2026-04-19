@@ -9,8 +9,13 @@ import (
 )
 
 // Heuristic is a Hearts player that uses rule-based priority scoring
-// to make decisions. It analyzes the game state to count cards, track
-// voids, locate dangerous cards, and detect moon threats.
+// to make decisions. On each call it analyzes the game state —
+// counting cards, tracking opponent voids, locating dangerous cards,
+// and detecting moon threats — without simulation or lookahead.
+//
+// Strategy in brief: shed high cards on the pass, duck tricks when
+// safe, dump the Queen of Spades on opponents, and attempt to shoot
+// the moon when the hand supports it.
 type Heuristic struct {
 	rng *rand.Rand
 }

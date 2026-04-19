@@ -14,8 +14,10 @@ cardcore/
 ├── games/
 │   └── hearts/          # Hearts card game
 │       ├── ai/          # Computer-controlled players
-│       │   ├── doc.go   # Package documentation
-│       │   └── random.go # Random legal move player
+│       │   ├── doc.go       # Package documentation
+│       │   ├── analysis.go  # Per-decision game-state analysis (card counts, voids, Q♠ location, moon threat)
+│       │   ├── heuristic.go # Rule-based heuristic player
+│       │   └── random.go    # Random legal move player
 │       ├── doc.go       # Package documentation
 │       ├── hearts.go    # Game logic
 │       └── player.go    # Player interface
@@ -52,6 +54,7 @@ cardcore/
 - Read the relevant ADRs in `doc/decisions/` before making architectural decisions
 - Follow Rules-Driven Development ([ADR-006](doc/decisions/006-rules-driven-development.md)) when adding a game — write the rules document before implementing
 - Place AI in `games/<game>/ai/` subpackages
+- Follow [ADR-008](doc/decisions/008-ai-design-principles.md) when implementing AI — read-only access to live game state, stdlib-only, separate type per difficulty
 - Keep the Go version in `go.mod` aligned with the minimum version stated in `README.md`
 
 ## 4. Never Do
@@ -99,6 +102,7 @@ Read `doc/decisions/` for the rationale behind key choices. Important ADRs:
 - ADR-005: Why no generic abstractions yet
 - ADR-006: Rules-Driven Development for games
 - ADR-007: Automated code convention enforcement
+- ADR-008: AI design principles
 
 ## 8. When to Check In With the Human
 - Before making any architectural change not covered by an ADR

@@ -8,6 +8,8 @@ import (
 )
 
 // Random is a Hearts player that makes uniformly random legal moves.
+// It serves as a baseline opponent and as a control in statistical
+// tests. The caller controls seeding for reproducible play.
 type Random struct {
 	rng *rand.Rand
 }

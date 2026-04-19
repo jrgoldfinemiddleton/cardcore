@@ -11,6 +11,7 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 ### Added
 - AI prerequisites: Clone, LegalMoves, and Player interface (`games/hearts/`)
 - Random AI player (`games/hearts/ai/`)
+- Heuristic AI player (`games/hearts/ai/`)
 - Trick history and pass history to Hearts game state (`games/hearts/`)
 
 ## [0.2.0] - 2026-04-14
