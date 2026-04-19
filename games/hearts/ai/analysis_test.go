@@ -7,7 +7,8 @@ import (
 	"github.com/jrgoldfinemiddleton/cardcore/games/hearts"
 )
 
-// TestAnalyzePlayedCards verifies that cards from completed tricks are marked as played in the analysis.
+// TestAnalyzePlayedCards verifies that cards from completed tricks are
+// marked as played in the analysis.
 func TestAnalyzePlayedCards(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -49,7 +50,8 @@ func TestAnalyzePlayedCards(t *testing.T) {
 	}
 }
 
-// TestAnalyzeVoidDetection verifies that failing to follow suit marks a player as void. West played a diamond when clubs were led.
+// TestAnalyzeVoidDetection verifies that failing to follow suit marks a
+// player as void. West played a diamond when clubs were led.
 func TestAnalyzeVoidDetection(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -88,7 +90,8 @@ func TestAnalyzeVoidDetection(t *testing.T) {
 	}
 }
 
-// TestAnalyzeVoidFromOwnHand verifies that suits missing from the player's own hand are marked as void.
+// TestAnalyzeVoidFromOwnHand verifies that suits missing from the player's
+// own hand are marked as void.
 func TestAnalyzeVoidFromOwnHand(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -136,7 +139,8 @@ func TestAnalyzeQueenInHand(t *testing.T) {
 	}
 }
 
-// TestAnalyzeQueenPlayed verifies that Q♠ appearing in trick history sets queen to queenPlayed for all observers.
+// TestAnalyzeQueenPlayed verifies that Q♠ appearing in trick history sets
+// queen to queenPlayed for all observers.
 func TestAnalyzeQueenPlayed(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -183,7 +187,8 @@ func TestAnalyzeQueenPlayed(t *testing.T) {
 	}
 }
 
-// TestAnalyzeQueenPassed verifies that passing Q♠ sets queen to queenPassed with the correct queenHolder (pass target).
+// TestAnalyzeQueenPassed verifies that passing Q♠ sets queen to queenPassed
+// with the correct queenHolder (pass target).
 func TestAnalyzeQueenPassed(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -210,7 +215,8 @@ func TestAnalyzeQueenPassed(t *testing.T) {
 	}
 }
 
-// TestAnalyzeQueenPassedThenPlayed verifies that queenPlayed takes priority over queenPassed when Q♠ appears in both pass history and trick history.
+// TestAnalyzeQueenPassedThenPlayed verifies that queenPlayed takes priority
+// over queenPassed when Q♠ appears in both pass history and trick history.
 func TestAnalyzeQueenPassedThenPlayed(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -259,7 +265,8 @@ func TestAnalyzeQueenPassedThenPlayed(t *testing.T) {
 	}
 }
 
-// TestAnalyzeQueenReceivedViaPass verifies that receiving Q♠ via a pass results in queenInHand (the hand check runs before pass history).
+// TestAnalyzeQueenReceivedViaPass verifies that receiving Q♠ via a pass
+// results in queenInHand (the hand check runs before pass history).
 func TestAnalyzeQueenReceivedViaPass(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -279,7 +286,8 @@ func TestAnalyzeQueenReceivedViaPass(t *testing.T) {
 	}
 }
 
-// TestAnalyzeQueenUnknown verifies that Q♠ defaults to queenUnknown when not in hand, not passed, and not played.
+// TestAnalyzeQueenUnknown verifies that Q♠ defaults to queenUnknown when
+// not in hand, not passed, and not played.
 func TestAnalyzeQueenUnknown(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -296,7 +304,8 @@ func TestAnalyzeQueenUnknown(t *testing.T) {
 	}
 }
 
-// TestAnalyzeQueenHoldRound verifies that Q♠ remains queenUnknown during a hold round (no passing occurs).
+// TestAnalyzeQueenHoldRound verifies that Q♠ remains queenUnknown during
+// a hold round (no passing occurs).
 func TestAnalyzeQueenHoldRound(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -314,7 +323,8 @@ func TestAnalyzeQueenHoldRound(t *testing.T) {
 	}
 }
 
-// TestAnalyzeHeartsPlayedAcrossMultipleTricks verifies that heartsPlayed accumulates across multiple tricks. Three hearts across tricks 1-2.
+// TestAnalyzeHeartsPlayedAcrossMultipleTricks verifies that heartsPlayed
+// accumulates across multiple tricks. Three hearts across tricks 1-2.
 func TestAnalyzeHeartsPlayedAcrossMultipleTricks(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -367,7 +377,8 @@ func TestAnalyzeHeartsPlayedAcrossMultipleTricks(t *testing.T) {
 	}
 }
 
-// TestAnalyzePointsTaken verifies that pointsTaken tracks penalty points per seat. South wins Q♠ (13) and 2♥ (1) = 14 points.
+// TestAnalyzePointsTaken verifies that pointsTaken tracks penalty points
+// per seat. South wins Q♠ (13) and 2♥ (1) = 14 points.
 func TestAnalyzePointsTaken(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -422,7 +433,8 @@ func TestAnalyzePointsTaken(t *testing.T) {
 	}
 }
 
-// TestAnalyzeMoonThreat verifies that moonThreat identifies the seat holding all distributed penalty points. East wins both point tricks.
+// TestAnalyzeMoonThreat verifies that moonThreat identifies the seat
+// holding all distributed penalty points. East wins both point tricks.
 func TestAnalyzeMoonThreat(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -473,7 +485,8 @@ func TestAnalyzeMoonThreat(t *testing.T) {
 	}
 }
 
-// TestAnalyzeMoonThreatSplit verifies that moonThreat is -1 when penalty points are split between multiple players.
+// TestAnalyzeMoonThreatSplit verifies that moonThreat is -1 when penalty
+// points are split between multiple players.
 func TestAnalyzeMoonThreatSplit(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -524,7 +537,8 @@ func TestAnalyzeMoonThreatSplit(t *testing.T) {
 	}
 }
 
-// TestAnalyzeNoTrickHistory verifies the zero-value analysis state with no trick history: no hearts played, no moon threat, queen unknown.
+// TestAnalyzeNoTrickHistory verifies the zero-value analysis state with no
+// trick history: no hearts played, no moon threat, queen unknown.
 func TestAnalyzeNoTrickHistory(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -554,7 +568,8 @@ func TestAnalyzeNoTrickHistory(t *testing.T) {
 	}
 }
 
-// TestCurrentWinnerLeaderWins verifies that the leader wins when they play the highest card of the led suit.
+// TestCurrentWinnerLeaderWins verifies that the leader wins when they play
+// the highest card of the led suit.
 func TestCurrentWinnerLeaderWins(t *testing.T) {
 	g := hearts.New()
 	g.Trick = hearts.Trick{
@@ -572,7 +587,8 @@ func TestCurrentWinnerLeaderWins(t *testing.T) {
 	}
 }
 
-// TestCurrentWinnerNonLeaderWins verifies that a non-leader wins when they play the highest card of the led suit.
+// TestCurrentWinnerNonLeaderWins verifies that a non-leader wins when
+// they play the highest card of the led suit.
 func TestCurrentWinnerNonLeaderWins(t *testing.T) {
 	g := hearts.New()
 	g.Trick = hearts.Trick{
@@ -606,5 +622,528 @@ func TestCurrentWinnerOffSuitIgnored(t *testing.T) {
 
 	if seat, _ := currentWinner(g); seat != hearts.North {
 		t.Errorf("currentWinner seat = %d, want %d (North)", seat, hearts.North)
+	}
+}
+
+// --- Shoot detection tests ---
+
+// TestDetectShootCandidateFullChecklist verifies that considerShoot is true
+// when the hand has A♥, K♥, Q♥, 4+ more hearts, and a side ace. Hand: 7
+// hearts (A♥ K♥ Q♥ J♥ 10♥ 9♥ 8♥) + A♣ + 5 low clubs.
+func TestDetectShootCandidateFullChecklist(t *testing.T) {
+	g := hearts.New()
+	g.Phase = hearts.PhasePass
+	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rAce, sClubs),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+	})
+	g.Hands[hearts.West] = cardcore.NewHand(nil)
+	g.Hands[hearts.North] = cardcore.NewHand(nil)
+	g.Hands[hearts.East] = cardcore.NewHand(nil)
+
+	a := analyze(g, hearts.South)
+
+	if !a.considerShoot {
+		t.Error("considerShoot should be true: A♥ K♥ Q♥ + 4 more hearts + A♣")
+	}
+}
+
+// TestDetectShootCandidateTooFewHearts verifies that considerShoot is false
+// when the hand has fewer than 7 hearts. Hand: 6 hearts (A♥ K♥ Q♥ J♥
+// 10♥ 9♥) + A♣ + 6 low clubs.
+func TestDetectShootCandidateTooFewHearts(t *testing.T) {
+	g := hearts.New()
+	g.Phase = hearts.PhasePass
+	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rSix, sClubs),
+		c(rAce, sClubs),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+	})
+	g.Hands[hearts.West] = cardcore.NewHand(nil)
+	g.Hands[hearts.North] = cardcore.NewHand(nil)
+	g.Hands[hearts.East] = cardcore.NewHand(nil)
+
+	a := analyze(g, hearts.South)
+
+	if a.considerShoot {
+		t.Error("considerShoot should be false: only 6 hearts")
+	}
+}
+
+// TestDetectShootCandidateMissingQueenOfHearts verifies that considerShoot
+// is false when Q♥ is absent. Hand: 7 hearts
+// (A♥ K♥ J♥ 10♥ 9♥ 8♥ 7♥) + A♣ + 5 clubs.
+func TestDetectShootCandidateMissingQueenOfHearts(t *testing.T) {
+	g := hearts.New()
+	g.Phase = hearts.PhasePass
+	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rAce, sClubs),
+		c(rSeven, sHearts),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+	})
+	g.Hands[hearts.West] = cardcore.NewHand(nil)
+	g.Hands[hearts.North] = cardcore.NewHand(nil)
+	g.Hands[hearts.East] = cardcore.NewHand(nil)
+
+	a := analyze(g, hearts.South)
+
+	if a.considerShoot {
+		t.Error("considerShoot should be false: missing Q♥")
+	}
+}
+
+// TestDetectShootCandidateNoSideAce verifies that considerShoot is false
+// when no non-heart ace is present. Hand: 7 hearts
+// (A♥ K♥ Q♥ J♥ 10♥ 9♥ 8♥) + K♣ + 5 low clubs.
+func TestDetectShootCandidateNoSideAce(t *testing.T) {
+	g := hearts.New()
+	g.Phase = hearts.PhasePass
+	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rKing, sClubs),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+	})
+	g.Hands[hearts.West] = cardcore.NewHand(nil)
+	g.Hands[hearts.North] = cardcore.NewHand(nil)
+	g.Hands[hearts.East] = cardcore.NewHand(nil)
+
+	a := analyze(g, hearts.South)
+
+	if a.considerShoot {
+		t.Error("considerShoot should be false: no side ace")
+	}
+}
+
+// TestDeriveShootActiveMoonThreatIsSelf verifies that shootActive is true
+// when the seat is the moon threat (has all distributed penalty points),
+// originally held ≥7 hearts, and holds the highest unplayed heart (A♥).
+func TestDeriveShootActiveMoonThreatIsSelf(t *testing.T) {
+	g := hearts.New()
+	g.Phase = hearts.PhasePlay
+	g.TrickNum = 7
+	g.Hands[hearts.East] = cardcore.NewHand([]cardcore.Card{
+		c(rThree, sHearts),
+		c(rFour, sHearts),
+		c(rFive, sHearts),
+		c(rSix, sHearts),
+		c(rSeven, sHearts),
+		c(rEight, sHearts),
+		c(rAce, sHearts),
+	})
+	g.Hands[hearts.South] = cardcore.NewHand(nil)
+	g.Hands[hearts.West] = cardcore.NewHand(nil)
+	g.Hands[hearts.North] = cardcore.NewHand(nil)
+	g.TrickHistory = moonThreatHistory()
+
+	a := analyze(g, hearts.East)
+
+	if !a.shootActive {
+		t.Error("shootActive should be true: East is the moon threat")
+	}
+}
+
+// TestDeriveShootActiveNoPointsStrongHand verifies that shootActive is true
+// when no penalty points have been distributed and the hand still holds
+// A♥, K♥, and Q♥.
+func TestDeriveShootActiveNoPointsStrongHand(t *testing.T) {
+	g := hearts.New()
+	g.Phase = hearts.PhasePlay
+	g.TrickNum = 2
+	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+	})
+	g.Hands[hearts.West] = cardcore.NewHand(nil)
+	g.Hands[hearts.North] = cardcore.NewHand(nil)
+	g.Hands[hearts.East] = cardcore.NewHand(nil)
+	g.TrickHistory = []hearts.Trick{
+		validFirstTrick(),
+		{
+			Leader: hearts.East,
+			Count:  hearts.NumPlayers,
+			Cards: [hearts.NumPlayers]cardcore.Card{
+				hearts.South: c(rFive, sClubs),
+				hearts.West:  c(rSix, sClubs),
+				hearts.North: c(rSeven, sClubs),
+				hearts.East:  c(rEight, sClubs),
+			},
+		},
+	}
+
+	a := analyze(g, hearts.South)
+
+	if !a.shootActive {
+		t.Error("shootActive should be true: no points distributed, A♥ + K♥ + Q♥ in hand")
+	}
+}
+
+// TestDeriveShootActivePointsDistributed verifies that shootActive is false
+// when penalty points have been distributed to another player, even with a
+// strong hand. South has 7 hearts (passes the originalHearts ≥ 7 gate), but
+// East took 2♥ in trick history so totalDistributed > 0 blocks activation.
+// Branch: early-game path, totalDistributed > 0 exit.
+func TestDeriveShootActivePointsDistributed(t *testing.T) {
+	g := hearts.New()
+	g.Phase = hearts.PhasePlay
+	g.TrickNum = 2
+	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+	})
+	g.Hands[hearts.West] = cardcore.NewHand(nil)
+	g.Hands[hearts.North] = cardcore.NewHand(nil)
+	g.Hands[hearts.East] = cardcore.NewHand(nil)
+	g.TrickHistory = []hearts.Trick{
+		validFirstTrick(),
+		{
+			Leader: hearts.East,
+			Count:  hearts.NumPlayers,
+			Cards: [hearts.NumPlayers]cardcore.Card{
+				hearts.South: c(rFive, sDiamonds),
+				hearts.West:  c(rTwo, sHearts),
+				hearts.North: c(rSix, sDiamonds),
+				hearts.East:  c(rAce, sDiamonds),
+			},
+		},
+	}
+
+	a := analyze(g, hearts.South)
+
+	if a.shootActive {
+		t.Error("shootActive should be false: East took a heart")
+	}
+}
+
+// TestDeriveShootActiveNoPointsMissingTopHearts verifies that shootActive is
+// false when no points are distributed but the hand lacks A♥ and K♥. South
+// has 7 hearts (passes the originalHearts ≥ 7 gate) and
+// totalDistributed == 0, but the A♥+K♥+Q♥ check fails because A♥
+// and K♥ are missing.
+// Branch: early-game path, A♥+K♥+Q♥ check.
+func TestDeriveShootActiveNoPointsMissingTopHearts(t *testing.T) {
+	g := hearts.New()
+	g.Phase = hearts.PhasePlay
+	g.TrickNum = 2
+	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rAce, sClubs),
+		c(rTwo, sHearts),
+		c(rThree, sHearts),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+	})
+	g.Hands[hearts.West] = cardcore.NewHand(nil)
+	g.Hands[hearts.North] = cardcore.NewHand(nil)
+	g.Hands[hearts.East] = cardcore.NewHand(nil)
+	g.TrickHistory = []hearts.Trick{
+		validFirstTrick(),
+		{
+			Leader: hearts.East,
+			Count:  hearts.NumPlayers,
+			Cards: [hearts.NumPlayers]cardcore.Card{
+				hearts.South: c(rFive, sDiamonds),
+				hearts.West:  c(rSix, sDiamonds),
+				hearts.North: c(rSeven, sDiamonds),
+				hearts.East:  c(rEight, sDiamonds),
+			},
+		},
+	}
+
+	a := analyze(g, hearts.South)
+
+	if a.shootActive {
+		t.Error("shootActive should be false: missing A♥ and K♥")
+	}
+}
+
+// TestDeriveShootActiveNoPointsMissingQueenHearts verifies that shootActive
+// is false when no points are distributed and the hand holds A♥+K♥ but
+// not Q♥. South has 7 hearts (A♥, K♥, J♥, 10♥, 9♥, 8♥, 7♥) plus
+// 4 clubs. Without Q♥, the early-game gate rejects shoot activation.
+func TestDeriveShootActiveNoPointsMissingQueenHearts(t *testing.T) {
+	g := hearts.New()
+	g.Phase = hearts.PhasePlay
+	g.TrickNum = 2
+	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rSeven, sHearts),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+	})
+	g.Hands[hearts.West] = cardcore.NewHand(nil)
+	g.Hands[hearts.North] = cardcore.NewHand(nil)
+	g.Hands[hearts.East] = cardcore.NewHand(nil)
+	g.TrickHistory = []hearts.Trick{
+		validFirstTrick(),
+		{
+			Leader: hearts.East,
+			Count:  hearts.NumPlayers,
+			Cards: [hearts.NumPlayers]cardcore.Card{
+				hearts.South: c(rFive, sDiamonds),
+				hearts.West:  c(rSix, sDiamonds),
+				hearts.North: c(rSeven, sDiamonds),
+				hearts.East:  c(rEight, sDiamonds),
+			},
+		},
+	}
+
+	a := analyze(g, hearts.South)
+
+	if a.shootActive {
+		t.Error("shootActive should be false: missing Q♥")
+	}
+}
+
+// TestDeriveShootActiveMoonThreatLowOriginalHearts verifies that shootActive
+// is false when the seat is the moon threat but originally held fewer than 7
+// hearts. East accidentally collected all points with only 3 hearts in hand
+// (A♥, K♥, Q♥). East IS the moon threat and holds A♥ (the highest
+// unplayed heart), so the moon-threat path would activate —
+// but originalHearts < 7 rejects it before that check is reached.
+// Branch: originalHearts < 7 early exit.
+func TestDeriveShootActiveMoonThreatLowOriginalHearts(t *testing.T) {
+	g := hearts.New()
+	g.Phase = hearts.PhasePlay
+	g.TrickNum = 7
+	g.Hands[hearts.East] = cardcore.NewHand([]cardcore.Card{
+		c(rAce, sHearts),
+		c(rKing, sHearts),
+		c(rQueen, sHearts),
+		c(rFour, sSpades),
+		c(rTen, sSpades),
+		c(rJack, sSpades),
+	})
+	g.Hands[hearts.South] = cardcore.NewHand(nil)
+	g.Hands[hearts.West] = cardcore.NewHand(nil)
+	g.Hands[hearts.North] = cardcore.NewHand(nil)
+	g.TrickHistory = moonThreatHistory()
+
+	a := analyze(g, hearts.East)
+
+	if a.shootActive {
+		t.Error("shootActive should be false: originalHearts < 7 (accidental collector)")
+	}
+}
+
+// TestDeriveShootActiveMoonThreatNoHighestHeart verifies that shootActive is
+// false when the seat is the moon threat with ≥7 original hearts but does
+// not hold the highest unplayed heart. East has 3♥–8♥ (6 in hand),
+// played A♥ in trick history (originalHearts = 7). K♥ is unplayed
+// and not in East's hand.
+func TestDeriveShootActiveMoonThreatNoHighestHeart(t *testing.T) {
+	g := hearts.New()
+	g.Phase = hearts.PhasePlay
+	g.TrickNum = 7
+	g.Hands[hearts.East] = cardcore.NewHand([]cardcore.Card{
+		c(rThree, sHearts),
+		c(rFour, sHearts),
+		c(rFive, sHearts),
+		c(rSix, sHearts),
+		c(rSeven, sHearts),
+		c(rEight, sHearts),
+	})
+	g.Hands[hearts.South] = cardcore.NewHand(nil)
+	g.Hands[hearts.West] = cardcore.NewHand(nil)
+	g.Hands[hearts.North] = cardcore.NewHand(nil)
+	// Use moonThreatHistory (East wins all points). Add a hearts-led
+	// trick where East plays A♥ and wins, so heartsFromSeat = 1 and
+	// originalHearts = 6 + 1 = 7. K♥ is the highest unplayed heart
+	// and East doesn't hold it.
+	h := moonThreatHistory()
+	h = append(h, hearts.Trick{
+		Leader: hearts.North,
+		Count:  hearts.NumPlayers,
+		Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rNine, sHearts),
+			hearts.West:  c(rTen, sHearts),
+			hearts.North: c(rJack, sHearts),
+			hearts.East:  c(rAce, sHearts),
+		},
+	})
+	g.TrickHistory = h
+	g.TrickNum = 8
+
+	a := analyze(g, hearts.East)
+
+	if a.shootActive {
+		t.Error("shootActive should be false: East does not hold highest unplayed heart (K♥)")
+	}
+}
+
+// TestDeriveShootActiveHeartsFromSeatReconstruction verifies that
+// originalHearts is correctly reconstructed from current hand plus hearts
+// played in trick history. East has 5 hearts in hand and played 2 hearts in
+// tricks, so originalHearts = 7. East holds A♥ (highest unplayed) and is
+// moon threat.
+func TestDeriveShootActiveHeartsFromSeatReconstruction(t *testing.T) {
+	g := hearts.New()
+	g.Phase = hearts.PhasePlay
+	g.TrickNum = 9
+	g.Hands[hearts.East] = cardcore.NewHand([]cardcore.Card{
+		c(rSix, sHearts),
+		c(rSeven, sHearts),
+		c(rEight, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+	})
+	g.Hands[hearts.South] = cardcore.NewHand(nil)
+	g.Hands[hearts.West] = cardcore.NewHand(nil)
+	g.Hands[hearts.North] = cardcore.NewHand(nil)
+	// moonThreatHistory has East winning all points (1 pt from West's 2♥).
+	// Add two tricks where East played 9♥ and 10♥, so heartsFromSeat = 2.
+	// originalHearts = 5 (in hand) + 2 (played) = 7.
+	h := moonThreatHistory()
+	h = append(h,
+		hearts.Trick{
+			Leader: hearts.East,
+			Count:  hearts.NumPlayers,
+			Cards: [hearts.NumPlayers]cardcore.Card{
+				hearts.South: c(rFive, sSpades),
+				hearts.West:  c(rSix, sSpades),
+				hearts.North: c(rSeven, sSpades),
+				hearts.East:  c(rNine, sHearts),
+			},
+		},
+		hearts.Trick{
+			Leader: hearts.East,
+			Count:  hearts.NumPlayers,
+			Cards: [hearts.NumPlayers]cardcore.Card{
+				hearts.South: c(rEight, sSpades),
+				hearts.West:  c(rNine, sSpades),
+				hearts.North: c(rJack, sSpades),
+				hearts.East:  c(rTen, sHearts),
+			},
+		},
+	)
+	g.TrickHistory = h
+
+	a := analyze(g, hearts.East)
+
+	if !a.shootActive {
+		t.Error("shootActive should be true: originalHearts = 5 + 2 = 7, holds A♥, is moon threat")
+	}
+}
+
+// TestHoldsHighestHeartMidRankPositive verifies that holdsHighestHeart
+// returns true when top hearts (A♥ through 6♥) have been played and the
+// seat holds 5♥ — the highest remaining heart. Constructs the analysis
+// struct directly to isolate holdsHighestHeart from the rest of analyze().
+// Branch: holdsHighestHeart loop finds 5♥ as first unplayed rank.
+func TestHoldsHighestHeartMidRankPositive(t *testing.T) {
+	a := analysis{}
+	// Mark A♥ through 6♥ as played.
+	for rank := cardcore.Ace; rank >= cardcore.Six; rank-- {
+		a.played[cardcore.Hearts][rank] = true
+	}
+
+	// Seat holds 5♥ — the highest unplayed heart.
+	hand := cardcore.NewHand([]cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rTwo, sHearts),
+		c(rThree, sHearts),
+		c(rFive, sHearts),
+	})
+
+	if !a.holdsHighestHeart(hand) {
+		t.Error("holdsHighestHeart should be true: 5♥ is the highest unplayed heart and seat holds it")
+	}
+}
+
+// TestHoldsHighestHeartMidRankNegative verifies that holdsHighestHeart
+// returns false when top hearts (A♥ through 6♥) have been played and the
+// seat does NOT hold 5♥ — the highest remaining heart. Same played state
+// as the positive test, but hand has 4♥ instead of 5♥.
+// Branch: holdsHighestHeart loop finds 5♥ as first unplayed rank,
+// seat lacks it.
+func TestHoldsHighestHeartMidRankNegative(t *testing.T) {
+	a := analysis{}
+	// Mark A♥ through 6♥ as played.
+	for rank := cardcore.Ace; rank >= cardcore.Six; rank-- {
+		a.played[cardcore.Hearts][rank] = true
+	}
+
+	// Seat holds 4♥ but NOT 5♥.
+	hand := cardcore.NewHand([]cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rTwo, sHearts),
+		c(rThree, sHearts),
+		c(rFour, sHearts),
+	})
+
+	if a.holdsHighestHeart(hand) {
+		t.Error("holdsHighestHeart should be false: 5♥ is the highest unplayed heart but seat holds 4♥, not 5♥")
 	}
 }

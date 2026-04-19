@@ -20,6 +20,7 @@ const (
 // visible game state: their own hand, their own pass history, and the
 // completed trick history. It is computed fresh on every decision.
 type analysis struct {
+	// seat is the player position this analysis was computed for.
 	seat hearts.Seat
 
 	// played tracks which cards have appeared in completed tricks.
@@ -39,12 +40,27 @@ type analysis struct {
 	// heartsPlayed is the number of hearts seen in completed tricks.
 	heartsPlayed int
 
+	// heartsFromSeat is the number of hearts this seat played from their
+	// hand in completed tricks. Used with the current hand to reconstruct
+	// the original post-pass heart count.
+	heartsFromSeat int
+
 	// pointsTaken tracks penalty points collected by each seat so far.
 	pointsTaken [hearts.NumPlayers]int
 
 	// moonThreat is the seat collecting all distributed points, or -1
 	// if no single player has all of them (or no points distributed yet).
 	moonThreat int
+
+	// considerShoot is true when the pre-pass hand is strong enough to
+	// attempt shooting the moon: A♥ + K♥ + Q♥ + 4 more hearts + ≥1 side ace.
+	considerShoot bool
+
+	// shootActive is true when the seat should play aggressively to
+	// shoot the moon. Requires the original post-pass hand to have held
+	// ≥7 hearts, plus either moonThreat status with the highest
+	// unplayed heart, or A♥+K♥+Q♥ with no points distributed.
+	shootActive bool
 }
 
 var (
@@ -54,7 +70,8 @@ var (
 	queenOfSpades = cardcore.Card{Rank: cardcore.Queen, Suit: cardcore.Spades}
 )
 
-// scanTrickHistory records played cards, opponent voids, hearts count, and points from completed tricks.
+// scanTrickHistory records played cards, opponent voids, hearts count,
+// and points from completed tricks.
 func (a *analysis) scanTrickHistory(g *hearts.Game) {
 	for _, trick := range g.TrickHistory {
 		ledSuit := trick.LedSuit()
@@ -70,6 +87,9 @@ func (a *analysis) scanTrickHistory(g *hearts.Game) {
 
 			if card.Suit == cardcore.Hearts {
 				a.heartsPlayed++
+				if s == a.seat {
+					a.heartsFromSeat++
+				}
 			}
 		}
 
@@ -107,7 +127,113 @@ func (a *analysis) locateQueen(g *hearts.Game, seat hearts.Seat) {
 	}
 }
 
-// detectMoonThreat checks whether a single player holds all distributed penalty points.
+// detectShootCandidate checks whether the hand is strong enough to
+// attempt shooting the moon: A♥ + K♥ + Q♥ + at least 4 more hearts +
+// at least one non-heart ace.
+func (a *analysis) detectShootCandidate(hand *cardcore.Hand) {
+	heartCards := hand.CardsOfSuit(cardcore.Hearts)
+	if len(heartCards) < 7 {
+		return
+	}
+
+	hasAceHearts := false
+	hasKingHearts := false
+	hasQueenHearts := false
+	for _, c := range heartCards {
+		switch c.Rank {
+		case cardcore.Ace:
+			hasAceHearts = true
+		case cardcore.King:
+			hasKingHearts = true
+		case cardcore.Queen:
+			hasQueenHearts = true
+		}
+	}
+	if !hasAceHearts || !hasKingHearts || !hasQueenHearts {
+		return
+	}
+
+	hasSideAce := false
+	for _, suit := range []cardcore.Suit{cardcore.Clubs, cardcore.Diamonds, cardcore.Spades} {
+		for _, c := range hand.CardsOfSuit(suit) {
+			if c.Rank == cardcore.Ace {
+				hasSideAce = true
+				break
+			}
+		}
+		if hasSideAce {
+			break
+		}
+	}
+
+	a.considerShoot = hasSideAce
+}
+
+// deriveShootActive determines whether the seat should play to shoot
+// the moon. It reconstructs the original post-pass heart count from
+// the current hand plus hearts played in trick history, then checks
+// two activation paths: moonThreat with highest unplayed heart, or
+// early game with A♥+K♥+Q♥.
+func (a *analysis) deriveShootActive(hand *cardcore.Hand) {
+	// Reconstruct post-pass heart count: current hand + hearts this
+	// seat already played in tricks. Hearts don't leave a shooter's
+	// hand early (you keep them at pass time, win them back in tricks),
+	// so this recovers the original count accurately.
+	originalHearts := len(hand.CardsOfSuit(cardcore.Hearts)) + a.heartsFromSeat
+	if originalHearts < 7 {
+		return
+	}
+
+	// Path 1: mid-game. We're already the moon threat (collected all
+	// distributed points) AND hold the highest unplayed heart, so we
+	// can keep winning heart tricks.
+	if a.moonThreat == int(a.seat) && a.holdsHighestHeart(hand) {
+		a.shootActive = true
+		return
+	}
+
+	// Path 2: early game. No points distributed yet — check if our
+	// hand is strong enough to attempt a shoot from scratch.
+	totalDistributed := 0
+	for i := range hearts.NumPlayers {
+		totalDistributed += a.pointsTaken[i]
+	}
+	if totalDistributed > 0 {
+		return
+	}
+
+	hasAceHearts := false
+	hasKingHearts := false
+	hasQueenHearts := false
+	for _, c := range hand.CardsOfSuit(cardcore.Hearts) {
+		switch c.Rank {
+		case cardcore.Ace:
+			hasAceHearts = true
+		case cardcore.King:
+			hasKingHearts = true
+		case cardcore.Queen:
+			hasQueenHearts = true
+		}
+	}
+
+	a.shootActive = hasAceHearts && hasKingHearts && hasQueenHearts
+}
+
+// holdsHighestHeart reports whether the seat holds the highest heart
+// not yet seen in completed tricks.
+func (a *analysis) holdsHighestHeart(hand *cardcore.Hand) bool {
+	// Walk ranks from Ace down. The first rank not yet seen in tricks
+	// is the highest heart still in play — check if we hold it.
+	for rank := cardcore.Ace; rank >= cardcore.Two; rank-- {
+		if !a.played[cardcore.Hearts][rank] {
+			return hand.Contains(cardcore.Card{Rank: rank, Suit: cardcore.Hearts})
+		}
+	}
+	return false
+}
+
+// detectMoonThreat checks whether a single player holds all distributed
+// penalty points.
 func (a *analysis) detectMoonThreat() {
 	totalDistributed := 0
 	for i := range hearts.NumPlayers {
@@ -148,7 +274,8 @@ func (a *analysis) opponentVoidInSuit(suit cardcore.Suit) bool {
 	return false
 }
 
-// analyze builds a fresh analysis of the visible game state from the given seat's perspective.
+// analyze builds a fresh analysis of the visible game state from the
+// given seat's perspective.
 func analyze(g *hearts.Game, seat hearts.Seat) analysis {
 	a := analysis{
 		seat:       seat,
@@ -159,6 +286,8 @@ func analyze(g *hearts.Game, seat hearts.Seat) analysis {
 	a.scanHandVoids(g, seat)
 	a.locateQueen(g, seat)
 	a.detectMoonThreat()
+	a.detectShootCandidate(g.Hands[seat])
+	a.deriveShootActive(g.Hands[seat])
 
 	return a
 }
@@ -251,7 +380,8 @@ func highCardRatio(hand *cardcore.Hand) int {
 	return count * 10 / hand.Len()
 }
 
-// passTarget returns the seat that receives cards from the given seat for the given pass direction.
+// passTarget returns the seat that receives cards from the given seat
+// for the given pass direction.
 func passTarget(from hearts.Seat, dir hearts.PassDirection) hearts.Seat {
 	switch dir {
 	case hearts.PassLeft:

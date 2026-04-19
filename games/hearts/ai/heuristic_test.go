@@ -15,7 +15,8 @@ type trickCard struct {
 	card cardcore.Card
 }
 
-// TestHeuristicChoosePassReturnsDistinctCardsFromHand verifies that ChoosePass returns three distinct cards that exist in the player's hand.
+// TestHeuristicChoosePassReturnsDistinctCardsFromHand verifies that ChoosePass
+// returns three distinct cards that exist in the player's hand.
 func TestHeuristicChoosePassReturnsDistinctCardsFromHand(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -40,7 +41,8 @@ func TestHeuristicChoosePassReturnsDistinctCardsFromHand(t *testing.T) {
 	}
 }
 
-// TestHeuristicChoosePlayReturnsLegalCard verifies that ChoosePlay returns a card accepted by PlayCard.
+// TestHeuristicChoosePlayReturnsLegalCard verifies that ChoosePlay returns a
+// card accepted by PlayCard.
 func TestHeuristicChoosePlayReturnsLegalCard(t *testing.T) {
 	g := hearts.New()
 	g.PassDir = hearts.PassHold
@@ -57,7 +59,9 @@ func TestHeuristicChoosePlayReturnsLegalCard(t *testing.T) {
 	}
 }
 
-// TestPassScoreUnprotectedQueen verifies that Q♠ scores 100 when fewer than 4 low spades protect it. Hand has only 2 low spades (3♠, 5♠), so Q♠ is unprotected.
+// TestPassScoreUnprotectedQueen verifies that Q♠ scores 100 when fewer than 4
+// low spades protect it. Hand has only 2 low spades (3♠, 5♠), so Q♠ is
+// unprotected.
 func TestPassScoreUnprotectedQueen(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
 		c(rTwo, sClubs),
@@ -81,7 +85,9 @@ func TestPassScoreUnprotectedQueen(t *testing.T) {
 	}
 }
 
-// TestPassScoreProtectedQueen verifies that Q♠ scores 2 when 4+ low spades protect it. Hand has 4 low spades (2♠, 3♠, 5♠, 6♠), making Q♠ an asset to keep.
+// TestPassScoreProtectedQueen verifies that Q♠ scores 2 when 4+ low spades
+// protect it. Hand has 4 low spades (2♠, 3♠, 5♠, 6♠), making Q♠
+// an asset to keep.
 func TestPassScoreProtectedQueen(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
 		c(rTwo, sClubs),
@@ -105,7 +111,9 @@ func TestPassScoreProtectedQueen(t *testing.T) {
 	}
 }
 
-// TestPassScoreHighSpades verifies that A♠ and K♠ receive a +20 bonus when Q♠ is not in hand (unprotected spade context). Both should outscore a low club.
+// TestPassScoreHighSpades verifies that A♠ and K♠ receive a +20 bonus when
+// Q♠ is not in hand (unprotected spade context). Both should outscore a low
+// club.
 func TestPassScoreHighSpades(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
 		c(rFive, sClubs),
@@ -135,7 +143,8 @@ func TestPassScoreHighSpades(t *testing.T) {
 	}
 }
 
-// TestPassScoreHeartsBonus verifies that hearts receive a +10 bonus. A♥ (rank 12 + hearts 10 = 22) should outscore A♦ (rank 12, no bonus).
+// TestPassScoreHeartsBonus verifies that hearts receive a +10 bonus. A♥
+// (rank 12 + hearts 10 = 22) should outscore A♦ (rank 12, no bonus).
 func TestPassScoreHeartsBonus(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
 		c(rTwo, sClubs),
@@ -161,7 +170,9 @@ func TestPassScoreHeartsBonus(t *testing.T) {
 	}
 }
 
-// TestPassScoreShortSuitBonus verifies that singletons get a short-suit bonus of (4-1)*5 = 15. Singleton A♦ (rank 12 + short 15 = 27) outscores long-suit K♣ (rank 11).
+// TestPassScoreShortSuitBonus verifies that singletons get a short-suit bonus
+// of (4-1)*5 = 15. Singleton A♦ (rank 12 + short 15 = 27) outscores long-suit
+// K♣ (rank 11).
 func TestPassScoreShortSuitBonus(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
 		c(rTwo, sClubs),
@@ -187,7 +198,8 @@ func TestPassScoreShortSuitBonus(t *testing.T) {
 	}
 }
 
-// TestChoosePassPassesUnprotectedQueen verifies that ChoosePass includes Q♠ when it is unprotected (only 1 low spade: 2♠).
+// TestChoosePassPassesUnprotectedQueen verifies that ChoosePass includes Q♠
+// when it is unprotected (only 1 low spade: 2♠).
 func TestChoosePassPassesUnprotectedQueen(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -218,7 +230,8 @@ func TestChoosePassPassesUnprotectedQueen(t *testing.T) {
 	}
 }
 
-// TestChoosePassKeepsProtectedQueen verifies that ChoosePass keeps Q♠ when 5+ low spades protect it. Hand: 5 low spades + Q♠ + 7 hearts.
+// TestChoosePassKeepsProtectedQueen verifies that ChoosePass keeps Q♠ when 5+
+// low spades protect it. Hand: 5 low spades + Q♠ + 7 hearts.
 func TestChoosePassKeepsProtectedQueen(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -249,7 +262,9 @@ func TestChoosePassKeepsProtectedQueen(t *testing.T) {
 	}
 }
 
-// TestChoosePassKeepsHighSpadesWithProtectedQueen verifies that A♠ and K♠ are kept when Q♠ is protected. No +20 bonus applies when queen is safe.
+// TestChoosePassKeepsHighSpadesWithProtectedQueen verifies that A♠ and
+// K♠ are kept when Q♠ is protected. No +20 bonus applies when queen is
+// safe.
 func TestChoosePassKeepsHighSpadesWithProtectedQueen(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -283,7 +298,9 @@ func TestChoosePassKeepsHighSpadesWithProtectedQueen(t *testing.T) {
 	}
 }
 
-// TestChoosePassPrefersHighSpades verifies that A♠ and K♠ are passed when Q♠ is absent and spades are unprotected. The +20 high-spade bonus makes them top pass candidates.
+// TestChoosePassPrefersHighSpades verifies that A♠ and K♠ are passed
+// when Q♠ is absent and spades are unprotected. The +20 high-spade
+// bonus makes them top pass candidates.
 func TestChoosePassPrefersHighSpades(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -317,7 +334,8 @@ func TestChoosePassPrefersHighSpades(t *testing.T) {
 	}
 }
 
-// TestChoosePassVoidsShortSuit verifies that a singleton in a non-club suit is passed to create a void. Singleton 7♦ gets short-suit bonus (4-1)*5 = 15.
+// TestChoosePassVoidsShortSuit verifies that a singleton in a non-club suit is
+// passed to create a void. Singleton 7♦ gets short-suit bonus (4-1)*5 = 15.
 func TestChoosePassVoidsShortSuit(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -348,7 +366,8 @@ func TestChoosePassVoidsShortSuit(t *testing.T) {
 	}
 }
 
-// TestChoosePassVoidsTwoShortSuits verifies that two singletons (3♦, 2♥) are both passed when the hand has two short suits.
+// TestChoosePassVoidsTwoShortSuits verifies that two singletons
+// (3♦, 2♥) are both passed when the hand has two short suits.
 func TestChoosePassVoidsTwoShortSuits(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -382,7 +401,8 @@ func TestChoosePassVoidsTwoShortSuits(t *testing.T) {
 	}
 }
 
-// TestChoosePassTieBreaking verifies that RNG-based shuffle produces varied selections among tied-score cards across different seeds.
+// TestChoosePassTieBreaking verifies that RNG-based shuffle produces varied
+// selections among tied-score cards across different seeds.
 func TestChoosePassTieBreaking(t *testing.T) {
 	// 5 clubs + 4 diamonds + 4 spades (all low): 6♣ is the unique
 	// highest (score 4), but 5♣, 5♦, 5♠ all tie at score 3. Only 2 of
@@ -423,7 +443,9 @@ func TestChoosePassTieBreaking(t *testing.T) {
 	}
 }
 
-// TestLeadScorePrefersLowFromLongSuit verifies that low cards are preferred from long suits. 6♣ (from 5-card club suit) outscores A♣ because long suits prefer safe low leads.
+// TestLeadScorePrefersLowFromLongSuit verifies that low cards are
+// preferred from long suits. 6♣ (from 5-card club suit) outscores A♣
+// because long suits prefer safe low leads.
 func TestLeadScorePrefersLowFromLongSuit(t *testing.T) {
 	g := setupLeadState(hearts.South, 1, []cardcore.Card{
 		c(rSix, sClubs),
@@ -449,7 +471,11 @@ func TestLeadScorePrefersLowFromLongSuit(t *testing.T) {
 	}
 }
 
-// TestLeadScorePrefersHighFromShortSuitEarly verifies that high cards are preferred from short suits in early tricks (trickNum ≤ 3). K♦ (from 3-card diamond suit) outscores 3♦ to void the suit quickly.
+// TestLeadScorePrefersHighFromShortSuitEarly verifies that high cards are
+// preferred from
+// short suits in early tricks (trickNum ≤ 3). K♦ (from 3-card diamond suit)
+// outscores
+// 3♦ to void the suit quickly.
 func TestLeadScorePrefersHighFromShortSuitEarly(t *testing.T) {
 	g := setupLeadState(hearts.South, 1, []cardcore.Card{
 		c(rSix, sClubs),
@@ -475,7 +501,9 @@ func TestLeadScorePrefersHighFromShortSuitEarly(t *testing.T) {
 	}
 }
 
-// TestLeadScorePrefersLowFromShortSuitLate verifies that low cards are preferred from short suits in late-game leads. TrickHistory is nil for brevity — only g.TrickNum matters for the early/late threshold.
+// TestLeadScorePrefersLowFromShortSuitLate verifies that low cards are
+// preferred from short suits in late-game leads. TrickHistory is nil for
+// brevity — only g.TrickNum matters for the early/late threshold.
 func TestLeadScorePrefersLowFromShortSuitLate(t *testing.T) {
 	g := setupLeadState(hearts.South, 7, []cardcore.Card{
 		c(rSix, sClubs),
@@ -495,7 +523,9 @@ func TestLeadScorePrefersLowFromShortSuitLate(t *testing.T) {
 	}
 }
 
-// TestLeadScoreAvoidsOpponentVoidSuit verifies the -40 opponent-void penalty. East is known void in diamonds from trick history. Both K♦ and 6♦ score below 10♣ because of the void penalty.
+// TestLeadScoreAvoidsOpponentVoidSuit verifies the -40 opponent-void penalty.
+// East is known void in diamonds from trick history. Both K♦ and 6♦ score
+// below 10♣ because of the void penalty.
 func TestLeadScoreAvoidsOpponentVoidSuit(t *testing.T) {
 	// East is known void in diamonds from trick history.
 	trickHistory := []hearts.Trick{
@@ -542,7 +572,9 @@ func TestLeadScoreAvoidsOpponentVoidSuit(t *testing.T) {
 	}
 }
 
-// TestLeadScoreSafeWhenGuaranteedLowest verifies that the guaranteed-lowest exemption overrides the opponent-void penalty. 4♦ is the lowest remaining diamond (2♦, 3♦ already played) so the -40 penalty is skipped.
+// TestLeadScoreSafeWhenGuaranteedLowest verifies that the guaranteed-lowest
+// exemption overrides the opponent-void penalty. 4♦ is the lowest remaining
+// diamond (2♦, 3♦ already played) so the -40 penalty is skipped.
 func TestLeadScoreSafeWhenGuaranteedLowest(t *testing.T) {
 	// 2♦ and 3♦ already played, so 4♦ is guaranteed lowest diamond.
 	// Leading 4♦ is safe even if opponent is void in diamonds.
@@ -584,7 +616,10 @@ func TestLeadScoreSafeWhenGuaranteedLowest(t *testing.T) {
 	}
 }
 
-// TestLeadScoreUnprotectedQueenUrgency verifies the void-urgency bonus for short non-spade suits when Q♠ is unprotected. Singleton K♦ gets a bonus to accelerate voiding.
+// TestLeadScoreUnprotectedQueenUrgency verifies the void-urgency bonus for
+// short non-spade
+// suits when Q♠ is unprotected. Singleton K♦ gets a bonus to accelerate
+// voiding.
 func TestLeadScoreUnprotectedQueenUrgency(t *testing.T) {
 	g := setupLeadState(hearts.South, 1, []cardcore.Card{
 		c(rSix, sClubs),
@@ -612,7 +647,9 @@ func TestLeadScoreUnprotectedQueenUrgency(t *testing.T) {
 	}
 }
 
-// TestLeadScoreAvoidsSpadesWithHighSpades verifies the -20 spade-flush penalty when holding A♠ or K♠. Leading 6♠ risks pulling Q♠ onto the player's own high spades.
+// TestLeadScoreAvoidsSpadesWithHighSpades verifies the -20
+// spade-flush penalty when holding A♠ or K♠. Leading 6♠ risks pulling
+// Q♠ onto the player's own high spades.
 func TestLeadScoreAvoidsSpadesWithHighSpades(t *testing.T) {
 	g := setupLeadState(hearts.South, 1, []cardcore.Card{
 		c(rSix, sClubs),
@@ -639,7 +676,9 @@ func TestLeadScoreAvoidsSpadesWithHighSpades(t *testing.T) {
 	}
 }
 
-// TestLeadScoreFlushesQueenWithoutHighSpades verifies that spade leads are preferred when Q♠ is not in hand and no A♠/K♠ are held. J♠ (highest below Q♠) is preferred to flush Q♠ from opponents.
+// TestLeadScoreFlushesQueenWithoutHighSpades verifies that spade leads
+// are preferred when Q♠ is not in hand and no A♠/K♠ are held.
+// J♠ (highest below Q♠) is preferred to flush Q♠ from opponents.
 func TestLeadScoreFlushesQueenWithoutHighSpades(t *testing.T) {
 	g := setupLeadState(hearts.South, 1, []cardcore.Card{
 		c(rSix, sClubs),
@@ -671,7 +710,8 @@ func TestLeadScoreFlushesQueenWithoutHighSpades(t *testing.T) {
 	}
 }
 
-// TestChooseLeadAvoidsHearts verifies the -15 heart lead penalty. Even with hearts broken, the AI prefers non-heart leads when alternatives exist.
+// TestChooseLeadAvoidsHearts verifies the -15 heart lead penalty. Even with
+// hearts broken, the AI prefers non-heart leads when alternatives exist.
 func TestChooseLeadAvoidsHearts(t *testing.T) {
 	g := setupLeadState(hearts.South, 1, []cardcore.Card{
 		c(rSix, sClubs),
@@ -697,7 +737,10 @@ func TestChooseLeadAvoidsHearts(t *testing.T) {
 	}
 }
 
-// TestFollowLastCleanTrickWinsWithHighest verifies the last-player clean-trick branch. East plays last into a clean club trick. J♣ (highest club, wins trick) is preferred: score = rank - danger*2.
+// TestFollowLastCleanTrickWinsWithHighest verifies the last-player clean-trick
+// branch. East plays last into a clean club trick. J♣ (highest club, wins
+// trick)
+// is preferred: score = rank - danger*2.
 func TestFollowLastCleanTrickWinsWithHighest(t *testing.T) {
 	g := setupFollowState(hearts.East, 1, []cardcore.Card{
 		c(rSix, sClubs),
@@ -728,7 +771,9 @@ func TestFollowLastCleanTrickWinsWithHighest(t *testing.T) {
 	}
 }
 
-// TestFollowLastTrickHasPointsShedsHighest verifies the last-player forced-win branch when points are present. East must win (all cards beat the current winner). Forced to win → shed highest: J♥ (rank 9).
+// TestFollowLastTrickHasPointsShedsHighest verifies the last-player forced-win
+// branch when points are present. East must win (all cards beat the current
+// winner). Forced to win → shed highest: J♥ (rank 9).
 func TestFollowLastTrickHasPointsShedsHighest(t *testing.T) {
 	g := setupFollowState(hearts.East, 2, []cardcore.Card{
 		c(rSix, sDiamonds),
@@ -768,7 +813,10 @@ func TestFollowLastTrickHasPointsShedsHighest(t *testing.T) {
 	}
 }
 
-// TestFollowLastTrickHasPointsPrefersDuck verifies that the highest losing card is preferred when the trick contains penalty points. East has 6♣, 8♣ (lose to J♣) and K♣ (wins). North sloughed 5♥ so trickPts=1. Losers get +50 bonus: 8♣ scores 56, K♣ scores 11.
+// TestFollowLastTrickHasPointsPrefersDuck verifies that the highest
+// losing card is preferred when the trick contains penalty points.
+// East has 6♣, 8♣ (lose to J♣) and K♣ (wins). North sloughed 5♥ so
+// trickPts=1. Losers get +50 bonus: 8♣ scores 56, K♣ scores 11.
 func TestFollowLastTrickHasPointsPrefersDuck(t *testing.T) {
 	g := setupFollowState(hearts.East, 1, []cardcore.Card{
 		c(rSix, sClubs),
@@ -800,7 +848,10 @@ func TestFollowLastTrickHasPointsPrefersDuck(t *testing.T) {
 	}
 }
 
-// TestFollowLastCleanTrickWins verifies that the highest winning card is preferred when the trick is clean and we play last. East is last, trick is clean. Both 9♦ and K♦ win; K♦ preferred (higher rank). 3♦ loses (score 1) and should rank below winners.
+// TestFollowLastCleanTrickWins verifies that the highest winning card
+// is preferred when the trick is clean and we play last. East is
+// last, trick is clean. Both 9♦ and K♦ win; K♦ preferred (higher
+// rank). 3♦ loses (score 1) and should rank below winners.
 func TestFollowLastCleanTrickWins(t *testing.T) {
 	g := setupFollowState(hearts.East, 1, []cardcore.Card{
 		c(rSix, sClubs),
@@ -831,7 +882,11 @@ func TestFollowLastCleanTrickWins(t *testing.T) {
 	}
 }
 
-// TestFollowLastCleanHighDangerPrefersDuck verifies that high hand danger discourages winning a clean trick when playing last. East is last, trick is clean, hand is almost all Ten+. highCardRatio = 10*10/12 = 8, so danger*2 = 16. 9♦ wins (score 7-16 = -9), 3♦ loses (score 1). High danger makes losing preferable over winning.
+// TestFollowLastCleanHighDangerPrefersDuck verifies that high hand
+// danger discourages winning a clean trick when playing last. East is
+// last, trick is clean, hand is almost all Ten+. highCardRatio =
+// 10*10/12 = 8, so danger*2 = 16. 9♦ wins (score 7-16 = -9), 3♦ loses
+// (score 1). High danger makes losing preferable over winning.
 func TestFollowLastCleanHighDangerPrefersDuck(t *testing.T) {
 	g := setupFollowState(hearts.East, 1, []cardcore.Card{
 		c(rTen, sClubs),
@@ -862,7 +917,10 @@ func TestFollowLastCleanHighDangerPrefersDuck(t *testing.T) {
 	}
 }
 
-// TestFollowNotLastPointsDucksLowestWinner verifies that the lowest winning card is preferred when not last and the trick has points. North is not last (East still to play). West sloughed 5♥ (1 pt). All of North's diamonds win; prefers lowest winner 8♦ (Ace-Rank = 6).
+// TestFollowNotLastPointsDucksLowestWinner verifies that the lowest
+// winning card is preferred when not last and the trick has points.
+// North is not last (East still to play). West sloughed 5♥ (1 pt). All
+// of North's diamonds win; prefers lowest winner 8♦ (Ace-Rank = 6).
 func TestFollowNotLastPointsDucksLowestWinner(t *testing.T) {
 	g := setupFollowState(hearts.North, 1, []cardcore.Card{
 		c(rSix, sClubs),
@@ -893,7 +951,12 @@ func TestFollowNotLastPointsDucksLowestWinner(t *testing.T) {
 	}
 }
 
-// TestFollowNotLastCleanWins verifies that the highest winning card is preferred when not last and the trick is clean. West is not last (Count=1, playersLeft=2). Clean trick. Both 8♦ and K♦ win; K♦ preferred (higher bonus after playersLeft penalty).
+// TestFollowNotLastCleanWins verifies that the highest winning card is
+// preferred when
+// not last and the trick is clean. West is not last (Count=1, playersLeft=2).
+// Clean
+// trick. Both 8♦ and K♦ win; K♦ preferred (higher bonus after playersLeft
+// penalty).
 func TestFollowNotLastCleanWins(t *testing.T) {
 	g := setupFollowState(hearts.West, 1, []cardcore.Card{
 		c(rSix, sClubs),
@@ -922,7 +985,8 @@ func TestFollowNotLastCleanWins(t *testing.T) {
 	}
 }
 
-// TestFollowUnderWinnerShedsHighest verifies that the highest losing card is preferred when playing under the current winner.
+// TestFollowUnderWinnerShedsHighest verifies that the highest losing card is
+// preferred when playing under the current winner.
 func TestFollowUnderWinnerShedsHighest(t *testing.T) {
 	g := setupFollowState(hearts.West, 1, []cardcore.Card{
 		c(rSix, sClubs),
@@ -951,7 +1015,9 @@ func TestFollowUnderWinnerShedsHighest(t *testing.T) {
 	}
 }
 
-// TestFollowQueenOfSpadesDumpsUnderHigherSpade verifies the Q♠ early-return in followScore. When A♠ is in the trick, Q♠ gets score 200 (dump it safely under a higher spade).
+// TestFollowQueenOfSpadesDumpsUnderHigherSpade verifies the Q♠
+// early-return in followScore. When A♠ is in the trick, Q♠ gets
+// score 200 (dump it safely under a higher spade).
 func TestFollowQueenOfSpadesDumpsUnderHigherSpade(t *testing.T) {
 	g := setupFollowState(hearts.East, 1, []cardcore.Card{
 		c(rSix, sDiamonds),
@@ -981,7 +1047,9 @@ func TestFollowQueenOfSpadesDumpsUnderHigherSpade(t *testing.T) {
 	}
 }
 
-// TestFollowQueenOfSpadesAvoidsWithoutHigherSpade verifies the Q♠ penalty when no higher spade is in the trick. Q♠ gets -100, making the AI avoid playing it.
+// TestFollowQueenOfSpadesAvoidsWithoutHigherSpade verifies the Q♠
+// penalty when no higher spade is in the trick. Q♠ gets -100, making
+// the AI avoid playing it.
 func TestFollowQueenOfSpadesAvoidsWithoutHigherSpade(t *testing.T) {
 	g := setupFollowState(hearts.East, 1, []cardcore.Card{
 		c(rSix, sDiamonds),
@@ -1011,18 +1079,20 @@ func TestFollowQueenOfSpadesAvoidsWithoutHigherSpade(t *testing.T) {
 	}
 }
 
-// TestVoidDumpsQueenOfSpades verifies the Q♠ priority in voidScore. Q♠ always scores +100, making it the first card dumped when void in the led suit.
+// TestVoidDumpsQueenOfSpades verifies the Q♠ priority in voidScore.
+// Q♠ always scores +100, making it the first card dumped when void in
+// the led suit.
 func TestVoidDumpsQueenOfSpades(t *testing.T) {
 	g := setupFollowState(hearts.West, 1, []cardcore.Card{
+		c(rTwo, sDiamonds),
+		c(rThree, sDiamonds),
+		c(rFour, sDiamonds),
 		c(rSix, sHearts),
 		c(rSeven, sHearts),
 		c(rEight, sHearts),
 		c(rNine, sHearts),
 		c(rTen, sHearts),
 		c(rJack, sHearts),
-		c(rQueen, sHearts),
-		c(rKing, sHearts),
-		c(rAce, sHearts),
 		c(rSix, sSpades),
 		queenOfSpades,
 		aceOfSpades,
@@ -1040,7 +1110,8 @@ func TestVoidDumpsQueenOfSpades(t *testing.T) {
 	}
 }
 
-// TestVoidDumpsAceOfSpades verifies the A♠/K♠ priority in voidScore. A♠ scores +50, outranking hearts and non-penalty cards.
+// TestVoidDumpsAceOfSpades verifies the A♠/K♠ priority in voidScore.
+// A♠ scores +50, outranking hearts and non-penalty cards.
 func TestVoidDumpsAceOfSpades(t *testing.T) {
 	g := setupFollowState(hearts.West, 1, []cardcore.Card{
 		c(rSix, sDiamonds),
@@ -1069,7 +1140,9 @@ func TestVoidDumpsAceOfSpades(t *testing.T) {
 	}
 }
 
-// TestVoidPrefersHeartsOverNonPenalty verifies the hearts dump bonus in voidScore. K♥ (+10 + rank 11 = 21) outscores K♦ (baseline rank 11) because hearts carry a +10 dump bonus.
+// TestVoidPrefersHeartsOverNonPenalty verifies the hearts dump bonus
+// in voidScore. K♥ (+10 + rank 11 = 21) outscores K♦ (baseline
+// rank 11) because hearts carry a +10 dump bonus.
 func TestVoidPrefersHeartsOverNonPenalty(t *testing.T) {
 	g := setupFollowState(hearts.West, 1, []cardcore.Card{
 		c(rSix, sDiamonds),
@@ -1100,7 +1173,12 @@ func TestVoidPrefersHeartsOverNonPenalty(t *testing.T) {
 
 // --- Moon blocking tests ---
 
-// TestFollowMoonBlockPrefersWinning verifies that the moon-block heuristic prefers winning the trick to deny the shooter lead control. Moon threat active (East has all pts, trickNum=7). South follows spades. 10♠ would win (beats 6♠). Moon block: rank+30 = 38 vs 2♠ loser = 0. Without moon block, 10♠ would score -1 (not-last clean, danger penalty).
+// TestFollowMoonBlockPrefersWinning verifies that the moon-block
+// heuristic prefers winning the trick to deny the shooter lead
+// control. Moon threat active (East has all pts, trickNum=7). South
+// follows spades. 10♠ would win (beats 6♠). Moon block: rank+30 = 38
+// vs 2♠ loser = 0. Without moon block, 10♠ would score -1 (not-last
+// clean, danger penalty).
 func TestFollowMoonBlockPrefersWinning(t *testing.T) {
 	g := setupFollowState(hearts.South, 7, []cardcore.Card{
 		c(rQueen, sClubs),
@@ -1124,7 +1202,11 @@ func TestFollowMoonBlockPrefersWinning(t *testing.T) {
 	}
 }
 
-// TestFollowMoonBlockGateTrickNumTooLow verifies that the moon-block heuristic does not activate before trick 6. Same setup as TestFollowMoonBlockPrefersWinning but trickNum=5 (gate fails). Normal scoring: South ducks with 2♠.
+// TestFollowMoonBlockGateTrickNumTooLow verifies that the moon-block heuristic
+// does
+// not activate before trick 6. Same setup as TestFollowMoonBlockPrefersWinning
+// but
+// trickNum=5 (gate fails). Normal scoring: South ducks with 2♠.
 func TestFollowMoonBlockGateTrickNumTooLow(t *testing.T) {
 	g := setupFollowState(hearts.South, 5, []cardcore.Card{
 		c(rQueen, sClubs),
@@ -1149,7 +1231,11 @@ func TestFollowMoonBlockGateTrickNumTooLow(t *testing.T) {
 	}
 }
 
-// TestFollowMoonBlockGateSelfIsThreat verifies that the moon-block heuristic does not activate when the player is the threat. East is the moon threat and is following — self-as-threat gate fails, normal scoring used.
+// TestFollowMoonBlockGateSelfIsThreat verifies that the moon-block heuristic
+// does not
+// activate when the player is the threat. East is the moon threat and is
+// following —
+// self-as-threat gate fails, normal scoring used.
 func TestFollowMoonBlockGateSelfIsThreat(t *testing.T) {
 	g := setupFollowState(hearts.East, 7, []cardcore.Card{
 		c(rQueen, sClubs),
@@ -1172,7 +1258,12 @@ func TestFollowMoonBlockGateSelfIsThreat(t *testing.T) {
 	}
 }
 
-// TestVoidMoonBlockSuppressesHeartsDumpWhenThreatWins verifies that hearts are suppressed when void and the moon-threat seat is winning. Moon threat active. South void in led suit (spades). East (moon threat) is currently winning. Dumping hearts feeds the shooter, so hearts get -10 instead of +10. Q♣ (rank 10 + short suit 15 = 25) beats 3♥ (rank 1 - 10 = -9).
+// TestVoidMoonBlockSuppressesHeartsDumpWhenThreatWins verifies that
+// hearts are suppressed when void and the moon-threat seat is winning.
+// Moon threat active. South void in led suit (spades). East (moon
+// threat) is currently winning. Dumping hearts feeds the shooter, so
+// hearts get -10 instead of +10. Q♣ (rank 10 + short suit 15 = 25)
+// beats 3♥ (rank 1 - 10 = -9).
 func TestVoidMoonBlockSuppressesHeartsDumpWhenThreatWins(t *testing.T) {
 	g := setupFollowState(hearts.South, 7, []cardcore.Card{
 		c(rQueen, sClubs),
@@ -1196,7 +1287,12 @@ func TestVoidMoonBlockSuppressesHeartsDumpWhenThreatWins(t *testing.T) {
 	}
 }
 
-// TestVoidMoonBlockAllowsHeartsDumpWhenThreatLoses verifies that hearts dumping is allowed when the moon-threat seat is not winning. Moon threat active but threat (East) is NOT winning the trick. North is winning. South is void in led suit (clubs) and has a non-heart alternative (4♠). Hearts dump allowed: K♥ (+10 + 11 = 21) beats 4♠ (baseline 2 + short suit 15 = 17).
+// TestVoidMoonBlockAllowsHeartsDumpWhenThreatLoses verifies that
+// hearts dumping is allowed when the moon-threat seat is not winning.
+// Moon threat active but threat (East) is NOT winning the trick.
+// North is winning. South is void in led suit (clubs) and has a
+// non-heart alternative (4♠). Hearts dump allowed: K♥ (+10 + 11 = 21)
+// beats 4♠ (baseline 2 + short suit 15 = 17).
 func TestVoidMoonBlockAllowsHeartsDumpWhenThreatLoses(t *testing.T) {
 	g := setupFollowState(hearts.South, 7, []cardcore.Card{
 		c(rEight, sHearts),
@@ -1220,7 +1316,11 @@ func TestVoidMoonBlockAllowsHeartsDumpWhenThreatLoses(t *testing.T) {
 	}
 }
 
-// TestVoidMoonBlockGateTrickNumTooLow verifies that the void moon-block heuristic does not activate before trick 6. trickNum=5, moon threat exists but gate fails. Normal scoring: hearts get +10 dump bonus. South void in diamonds, K♥ (+10 + 11 = 21) beats 4♠ (baseline 2 + short suit 15 = 17).
+// TestVoidMoonBlockGateTrickNumTooLow verifies that the void
+// moon-block heuristic does not activate before trick 6. trickNum=5,
+// moon threat exists but gate fails. Normal scoring: hearts get +10
+// dump bonus. South void in diamonds, K♥ (+10 + 11 = 21) beats 4♠
+// (baseline 2 + short suit 15 = 17).
 func TestVoidMoonBlockGateTrickNumTooLow(t *testing.T) {
 	g := setupFollowState(hearts.South, 5, []cardcore.Card{
 		c(rThree, sHearts),
@@ -1245,7 +1345,12 @@ func TestVoidMoonBlockGateTrickNumTooLow(t *testing.T) {
 	}
 }
 
-// TestLeadMoonBlockPrefersHighHearts verifies that high hearts are preferred when leading under an active moon threat. A♥ gets +30 (high heart, win the trick to dash shooter's hopes). All hearts in hand — A♥ preferred over low hearts (+15).
+// TestLeadMoonBlockPrefersHighHearts verifies that high hearts are preferred
+// when
+// leading under an active moon threat. A♥ gets +30 (high heart, win the trick
+// to
+// dash shooter's hopes). All hearts in hand — A♥ preferred over low hearts
+// (+15).
 func TestLeadMoonBlockPrefersHighHearts(t *testing.T) {
 	g := setupLeadState(hearts.North, 7, []cardcore.Card{
 		c(rThree, sHearts),
@@ -1265,7 +1370,11 @@ func TestLeadMoonBlockPrefersHighHearts(t *testing.T) {
 	}
 }
 
-// TestLeadMoonBlockLowHeartsStillPreferred verifies that even low hearts are preferred over penalized spades under a moon threat. North has only low hearts (no K♥/A♥) plus K♠ and A♠ (penalized by flush -20). Low hearts get +15 from moon block, beating the penalized spades.
+// TestLeadMoonBlockLowHeartsStillPreferred verifies that even low
+// hearts are preferred over penalized spades under a moon threat.
+// North has only low hearts (no K♥/A♥) plus K♠ and A♠ (penalized by
+// flush -20). Low hearts get +15 from moon block, beating the
+// penalized spades.
 func TestLeadMoonBlockLowHeartsStillPreferred(t *testing.T) {
 	g := setupLeadState(hearts.North, 7, []cardcore.Card{
 		c(rThree, sHearts),
@@ -1285,7 +1394,9 @@ func TestLeadMoonBlockLowHeartsStillPreferred(t *testing.T) {
 	}
 }
 
-// TestLeadNoMoonThreatNormalHeartPenalty verifies that hearts are penalized for leading when no moon threat exists. No moon threat (penalties distributed to North and West). Hearts get normal -15 lead penalty.
+// TestLeadNoMoonThreatNormalHeartPenalty verifies that hearts are penalized for
+// leading when no moon threat exists. No moon threat (penalties distributed to
+// North and West). Hearts get normal -15 lead penalty.
 func TestLeadNoMoonThreatNormalHeartPenalty(t *testing.T) {
 	cleanHistory := moonThreatHistory()
 	cleanHistory = cleanHistory[:4]
@@ -1328,7 +1439,618 @@ func TestLeadNoMoonThreatNormalHeartPenalty(t *testing.T) {
 	}
 }
 
-// TestHeuristicFullGameIntegration runs 10 complete games with Heuristic players and verifies structural invariants: games terminate, winner has the lowest score.
+// --- Moon shooting tests ---
+
+// TestShootPassScoreKeepsHearts verifies that shootPassScore ranks hearts
+// far below non-penalty cards, preventing them from being passed. A♥ (-100)
+// scores far below 2♣ (Ace - 0 = 12).
+func TestShootPassScoreKeepsHearts(t *testing.T) {
+	hand := cardcore.NewHand([]cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rAce, sClubs),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+	})
+
+	heartScore := shootPassScore(c(rAce, sHearts), hand)
+	clubScore := shootPassScore(c(rTwo, sClubs), hand)
+
+	if heartScore >= clubScore {
+		t.Errorf("A♥ shoot pass score (%d) should be less than 2♣ score (%d)", heartScore, clubScore)
+	}
+}
+
+// TestShootPassScoreKeepsQueenOfSpades verifies that shootPassScore ranks Q♠
+// (-100) far below any non-penalty card.
+func TestShootPassScoreKeepsQueenOfSpades(t *testing.T) {
+	hand := cardcore.NewHand([]cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rAce, sClubs),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		queenOfSpades,
+	})
+
+	queenScore := shootPassScore(queenOfSpades, hand)
+	clubScore := shootPassScore(c(rTwo, sClubs), hand)
+
+	if queenScore >= clubScore {
+		t.Errorf("Q♠ shoot pass score (%d) should be less than 2♣ score (%d)", queenScore, clubScore)
+	}
+}
+
+// TestShootPassScorePassesLowCardsFirst verifies that shootPassScore prefers
+// passing low non-heart cards. 2♣ (Ace - 0 = 12) outscores K♣ (Ace - 11 = 1).
+func TestShootPassScorePassesLowCardsFirst(t *testing.T) {
+	hand := cardcore.NewHand([]cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rKing, sClubs),
+		c(rAce, sClubs),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+	})
+
+	twoScore := shootPassScore(c(rTwo, sClubs), hand)
+	kingScore := shootPassScore(c(rKing, sClubs), hand)
+
+	if twoScore <= kingScore {
+		t.Errorf("2♣ shoot pass score (%d) should exceed K♣ score (%d)", twoScore, kingScore)
+	}
+}
+
+// TestChoosePassShootKeepsHearts verifies that ChoosePass keeps all
+// hearts when the hand triggers considerShoot. Hand: A♥ K♥ Q♥ J♥ 10♥
+// 9♥ 8♥ + A♣ + 5 low clubs + 2♠. All 3 passed cards should be
+// non-hearts.
+//
+// Why this works: normal passScore gives hearts a +10 bonus (eagerly passes
+// them), so without shoot mode the heuristic would happily pass high hearts.
+// Shoot mode's shootPassScore returns -100 for hearts, completely inverting
+// that preference. The test proves shoot vs non-shoot produce opposite
+// behavior for hearts.
+func TestChoosePassShootKeepsHearts(t *testing.T) {
+	g := hearts.New()
+	if err := g.Deal(); err != nil {
+		t.Fatalf("Deal error: %v", err)
+	}
+
+	setupPassHand(t, g, hearts.South, []cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rAce, sClubs),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+	})
+
+	h := newSeededHeuristic(42)
+	cards := h.ChoosePass(g, hearts.South)
+
+	for _, card := range cards {
+		if card.Suit == sHearts {
+			t.Errorf("expected no hearts passed when shooting, but passed %v (all 3: %v)", card, cards)
+			break
+		}
+	}
+}
+
+// TestShootLeadScorePrefersSideAcesOverHearts verifies that non-heart aces
+// outscore hearts when shooting. A♣ (40) exceeds A♥ (12).
+func TestShootLeadScorePrefersSideAcesOverHearts(t *testing.T) {
+	g := setupLeadState(hearts.South, 2, []cardcore.Card{
+		c(rAce, sClubs),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+		c(rFour, sSpades),
+	}, []hearts.Trick{
+		validFirstTrick(),
+		{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rNine, sClubs),
+			hearts.West:  c(rSix, sClubs),
+			hearts.North: c(rSeven, sClubs),
+			hearts.East:  c(rEight, sClubs),
+		}},
+	})
+
+	a := analyze(g, hearts.South)
+	a.shootActive = true
+
+	aceClubScore := shootLeadScore(c(rAce, sClubs), g, a)
+	aceHeartScore := shootLeadScore(c(rAce, sHearts), g, a)
+
+	if aceClubScore <= aceHeartScore {
+		t.Errorf("A♣ shoot lead score (%d) should exceed A♥ score (%d)", aceClubScore, aceHeartScore)
+	}
+}
+
+// TestShootLeadScoreAvoidsQueenOfSpades verifies that Q♠ scores negative when
+// leading and shooting. Leading Q♠ signals intent and risks losing the card.
+func TestShootLeadScoreAvoidsQueenOfSpades(t *testing.T) {
+	g := setupLeadState(hearts.South, 2, []cardcore.Card{
+		c(rTwo, sClubs),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+		queenOfSpades,
+	}, []hearts.Trick{
+		validFirstTrick(),
+		{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rNine, sClubs),
+			hearts.West:  c(rSix, sClubs),
+			hearts.North: c(rSeven, sClubs),
+			hearts.East:  c(rEight, sClubs),
+		}},
+	})
+
+	a := analyze(g, hearts.South)
+	a.shootActive = true
+
+	queenScore := shootLeadScore(queenOfSpades, g, a)
+
+	if queenScore >= 0 {
+		t.Errorf("Q♠ shoot lead score (%d) should be negative", queenScore)
+	}
+}
+
+// TestShootFollowScorePrefersWinning verifies that winning cards
+// outscore losing cards when shooting. South follows diamonds. K♦
+// wins (rank 11 + 30 = 41), 3♦ loses (Ace - 1 = 11).
+func TestShootFollowScorePrefersWinning(t *testing.T) {
+	g := setupFollowState(hearts.South, 2, []cardcore.Card{
+		c(rThree, sDiamonds),
+		c(rKing, sDiamonds),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+	}, []hearts.Trick{
+		validFirstTrick(),
+		{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rNine, sClubs),
+			hearts.West:  c(rSix, sClubs),
+			hearts.North: c(rSeven, sClubs),
+			hearts.East:  c(rEight, sClubs),
+		}},
+	},
+		hearts.East,
+		[]trickCard{
+			{hearts.East, c(rSix, sDiamonds)},
+			{hearts.West, c(rSeven, sDiamonds)},
+		})
+
+	a := analyze(g, hearts.South)
+	a.shootActive = true
+
+	kingScore := shootFollowScore(c(rKing, sDiamonds), g, a)
+	threeScore := shootFollowScore(c(rThree, sDiamonds), g, a)
+
+	if kingScore <= threeScore {
+		t.Errorf("K♦ shoot follow score (%d) should exceed 3♦ score (%d)", kingScore, threeScore)
+	}
+}
+
+// TestShootFollowScoreQueenWouldWinPlayed verifies that Q♠ scores
+// 100 when it would win the trick and no K♠/A♠ in hand. South
+// follows spades, Q♠ beats 8♠.
+func TestShootFollowScoreQueenWouldWinPlayed(t *testing.T) {
+	g := setupFollowState(hearts.South, 2, []cardcore.Card{
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+		c(rFour, sSpades),
+		queenOfSpades,
+	}, []hearts.Trick{
+		validFirstTrick(),
+		{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rNine, sClubs),
+			hearts.West:  c(rSix, sClubs),
+			hearts.North: c(rSeven, sClubs),
+			hearts.East:  c(rEight, sClubs),
+		}},
+	},
+		hearts.East,
+		[]trickCard{
+			{hearts.East, c(rEight, sSpades)},
+		})
+
+	a := analyze(g, hearts.South)
+	a.shootActive = true
+
+	queenScore := shootFollowScore(queenOfSpades, g, a)
+
+	if queenScore != 100 {
+		t.Errorf("Q♠ shoot follow score = %d, want 100 (would win, no K♠/A♠)", queenScore)
+	}
+}
+
+// TestShootFollowScoreQueenDeferredForHigherSpade verifies that Q♠
+// scores 10 (deferred) when it would win but K♠ or A♠ is in hand.
+// The higher spade is preferred to preserve Q♠ optionality.
+// Q♠ == 10 proves the defer branch (not the would-win branch at 100
+// or would-lose branch at -50).
+// Branch: shootFollowScore Q♠ would win, K♠/A♠ in hand → 10.
+func TestShootFollowScoreQueenDeferredForHigherSpade(t *testing.T) {
+	g := setupFollowState(hearts.South, 2, []cardcore.Card{
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+		queenOfSpades,
+		kingOfSpades,
+		aceOfSpades,
+	}, []hearts.Trick{
+		validFirstTrick(),
+		{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rNine, sClubs),
+			hearts.West:  c(rSix, sClubs),
+			hearts.North: c(rSeven, sClubs),
+			hearts.East:  c(rEight, sClubs),
+		}},
+	},
+		hearts.East,
+		[]trickCard{
+			{hearts.East, c(rEight, sSpades)},
+		})
+
+	a := analyze(g, hearts.South)
+	a.shootActive = true
+
+	queenScore := shootFollowScore(queenOfSpades, g, a)
+
+	if queenScore != 10 {
+		t.Errorf("Q♠ shoot follow score = %d, want 10 (deferred: K♠/A♠ in hand)", queenScore)
+	}
+}
+
+// TestShootFollowScoreQueenWouldWinNoHigherSpade verifies that Q♠ scores 100
+// when it would win and no K♠/A♠ is in hand. This is the paired control for
+// TestShootFollowScoreQueenDeferredForHigherSpade — same setup minus K♠/A♠,
+// proving the defer branch (10) vs would-win branch (100) distinction.
+// Branch: shootFollowScore Q♠ would win, no K♠/A♠ → 100.
+func TestShootFollowScoreQueenWouldWinNoHigherSpade(t *testing.T) {
+	g := setupFollowState(hearts.South, 2, []cardcore.Card{
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+		c(rFour, sSpades),
+		queenOfSpades,
+	}, []hearts.Trick{
+		validFirstTrick(),
+		{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rNine, sClubs),
+			hearts.West:  c(rSix, sClubs),
+			hearts.North: c(rSeven, sClubs),
+			hearts.East:  c(rEight, sClubs),
+		}},
+	},
+		hearts.East,
+		[]trickCard{
+			{hearts.East, c(rEight, sSpades)},
+		})
+
+	a := analyze(g, hearts.South)
+	a.shootActive = true
+
+	queenScore := shootFollowScore(queenOfSpades, g, a)
+
+	if queenScore != 100 {
+		t.Errorf("Q♠ shoot follow score = %d, want 100 (would win, no K♠/A♠)", queenScore)
+	}
+}
+
+// TestShootFollowScoreQueenWouldLose verifies that Q♠ scores -50
+// when it would lose the trick. Losing Q♠ gives an opponent a penalty
+// card, killing the shoot.
+func TestShootFollowScoreQueenWouldLose(t *testing.T) {
+	g := setupFollowState(hearts.South, 2, []cardcore.Card{
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+		c(rFour, sSpades),
+		queenOfSpades,
+	}, []hearts.Trick{
+		validFirstTrick(),
+		{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rNine, sClubs),
+			hearts.West:  c(rSix, sClubs),
+			hearts.North: c(rSeven, sClubs),
+			hearts.East:  c(rEight, sClubs),
+		}},
+	},
+		hearts.East,
+		[]trickCard{
+			{hearts.East, aceOfSpades},
+		})
+
+	a := analyze(g, hearts.South)
+	a.shootActive = true
+
+	queenScore := shootFollowScore(queenOfSpades, g, a)
+
+	if queenScore != -50 {
+		t.Errorf("Q♠ shoot follow score = %d, want -50 (would lose)", queenScore)
+	}
+}
+
+// TestShootVoidScoreNeverDumpsHearts verifies that hearts score -100 when
+// void and shooting. Dumping a heart gives an opponent a penalty card.
+func TestShootVoidScoreNeverDumpsHearts(t *testing.T) {
+	g := setupFollowState(hearts.South, 2, []cardcore.Card{
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+		c(rFour, sSpades),
+		queenOfSpades,
+	}, []hearts.Trick{
+		validFirstTrick(),
+		{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rNine, sClubs),
+			hearts.West:  c(rSix, sClubs),
+			hearts.North: c(rSeven, sClubs),
+			hearts.East:  c(rEight, sClubs),
+		}},
+	},
+		hearts.East,
+		[]trickCard{
+			{hearts.East, c(rSix, sDiamonds)},
+		})
+
+	a := analyze(g, hearts.South)
+	a.shootActive = true
+
+	heartScore := shootVoidScore(c(rAce, sHearts), g, a)
+
+	if heartScore != -100 {
+		t.Errorf("A♥ shoot void score = %d, want -100", heartScore)
+	}
+}
+
+// TestShootVoidScoreNeverDumpsQueenOfSpades verifies that Q♠ scores -100 when
+// void and shooting.
+func TestShootVoidScoreNeverDumpsQueenOfSpades(t *testing.T) {
+	g := setupFollowState(hearts.South, 2, []cardcore.Card{
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+		c(rFour, sSpades),
+		queenOfSpades,
+	}, []hearts.Trick{
+		validFirstTrick(),
+		{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rNine, sClubs),
+			hearts.West:  c(rSix, sClubs),
+			hearts.North: c(rSeven, sClubs),
+			hearts.East:  c(rEight, sClubs),
+		}},
+	},
+		hearts.East,
+		[]trickCard{
+			{hearts.East, c(rSix, sDiamonds)},
+		})
+
+	a := analyze(g, hearts.South)
+	a.shootActive = true
+
+	queenScore := shootVoidScore(queenOfSpades, g, a)
+
+	if queenScore != -100 {
+		t.Errorf("Q♠ shoot void score = %d, want -100", queenScore)
+	}
+}
+
+// TestShootVoidScoreDumpsLowCardsFirst verifies that low non-penalty
+// cards are preferred for dumping when shooting. 2♠ (Ace - 0 = 12)
+// outscores K♠ (Ace - 11 = 1).
+func TestShootVoidScoreDumpsLowCardsFirst(t *testing.T) {
+	g := setupFollowState(hearts.South, 2, []cardcore.Card{
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+		c(rFour, sSpades),
+		kingOfSpades,
+	}, []hearts.Trick{
+		validFirstTrick(),
+		{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rNine, sClubs),
+			hearts.West:  c(rSix, sClubs),
+			hearts.North: c(rSeven, sClubs),
+			hearts.East:  c(rEight, sClubs),
+		}},
+	},
+		hearts.East,
+		[]trickCard{
+			{hearts.East, c(rSix, sDiamonds)},
+		})
+
+	a := analyze(g, hearts.South)
+	a.shootActive = true
+
+	twoScore := shootVoidScore(c(rTwo, sSpades), g, a)
+	kingScore := shootVoidScore(kingOfSpades, g, a)
+
+	if twoScore <= kingScore {
+		t.Errorf("2♠ shoot void score (%d) should exceed K♠ score (%d)", twoScore, kingScore)
+	}
+}
+
+// TestShootOrDuckDeterministic verifies that two contrasting hands
+// produce opposite shooting decisions through ChoosePass. The
+// "shooter" hand has 7 hearts including A♥+K♥+Q♥ plus A♣ (triggers
+// considerShoot), so ChoosePass keeps all hearts and passes only
+// non-hearts. The "ducker" hand has the same 13-card count but only
+// 3 low hearts and no side ace (does not trigger considerShoot), so
+// ChoosePass eagerly passes hearts via the normal passScore +10
+// hearts bonus.
+//
+// This is an end-to-end test of the shoot detection → pass scoring pipeline.
+// The two hands are identical in size but differ in heart quality, proving the
+// heuristic distinguishes shooters from duckers.
+func TestShootOrDuckDeterministic(t *testing.T) {
+	// Shooter hand: 7 hearts (A♥ K♥ Q♥ J♥ 10♥ 9♥ 8♥) + A♣ + 5 low cards.
+	// considerShoot triggers (≥7 hearts + side ace).
+	shooterHand := []cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rAce, sClubs),
+		c(rEight, sHearts),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+	}
+
+	// Ducker hand: 3 low hearts, no ace — does not trigger considerShoot.
+	duckerHand := []cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
+		c(rSix, sClubs),
+		c(rTwo, sDiamonds),
+		c(rThree, sDiamonds),
+		c(rFour, sDiamonds),
+		c(rFive, sDiamonds),
+		c(rTwo, sHearts),
+		c(rThree, sHearts),
+		c(rFour, sHearts),
+		c(rTwo, sSpades),
+	}
+
+	h := newSeededHeuristic(42)
+
+	// Shooter: all 3 passed cards should be non-hearts.
+	gShoot := hearts.New()
+	if err := gShoot.Deal(); err != nil {
+		t.Fatalf("Deal error: %v", err)
+	}
+	setupPassHand(t, gShoot, hearts.South, shooterHand)
+	shootPassed := h.ChoosePass(gShoot, hearts.South)
+	for _, card := range shootPassed {
+		if card.Suit == sHearts {
+			t.Errorf("shooter should keep all hearts, but passed %v (all 3: %v)", card, shootPassed)
+			break
+		}
+	}
+
+	// Ducker: should pass at least one heart (normal passScore gives
+	// hearts +10 bonus, making them high-priority pass candidates).
+	gDuck := hearts.New()
+	if err := gDuck.Deal(); err != nil {
+		t.Fatalf("Deal error: %v", err)
+	}
+	setupPassHand(t, gDuck, hearts.South, duckerHand)
+	duckPassed := h.ChoosePass(gDuck, hearts.South)
+	passedHeart := false
+	for _, card := range duckPassed {
+		if card.Suit == sHearts {
+			passedHeart = true
+			break
+		}
+	}
+	if !passedHeart {
+		t.Errorf("ducker should pass at least one heart, but passed %v", duckPassed)
+	}
+}
+
+// TestHeuristicFullGameIntegration runs 10 complete games with Heuristic
+// players
+// and verifies structural invariants: games terminate, winner has the lowest
+// score.
 func TestHeuristicFullGameIntegration(t *testing.T) {
 	const (
 		numGames  = 10
@@ -1365,7 +2087,9 @@ func TestHeuristicFullGameIntegration(t *testing.T) {
 	}
 }
 
-// newSeededHeuristic creates a Heuristic player with a deterministic RNG for test reproducibility.
+// newSeededHeuristic creates a Heuristic player with a deterministic RNG for
+// test
+// reproducibility.
 func newSeededHeuristic(seed uint64) *Heuristic {
 	return NewHeuristic(rand.New(rand.NewPCG(seed, seed+1)))
 }
@@ -1406,8 +2130,9 @@ func setupLeadState(seat hearts.Seat, trickNum int, hand []cardcore.Card, trickH
 	return g
 }
 
-// validFirstTrick returns a trick led with 2♣ by South for use in
-// test trick histories that need a realistic first trick.
+// validFirstTrick returns a trick led with 2♣ by South for use in test trick
+// histories
+// that need a realistic first trick.
 func validFirstTrick() hearts.Trick {
 	return hearts.Trick{
 		Leader: hearts.South,
@@ -1421,7 +2146,9 @@ func validFirstTrick() hearts.Trick {
 	}
 }
 
-// setupFollowState creates a game in PhasePlay where seat must play into an in-progress trick. The leader and played cards define the partial trick state.
+// setupFollowState creates a game in PhasePlay where seat must play into an
+// in-progress
+// trick. The leader and played cards define the partial trick state.
 func setupFollowState(
 	seat hearts.Seat,
 	trickNum int,
@@ -1491,7 +2218,8 @@ func earlyMoonThreatHistory() []hearts.Trick {
 // moonThreatHistory returns 7 completed tricks where East wins all penalty
 // points. Extends earlyMoonThreatHistory with 2 clean tricks.
 //
-// Cards used: 2♣–J♣, K♣, A♣, 2♦–A♦, 2♠, 3♠, 2♥ (28 cards).
+// Cards used: 2♣–J♣, K♣, A♣, 2♦–A♦, 2♠, 3♠, 2♥
+// (28 cards).
 // Available for hands: Q♣, spades (4♠–A♠), hearts (3♥–A♥).
 func moonThreatHistory() []hearts.Trick {
 	h := earlyMoonThreatHistory()

@@ -32,6 +32,19 @@ func (h *Heuristic) ChoosePass(g *hearts.Game, seat hearts.Seat) [hearts.PassCou
 		panic("ai: ChoosePass called with fewer than 3 cards in hand")
 	}
 
+	a := analyze(g, seat)
+
+	var scoreFunc func(cardcore.Card) int
+	if a.considerShoot {
+		scoreFunc = func(card cardcore.Card) int {
+			return shootPassScore(card, hand)
+		}
+	} else {
+		scoreFunc = func(card cardcore.Card) int {
+			return passScore(card, hand)
+		}
+	}
+
 	// Copy and shuffle for random tie-breaking.
 	candidates := make([]cardcore.Card, hand.Len())
 	copy(candidates, hand.Cards)
@@ -41,7 +54,7 @@ func (h *Heuristic) ChoosePass(g *hearts.Game, seat hearts.Seat) [hearts.PassCou
 
 	// Stable sort by descending pass score.
 	slices.SortStableFunc(candidates, func(a, b cardcore.Card) int {
-		return passScore(b, hand) - passScore(a, hand)
+		return scoreFunc(b) - scoreFunc(a)
 	})
 
 	var cards [hearts.PassCount]cardcore.Card
@@ -115,6 +128,10 @@ func (h *Heuristic) chooseVoid(g *hearts.Game, legal []cardcore.Card, a analysis
 // followScore returns how desirable it is to play this card when
 // following suit. Higher scores are preferred.
 func followScore(card cardcore.Card, g *hearts.Game, a analysis) int {
+	if a.shootActive {
+		return shootFollowScore(card, g, a)
+	}
+
 	_, winnerRank := currentWinner(g)
 	wouldWin := card.Rank > winnerRank
 	isLast := g.Trick.Count == 3
@@ -175,9 +192,41 @@ func followScore(card cardcore.Card, g *hearts.Game, a analysis) int {
 	return bonus
 }
 
+// shootFollowScore returns how desirable it is to play this card when
+// following suit and actively shooting the moon. Higher scores are preferred.
+func shootFollowScore(card cardcore.Card, g *hearts.Game, a analysis) int {
+	_, winnerRank := currentWinner(g)
+	wouldWin := card.Rank > winnerRank
+	hand := g.Hands[a.seat]
+
+	// Q♠ has three outcomes when shooting:
+	//   would lose (-50): an opponent gets a penalty card, killing the shoot.
+	//   would win, K♠/A♠ in hand (10): defer Q♠, play the higher spade instead.
+	//   would win, no K♠/A♠ (100): play it now — we win the trick.
+	if card == queenOfSpades {
+		if !wouldWin {
+			return -50
+		}
+		if hand.Contains(kingOfSpades) || hand.Contains(aceOfSpades) {
+			return 10
+		}
+		return 100
+	}
+
+	if wouldWin {
+		return int(card.Rank) + 30
+	}
+
+	return int(cardcore.Ace) - int(card.Rank)
+}
+
 // voidScore returns how desirable it is to slough this card when void
 // in the led suit. Higher scores are preferred.
 func voidScore(card cardcore.Card, g *hearts.Game, a analysis) int {
+	if a.shootActive {
+		return shootVoidScore(card, g, a)
+	}
+
 	if card == queenOfSpades {
 		return 100
 	}
@@ -208,9 +257,24 @@ func voidScore(card cardcore.Card, g *hearts.Game, a analysis) int {
 	return score
 }
 
+// shootVoidScore returns how desirable it is to slough this card when
+// void in the led suit and actively shooting the moon. Higher scores
+// are preferred.
+func shootVoidScore(card cardcore.Card, _ *hearts.Game, _ analysis) int {
+	if card.Suit == cardcore.Hearts || card == queenOfSpades {
+		return -100
+	}
+
+	return int(cardcore.Ace) - int(card.Rank)
+}
+
 // leadScore returns how desirable it is to lead this card.
 // Higher scores are preferred.
 func leadScore(card cardcore.Card, g *hearts.Game, a analysis) int {
+	if a.shootActive {
+		return shootLeadScore(card, g, a)
+	}
+
 	score := 0
 	suit := card.Suit
 	hand := g.Hands[a.seat]
@@ -277,6 +341,42 @@ func leadScore(card cardcore.Card, g *hearts.Game, a analysis) int {
 	return score
 }
 
+// shootLeadScore returns how desirable it is to lead this card when
+// actively shooting the moon. Higher scores are preferred.
+func shootLeadScore(card cardcore.Card, g *hearts.Game, a analysis) int {
+	suit := card.Suit
+	hand := g.Hands[a.seat]
+
+	if card == queenOfSpades {
+		return -50
+	}
+
+	score := 0
+
+	if suit != cardcore.Hearts {
+		// Side suits: aces and kings win clean tricks and maintain lead
+		// control before running hearts later. Hearts get plain rank
+		// because leading them early signals moonshot intent to opponents.
+		switch card.Rank {
+		case cardcore.Ace:
+			score += 40
+		case cardcore.King:
+			score += 35
+		default:
+			score += int(card.Rank)
+		}
+	} else {
+		score += int(card.Rank)
+	}
+
+	suitLen := len(hand.CardsOfSuit(suit))
+	if suitLen == 1 && suit != cardcore.Hearts {
+		score += 15
+	}
+
+	return score
+}
+
 // passScore returns how much the heuristic wants to pass this card.
 // Higher scores are passed first.
 func passScore(card cardcore.Card, hand *cardcore.Hand) int {
@@ -304,6 +404,32 @@ func passScore(card cardcore.Card, hand *cardcore.Hand) int {
 	}
 
 	// Short suit bonus: passing from short suits creates voids.
+	suitLen := len(hand.CardsOfSuit(card.Suit))
+	if suitLen <= 3 {
+		score += (4 - suitLen) * 5
+	}
+
+	return score
+}
+
+// shootPassScore returns how much the heuristic wants to pass this card
+// when shooting the moon. The strategy inverts: keep hearts, Q♠, and
+// aces; pass low non-heart cards to shed weak suits.
+func shootPassScore(card cardcore.Card, hand *cardcore.Hand) int {
+	if card.Suit == cardcore.Hearts {
+		return -100
+	}
+
+	if card == queenOfSpades {
+		return -100
+	}
+
+	if card.Rank == cardcore.Ace {
+		return -50
+	}
+
+	score := int(cardcore.Ace) - int(card.Rank)
+
 	suitLen := len(hand.CardsOfSuit(card.Suit))
 	if suitLen <= 3 {
 		score += (4 - suitLen) * 5
