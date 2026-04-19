@@ -223,13 +223,17 @@ func (a *analysis) deriveShootActive(hand *cardcore.Hand) {
 // not yet seen in completed tricks.
 func (a *analysis) holdsHighestHeart(hand *cardcore.Hand) bool {
 	// Walk ranks from Ace down. The first rank not yet seen in tricks
-	// is the highest heart still in play — check if we hold it.
-	for rank := cardcore.Ace; rank >= cardcore.Two; rank-- {
+	// is the highest heart still in play — check if we hold it. The
+	// explicit Two check avoids underflowing the uint8 Rank when every
+	// heart has already been played.
+	for rank := cardcore.Ace; ; rank-- {
 		if !a.played[cardcore.Hearts][rank] {
 			return hand.Contains(cardcore.Card{Rank: rank, Suit: cardcore.Hearts})
 		}
+		if rank == cardcore.Two {
+			return false
+		}
 	}
-	return false
 }
 
 // detectMoonThreat checks whether a single player holds all distributed

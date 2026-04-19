@@ -14,6 +14,9 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 - Heuristic AI player (`games/hearts/ai/`)
 - Trick history and pass history to Hearts game state (`games/hearts/`)
 
+### Fixed
+- Prevent uint8 underflow panic in heuristic AI's moon-shoot detection when all hearts have been played (`games/hearts/ai/`)
+
 ## [0.2.0] - 2026-04-14
 
 ### Added

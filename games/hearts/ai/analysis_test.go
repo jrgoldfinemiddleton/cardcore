@@ -1147,3 +1147,25 @@ func TestHoldsHighestHeartMidRankNegative(t *testing.T) {
 		t.Error("holdsHighestHeart should be false: 5♥ is the highest unplayed heart but seat holds 4♥, not 5♥")
 	}
 }
+
+// TestHoldsHighestHeartAllPlayed verifies that holdsHighestHeart returns
+// false (without panicking) when every heart has already been played.
+// Regression test for a uint8 underflow on the rank loop variable that
+// caused an index-out-of-range panic at a.played[Hearts][255].
+// Branch: holdsHighestHeart loop scans every rank without finding an
+// unplayed heart and must terminate cleanly at Two.
+func TestHoldsHighestHeartAllPlayed(t *testing.T) {
+	a := analysis{}
+	for rank := rTwo; rank <= rAce; rank++ {
+		a.played[sHearts][rank] = true
+	}
+
+	hand := cardcore.NewHand([]cardcore.Card{
+		c(rTwo, sClubs),
+		c(rThree, sClubs),
+	})
+
+	if a.holdsHighestHeart(hand) {
+		t.Error("holdsHighestHeart should be false: no hearts remain unplayed")
+	}
+}
