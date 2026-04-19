@@ -7,10 +7,10 @@ import (
 	"github.com/jrgoldfinemiddleton/cardcore/games/hearts"
 )
 
-func newSeededRandom(seed uint64) *Random {
-	return NewRandom(rand.New(rand.NewPCG(seed, seed+1)))
-}
+// Compile-time check that Random satisfies hearts.Player.
+var _ hearts.Player = (*Random)(nil)
 
+// TestChoosePassReturnsDistinctCardsFromHand verifies that ChoosePass returns three distinct cards that exist in the player's hand.
 func TestChoosePassReturnsDistinctCardsFromHand(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -35,6 +35,7 @@ func TestChoosePassReturnsDistinctCardsFromHand(t *testing.T) {
 	}
 }
 
+// TestChoosePlayReturnsLegalCard verifies that ChoosePlay returns a card accepted by PlayCard.
 func TestChoosePlayReturnsLegalCard(t *testing.T) {
 	g := hearts.New()
 	g.PassDir = hearts.PassHold
@@ -51,6 +52,7 @@ func TestChoosePlayReturnsLegalCard(t *testing.T) {
 	}
 }
 
+// TestDeterminism verifies that identical seeds produce identical ChoosePass and ChoosePlay results.
 func TestDeterminism(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -86,16 +88,18 @@ func TestDeterminism(t *testing.T) {
 	}
 }
 
+// TestLegalityAcrossGames verifies that Random produces legal moves across 200 seeded games.
 func TestLegalityAcrossGames(t *testing.T) {
 	for seed := uint64(0); seed < 200; seed++ {
 		rng := rand.New(rand.NewPCG(seed, seed+1))
 		r := NewRandom(rng)
 		g := hearts.New()
 
-		playRandomRound(t, g, r, seed)
+		playRoundWithPlayer(t, g, r, seed)
 	}
 }
 
+// TestFullGameIntegration runs 10 complete games with Random players and verifies structural invariants: games terminate, winner has the lowest score.
 func TestFullGameIntegration(t *testing.T) {
 	const (
 		numGames  = 10
@@ -109,7 +113,7 @@ func TestFullGameIntegration(t *testing.T) {
 		g := hearts.New()
 
 		for range maxRounds {
-			playRandomRound(t, g, r, seed)
+			playRoundWithPlayer(t, g, r, seed)
 
 			if g.Phase == hearts.PhaseEnd {
 				break
@@ -133,42 +137,7 @@ func TestFullGameIntegration(t *testing.T) {
 	}
 }
 
-func playRandomRound(t *testing.T, g *hearts.Game, r *Random, seed uint64) {
-	t.Helper()
-
-	if err := g.Deal(); err != nil {
-		t.Fatalf("seed %d: Deal error: %v", seed, err)
-	}
-
-	if g.Phase == hearts.PhasePass {
-		for i := hearts.Seat(0); i < hearts.NumPlayers; i++ {
-			cards := r.ChoosePass(g.Clone(), i)
-			if err := g.SetPass(i, cards); err != nil {
-				t.Fatalf("seed %d: SetPass(%d) error: %v", seed, i, err)
-			}
-		}
-	}
-
-	for g.Phase == hearts.PhasePlay {
-		seat := g.Turn
-		card := r.ChoosePlay(g.Clone(), seat)
-		if err := g.PlayCard(seat, card); err != nil {
-			t.Fatalf("seed %d: PlayCard(%d, %v) error: %v", seed, seat, card, err)
-		}
-	}
-
-	roundTotal := 0
-	for i := range hearts.NumPlayers {
-		roundTotal += g.RoundPts[i]
-	}
-	if roundTotal != hearts.MoonPoints {
-		t.Fatalf("seed %d: sum(RoundPts) = %d, want %d", seed, roundTotal, hearts.MoonPoints)
-	}
-
-	if err := g.EndRound(); err != nil {
-		t.Fatalf("seed %d: EndRound error: %v", seed, err)
-	}
+// newSeededRandom creates a Random player with a deterministic RNG for test reproducibility.
+func newSeededRandom(seed uint64) *Random {
+	return NewRandom(rand.New(rand.NewPCG(seed, seed+1)))
 }
-
-// Compile-time check that Random satisfies hearts.Player.
-var _ hearts.Player = (*Random)(nil)

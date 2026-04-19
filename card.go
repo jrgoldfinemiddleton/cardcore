@@ -18,28 +18,8 @@ const (
 // NumSuits is the number of standard suits.
 const NumSuits = 4
 
-// AllSuits returns all four suits in standard order.
-func AllSuits() [NumSuits]Suit {
-	return [NumSuits]Suit{Clubs, Diamonds, Hearts, Spades}
-}
-
 var suitNames = [NumSuits]string{"Clubs", "Diamonds", "Hearts", "Spades"}
 var suitSymbols = [NumSuits]string{"♣", "♦", "♥", "♠"}
-
-func (s Suit) String() string {
-	if s < NumSuits {
-		return suitNames[s]
-	}
-	return fmt.Sprintf("Suit(%d)", s)
-}
-
-// Symbol returns the Unicode symbol for the suit.
-func (s Suit) Symbol() string {
-	if s < NumSuits {
-		return suitSymbols[s]
-	}
-	return "?"
-}
 
 // Rank represents a card rank (2 through Ace).
 type Rank uint8
@@ -63,36 +43,14 @@ const (
 // NumRanks is the number of standard ranks.
 const NumRanks = 13
 
-// AllRanks returns all thirteen ranks in ascending order.
-func AllRanks() [NumRanks]Rank {
-	return [NumRanks]Rank{Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace}
-}
-
 var rankNames = [NumRanks]string{
 	"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A",
-}
-
-func (r Rank) String() string {
-	if r < NumRanks {
-		return rankNames[r]
-	}
-	return fmt.Sprintf("Rank(%d)", r)
 }
 
 // Card represents a single playing card as a rank and suit.
 type Card struct {
 	Rank Rank
 	Suit Suit
-}
-
-// String returns a human-readable card representation like "A♠" or "10♣".
-func (c Card) String() string {
-	return c.Rank.String() + c.Suit.Symbol()
-}
-
-// Equal reports whether two cards are the same.
-func (c Card) Equal(other Card) bool {
-	return c.Suit == other.Suit && c.Rank == other.Rank
 }
 
 // DeckSize is the number of cards in a standard deck.
@@ -113,6 +71,40 @@ func NewStandardDeck() *Deck {
 		}
 	}
 	return &Deck{Cards: cards}
+}
+
+// String returns the English name of the suit.
+func (s Suit) String() string {
+	if s < NumSuits {
+		return suitNames[s]
+	}
+	return fmt.Sprintf("Suit(%d)", s)
+}
+
+// Symbol returns the Unicode symbol for the suit.
+func (s Suit) Symbol() string {
+	if s < NumSuits {
+		return suitSymbols[s]
+	}
+	return "?"
+}
+
+// String returns the short display string for the rank.
+func (r Rank) String() string {
+	if r < NumRanks {
+		return rankNames[r]
+	}
+	return fmt.Sprintf("Rank(%d)", r)
+}
+
+// String returns a human-readable card representation like "A♠" or "10♣".
+func (c Card) String() string {
+	return c.Rank.String() + c.Suit.Symbol()
+}
+
+// Equal reports whether two cards are the same.
+func (c Card) Equal(other Card) bool {
+	return c.Suit == other.Suit && c.Rank == other.Rank
 }
 
 // Len returns the number of cards in the deck.
@@ -150,4 +142,14 @@ func (d *Deck) Contains(c Card) bool {
 		}
 	}
 	return false
+}
+
+// AllSuits returns all four suits in standard order.
+func AllSuits() [NumSuits]Suit {
+	return [NumSuits]Suit{Clubs, Diamonds, Hearts, Spades}
+}
+
+// AllRanks returns all thirteen ranks in ascending order.
+func AllRanks() [NumRanks]Rank {
+	return [NumRanks]Rank{Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace}
 }

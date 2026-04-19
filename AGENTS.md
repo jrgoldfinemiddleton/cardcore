@@ -14,8 +14,10 @@ cardcore/
 ├── games/
 │   └── hearts/          # Hearts card game
 │       ├── ai/          # Computer-controlled players
-│       │   ├── doc.go   # Package documentation
-│       │   └── random.go # Random legal move player
+│       │   ├── doc.go       # Package documentation
+│       │   ├── analysis.go  # Per-decision game-state analysis (card counts, voids, Q♠ location, moon threat)
+│       │   ├── heuristic.go # Rule-based heuristic player
+│       │   └── random.go    # Random legal move player
 │       ├── doc.go       # Package documentation
 │       ├── hearts.go    # Game logic
 │       └── player.go    # Player interface
@@ -52,6 +54,7 @@ cardcore/
 - Read the relevant ADRs in `doc/decisions/` before making architectural decisions
 - Follow Rules-Driven Development ([ADR-006](doc/decisions/006-rules-driven-development.md)) when adding a game — write the rules document before implementing
 - Place AI in `games/<game>/ai/` subpackages
+- Follow [ADR-008](doc/decisions/008-ai-design-principles.md) when implementing AI — read-only access to live game state, stdlib-only, separate type per difficulty
 - Keep the Go version in `go.mod` aligned with the minimum version stated in `README.md`
 
 ## 4. Never Do
@@ -87,8 +90,10 @@ cardcore/
   - Each game engine must include an integration test that exercises the full state machine lifecycle (start to terminal state) and verifies structural invariants hold across rounds (e.g., point conservation, hand depletion, phase transitions, no state leaks between rounds)
   - Scenarios that require multiple subsystems cooperating (e.g., trick resolution → point accumulation → score detection → special scoring logic) need their own integration tests — unit tests on each piece in isolation are not sufficient
   - Implemented variants require integration tests — exceptions need significant justification
+  - Test files in game packages (and their subpackages) must define prefixed const aliases for `cardcore` ranks and suits — `rAce`, `rTwo`, …, `rKing` for ranks and `sClubs`, `sDiamonds`, `sHearts`, `sSpades` for suits. Use these aliases in all test code instead of qualified `cardcore.Rank`/`cardcore.Suit` constants. Place the alias definitions in a shared test helpers file (e.g., `helpers_test.go`). The root `cardcore` package is exempt since it defines the constants directly.
 - **Formatting**: `gofmt` is enforced by `make check`; never manually format — let the tool do it
-- **Comments**: exported symbols need doc comments; unexported ones are optional but welcome
+- **Function ordering**: follow the conventions in [CONTRIBUTING.md](CONTRIBUTING.md#code-conventions) — `convention_test.go` enforces them automatically via `make check`
+- **Comments**: every function and method needs a doc comment starting with its name — `convention_test.go` enforces this automatically via `make check`
 
 ## 7. Architecture Decisions
 Read `doc/decisions/` for the rationale behind key choices. Important ADRs:
@@ -96,6 +101,8 @@ Read `doc/decisions/` for the rationale behind key choices. Important ADRs:
 - ADR-004: Why API-first
 - ADR-005: Why no generic abstractions yet
 - ADR-006: Rules-Driven Development for games
+- ADR-007: Automated code convention enforcement
+- ADR-008: AI design principles
 
 ## 8. When to Check In With the Human
 - Before making any architectural change not covered by an ADR

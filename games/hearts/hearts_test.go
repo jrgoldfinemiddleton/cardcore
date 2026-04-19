@@ -9,35 +9,32 @@ import (
 	"github.com/jrgoldfinemiddleton/cardcore"
 )
 
-// Rank aliases for readability.
+// Rank aliases for test readability.
 const (
-	ace   = cardcore.Ace
-	two   = cardcore.Two
-	three = cardcore.Three
-	four  = cardcore.Four
-	five  = cardcore.Five
-	six   = cardcore.Six
-	seven = cardcore.Seven
-	eight = cardcore.Eight
-	nine  = cardcore.Nine
-	ten   = cardcore.Ten
-	jack  = cardcore.Jack
-	queen = cardcore.Queen
-	king  = cardcore.King
+	rAce   = cardcore.Ace
+	rTwo   = cardcore.Two
+	rThree = cardcore.Three
+	rFour  = cardcore.Four
+	rFive  = cardcore.Five
+	rSix   = cardcore.Six
+	rSeven = cardcore.Seven
+	rEight = cardcore.Eight
+	rNine  = cardcore.Nine
+	rTen   = cardcore.Ten
+	rJack  = cardcore.Jack
+	rQueen = cardcore.Queen
+	rKing  = cardcore.King
 )
 
-// Suit aliases for readability.
+// Suit aliases for test readability.
 const (
-	clubs    = cardcore.Clubs
-	diamonds = cardcore.Diamonds
-	hearts   = cardcore.Hearts
-	spades   = cardcore.Spades
+	sClubs    = cardcore.Clubs
+	sDiamonds = cardcore.Diamonds
+	sHearts   = cardcore.Hearts
+	sSpades   = cardcore.Spades
 )
 
-func c(rank cardcore.Rank, suit cardcore.Suit) cardcore.Card {
-	return cardcore.Card{Rank: rank, Suit: suit}
-}
-
+// TestNewGame verifies that a new game starts in PhaseDeal at round 0.
 func TestNewGame(t *testing.T) {
 	g := New()
 	if g.Phase != PhaseDeal {
@@ -48,6 +45,7 @@ func TestNewGame(t *testing.T) {
 	}
 }
 
+// TestCloneGame verifies that Clone produces an independent deep copy of game state.
 func TestCloneGame(t *testing.T) {
 	g := New()
 	if err := g.Deal(); err != nil {
@@ -100,7 +98,7 @@ func TestCloneGame(t *testing.T) {
 	}
 
 	// Mutate clone trick — original must be unchanged.
-	clone.Trick.Cards[South] = c(ace, spades)
+	clone.Trick.Cards[South] = c(rAce, sSpades)
 	clone.Trick.Count = 1
 	if g.Trick.Cards[South] != (cardcore.Card{}) {
 		t.Fatalf("original Trick.Cards[South] = %v after clone mutation, want zero card", g.Trick.Cards[South])
@@ -110,6 +108,7 @@ func TestCloneGame(t *testing.T) {
 	}
 }
 
+// TestLegalMovesWrongPhase verifies that LegalMoves returns an error outside PhasePlay.
 func TestLegalMovesWrongPhase(t *testing.T) {
 	g := New()
 	_, err := g.LegalMoves(South)
@@ -121,11 +120,12 @@ func TestLegalMovesWrongPhase(t *testing.T) {
 	}
 }
 
+// TestLegalMovesWrongTurn verifies that LegalMoves returns an error when called for the wrong seat.
 func TestLegalMovesWrongTurn(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
 	g.Turn = South
-	g.Hands[North] = cardcore.NewHand([]cardcore.Card{c(ace, spades)})
+	g.Hands[North] = cardcore.NewHand([]cardcore.Card{c(rAce, sSpades)})
 
 	_, err := g.LegalMoves(North)
 	if err == nil {
@@ -136,6 +136,7 @@ func TestLegalMovesWrongTurn(t *testing.T) {
 	}
 }
 
+// TestLegalMovesFirstTrickLeader verifies that only 2♣ is legal when leading the first trick.
 func TestLegalMovesFirstTrickLeader(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
@@ -143,7 +144,7 @@ func TestLegalMovesFirstTrickLeader(t *testing.T) {
 	g.Turn = South
 	g.Trick = Trick{Leader: South}
 	g.Hands[South] = cardcore.NewHand([]cardcore.Card{
-		twoOfClubs, c(ace, spades), c(king, hearts),
+		twoOfClubs, c(rKing, sHearts), c(rAce, sSpades),
 	})
 
 	legal, err := g.LegalMoves(South)
@@ -155,16 +156,17 @@ func TestLegalMovesFirstTrickLeader(t *testing.T) {
 	}
 }
 
+// TestLegalMovesFollowSuit verifies that only cards of the led suit are legal when following.
 func TestLegalMovesFollowSuit(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
 	g.TrickNum = 1
 	g.Turn = East
 	g.Trick = Trick{Leader: South, Cards: [NumPlayers]cardcore.Card{
-		South: c(five, diamonds),
+		South: c(rFive, sDiamonds),
 	}, Count: 1}
 	g.Hands[East] = cardcore.NewHand([]cardcore.Card{
-		c(three, diamonds), c(king, diamonds), c(ace, spades), c(queen, hearts),
+		c(rThree, sDiamonds), c(rKing, sDiamonds), c(rQueen, sHearts), c(rAce, sSpades),
 	})
 
 	legal, err := g.LegalMoves(East)
@@ -175,22 +177,23 @@ func TestLegalMovesFollowSuit(t *testing.T) {
 		t.Fatalf("legal = %v, want 2 diamonds", legal)
 	}
 	for _, card := range legal {
-		if card.Suit != diamonds {
+		if card.Suit != sDiamonds {
 			t.Fatalf("legal contains %v, want only diamonds", card)
 		}
 	}
 }
 
+// TestLegalMovesVoidInLedSuit verifies that all cards are legal when void in the led suit.
 func TestLegalMovesVoidInLedSuit(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
 	g.TrickNum = 1
 	g.Turn = West
 	g.Trick = Trick{Leader: South, Cards: [NumPlayers]cardcore.Card{
-		South: c(five, diamonds),
+		South: c(rFive, sDiamonds),
 	}, Count: 1}
 	g.Hands[West] = cardcore.NewHand([]cardcore.Card{
-		c(ace, spades), c(queen, hearts), c(king, clubs),
+		c(rKing, sClubs), c(rQueen, sHearts), c(rAce, sSpades),
 	})
 
 	legal, err := g.LegalMoves(West)
@@ -202,6 +205,7 @@ func TestLegalMovesVoidInLedSuit(t *testing.T) {
 	}
 }
 
+// TestLegalMovesHeartsNotBroken verifies that hearts cannot be led when hearts are not broken.
 func TestLegalMovesHeartsNotBroken(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
@@ -210,18 +214,19 @@ func TestLegalMovesHeartsNotBroken(t *testing.T) {
 	g.Turn = South
 	g.Trick = Trick{Leader: South}
 	g.Hands[South] = cardcore.NewHand([]cardcore.Card{
-		c(ace, spades), c(king, hearts), c(queen, hearts),
+		c(rQueen, sHearts), c(rKing, sHearts), c(rAce, sSpades),
 	})
 
 	legal, err := g.LegalMoves(South)
 	if err != nil {
 		t.Fatalf("LegalMoves error: %v", err)
 	}
-	if len(legal) != 1 || legal[0] != c(ace, spades) {
+	if len(legal) != 1 || legal[0] != c(rAce, sSpades) {
 		t.Fatalf("legal = %v, want [A♠] (hearts not broken)", legal)
 	}
 }
 
+// TestLegalMovesQueenOfSpadesLead verifies that Q♠ can be led when hearts are not broken.
 func TestLegalMovesQueenOfSpadesLead(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
@@ -230,7 +235,7 @@ func TestLegalMovesQueenOfSpadesLead(t *testing.T) {
 	g.Turn = South
 	g.Trick = Trick{Leader: South}
 	g.Hands[South] = cardcore.NewHand([]cardcore.Card{
-		queenOfSpades, c(king, hearts), c(queen, hearts),
+		c(rQueen, sHearts), c(rKing, sHearts), queenOfSpades,
 	})
 
 	legal, err := g.LegalMoves(South)
@@ -242,6 +247,7 @@ func TestLegalMovesQueenOfSpadesLead(t *testing.T) {
 	}
 }
 
+// TestLegalMovesOnlyHeartsRemain verifies that hearts can be led when the hand has only hearts.
 func TestLegalMovesOnlyHeartsRemain(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
@@ -250,7 +256,7 @@ func TestLegalMovesOnlyHeartsRemain(t *testing.T) {
 	g.Turn = South
 	g.Trick = Trick{Leader: South}
 	g.Hands[South] = cardcore.NewHand([]cardcore.Card{
-		c(king, hearts), c(queen, hearts), c(jack, hearts),
+		c(rJack, sHearts), c(rQueen, sHearts), c(rKing, sHearts),
 	})
 
 	legal, err := g.LegalMoves(South)
@@ -262,6 +268,7 @@ func TestLegalMovesOnlyHeartsRemain(t *testing.T) {
 	}
 }
 
+// TestLegalMovesFirstTrickNoPoints verifies that point cards are excluded on the first trick when following void.
 func TestLegalMovesFirstTrickNoPoints(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
@@ -271,18 +278,19 @@ func TestLegalMovesFirstTrickNoPoints(t *testing.T) {
 		South: twoOfClubs,
 	}, Count: 1}
 	g.Hands[East] = cardcore.NewHand([]cardcore.Card{
-		c(ace, spades), c(queen, hearts), queenOfSpades,
+		c(rQueen, sHearts), queenOfSpades, c(rAce, sSpades),
 	})
 
 	legal, err := g.LegalMoves(East)
 	if err != nil {
 		t.Fatalf("LegalMoves error: %v", err)
 	}
-	if len(legal) != 1 || legal[0] != c(ace, spades) {
+	if len(legal) != 1 || legal[0] != c(rAce, sSpades) {
 		t.Fatalf("legal = %v, want [A♠] (no points on first trick)", legal)
 	}
 }
 
+// TestLegalMovesFirstTrickOnlyPointCards verifies that all cards are legal on the first trick when only point cards remain.
 func TestLegalMovesFirstTrickOnlyPointCards(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
@@ -292,7 +300,7 @@ func TestLegalMovesFirstTrickOnlyPointCards(t *testing.T) {
 		South: twoOfClubs,
 	}, Count: 1}
 	g.Hands[East] = cardcore.NewHand([]cardcore.Card{
-		queenOfSpades, c(queen, hearts), c(king, hearts),
+		c(rQueen, sHearts), c(rKing, sHearts), queenOfSpades,
 	})
 
 	legal, err := g.LegalMoves(East)
@@ -304,6 +312,7 @@ func TestLegalMovesFirstTrickOnlyPointCards(t *testing.T) {
 	}
 }
 
+// TestLegalMovesRoundtrip verifies consistency between LegalMoves and PlayCard across 50 random games.
 func TestLegalMovesRoundtrip(t *testing.T) {
 	for seed := range 50 {
 		rng := rand.New(rand.NewPCG(uint64(seed), uint64(seed+1)))
@@ -352,6 +361,7 @@ func TestLegalMovesRoundtrip(t *testing.T) {
 	}
 }
 
+// TestDeal verifies that Deal distributes 13 cards to each player and advances to PhasePass.
 func TestDeal(t *testing.T) {
 	g := New()
 	if err := g.Deal(); err != nil {
@@ -377,6 +387,7 @@ func TestDeal(t *testing.T) {
 	}
 }
 
+// TestDealHoldRound verifies that Deal skips PhasePass on hold rounds and goes to PhasePlay.
 func TestDealHoldRound(t *testing.T) {
 	g := New()
 	g.PassDir = PassHold
@@ -388,6 +399,7 @@ func TestDealHoldRound(t *testing.T) {
 	}
 }
 
+// TestDealWrongPhase verifies that Deal returns an error outside PhaseDeal.
 func TestDealWrongPhase(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
@@ -396,6 +408,7 @@ func TestDealWrongPhase(t *testing.T) {
 	}
 }
 
+// TestPassWrongPhase verifies that SetPass returns an error outside PhasePass.
 func TestPassWrongPhase(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
@@ -405,6 +418,7 @@ func TestPassWrongPhase(t *testing.T) {
 	}
 }
 
+// TestPlayCardWrongPhase verifies that PlayCard returns an error outside PhasePlay.
 func TestPlayCardWrongPhase(t *testing.T) {
 	g := New()
 	g.Phase = PhasePass
@@ -413,6 +427,7 @@ func TestPlayCardWrongPhase(t *testing.T) {
 	}
 }
 
+// TestEndRoundWrongPhase verifies that EndRound returns an error outside PhaseScore.
 func TestEndRoundWrongPhase(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
@@ -421,6 +436,7 @@ func TestEndRoundWrongPhase(t *testing.T) {
 	}
 }
 
+// TestWinnerWrongPhase verifies that Winner returns an error before PhaseEnd.
 func TestWinnerWrongPhase(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
@@ -429,6 +445,7 @@ func TestWinnerWrongPhase(t *testing.T) {
 	}
 }
 
+// TestPassValidation verifies that SetPass rejects cards not in hand and duplicate cards.
 func TestPassValidation(t *testing.T) {
 	g := newPassGame(t)
 
@@ -468,6 +485,7 @@ func TestPassValidation(t *testing.T) {
 	}
 }
 
+// TestPassExchange verifies that passed cards are removed from the sender and added to the receiver.
 func TestPassExchange(t *testing.T) {
 	g := newPassGame(t)
 
@@ -503,6 +521,7 @@ func TestPassExchange(t *testing.T) {
 	}
 }
 
+// TestFirstTrickMustLead2C verifies that the 2♣ holder must lead it on the first trick.
 func TestFirstTrickMustLead2C(t *testing.T) {
 	g := newHoldGame(t)
 
@@ -525,6 +544,7 @@ func TestFirstTrickMustLead2C(t *testing.T) {
 	}
 }
 
+// TestMustFollowSuit verifies that a player with cards in the led suit must play one.
 func TestMustFollowSuit(t *testing.T) {
 	g := setupFixedHands()
 
@@ -533,15 +553,16 @@ func TestMustFollowSuit(t *testing.T) {
 	}
 
 	// West has clubs and must follow suit.
-	if err := g.PlayCard(West, c(two, diamonds)); err == nil {
+	if err := g.PlayCard(West, c(rTwo, sDiamonds)); err == nil {
 		t.Error("expected error for not following suit when able")
 	}
 
-	if err := g.PlayCard(West, c(three, clubs)); err != nil {
+	if err := g.PlayCard(West, c(rThree, sClubs)); err != nil {
 		t.Fatalf("PlayCard 3♣ error: %v", err)
 	}
 }
 
+// TestCannotPlayPointsOnFirstTrick verifies that hearts and Q♠ cannot be played on the first trick when void.
 func TestCannotPlayPointsOnFirstTrick(t *testing.T) {
 	g := setupVoidClubs()
 
@@ -551,7 +572,7 @@ func TestCannotPlayPointsOnFirstTrick(t *testing.T) {
 
 	// West is void in clubs and has non-penalty cards.
 	// Playing a heart should be rejected.
-	if err := g.PlayCard(West, c(two, hearts)); err == nil {
+	if err := g.PlayCard(West, c(rTwo, sHearts)); err == nil {
 		t.Error("expected error for playing hearts on first trick")
 	}
 
@@ -561,11 +582,12 @@ func TestCannotPlayPointsOnFirstTrick(t *testing.T) {
 	}
 
 	// Playing a non-penalty card should succeed.
-	if err := g.PlayCard(West, c(two, diamonds)); err != nil {
+	if err := g.PlayCard(West, c(rTwo, sDiamonds)); err != nil {
 		t.Fatalf("PlayCard 2♦ error: %v", err)
 	}
 }
 
+// TestTrickResolution verifies that a completed trick advances TrickNum.
 func TestTrickResolution(t *testing.T) {
 	g := setupFixedHands()
 
@@ -583,6 +605,7 @@ func TestTrickResolution(t *testing.T) {
 	}
 }
 
+// TestHeartsBroken verifies that hearts are not broken initially and become broken when a heart is played.
 func TestHeartsBroken(t *testing.T) {
 	g := setupFixedHands()
 
@@ -605,7 +628,7 @@ func TestHeartsBroken(t *testing.T) {
 		seat := g.Turn
 		for _, card := range g.Hands[seat].Cards {
 			if err := g.PlayCard(seat, card); err == nil {
-				if card.Suit == hearts {
+				if card.Suit == sHearts {
 					breakingCard = card
 				}
 				break
@@ -613,11 +636,12 @@ func TestHeartsBroken(t *testing.T) {
 		}
 	}
 
-	if breakingCard.Suit != hearts {
+	if breakingCard.Suit != sHearts {
 		t.Error("expected a heart to trigger HeartsBroken")
 	}
 }
 
+// TestScoring verifies that round points are added to cumulative scores.
 func TestScoring(t *testing.T) {
 	g := New()
 
@@ -633,6 +657,7 @@ func TestScoring(t *testing.T) {
 	}
 }
 
+// TestShootTheMoon verifies that shooting the moon adds 26 to all opponents instead of the shooter.
 func TestShootTheMoon(t *testing.T) {
 	g := New()
 
@@ -648,6 +673,7 @@ func TestShootTheMoon(t *testing.T) {
 	}
 }
 
+// TestGameEnd verifies that the game transitions to PhaseEnd when a player reaches MaxScore.
 func TestGameEnd(t *testing.T) {
 	g := New()
 	g.Scores = [NumPlayers]int{94, 52, 36, 26}
@@ -678,6 +704,7 @@ func TestGameEnd(t *testing.T) {
 	}
 }
 
+// TestPassDirectionRotation verifies that pass direction cycles Left→Right→Across→Hold.
 func TestPassDirectionRotation(t *testing.T) {
 	g := New()
 
@@ -697,6 +724,7 @@ func TestPassDirectionRotation(t *testing.T) {
 	}
 }
 
+// TestWrongTurn verifies that PlayCard returns an error when played out of turn.
 func TestWrongTurn(t *testing.T) {
 	g := newHoldGame(t)
 	wrongSeat := nextSeat(g.Turn)
@@ -711,14 +739,15 @@ func TestWrongTurn(t *testing.T) {
 	}
 }
 
+// TestTrickPoints verifies that trickPoints sums hearts (1 each) and Q♠ (13).
 func TestTrickPoints(t *testing.T) {
 	g := New()
 	g.Trick = Trick{
 		Cards: [NumPlayers]cardcore.Card{
-			c(two, hearts),
-			c(five, hearts),
+			c(rTwo, sHearts),
+			c(rFive, sHearts),
 			queenOfSpades,
-			c(three, clubs),
+			c(rThree, sClubs),
 		},
 	}
 	pts := g.trickPoints()
@@ -727,6 +756,157 @@ func TestTrickPoints(t *testing.T) {
 	}
 }
 
+// TestPassHistoryAccuracy verifies that PassHistory records the exact cards each player passed.
+func TestPassHistoryAccuracy(t *testing.T) {
+	g := newPassGame(t)
+
+	passedCards := [NumPlayers][PassCount]cardcore.Card{}
+	for i := Seat(0); i < NumPlayers; i++ {
+		copy(passedCards[i][:], g.Hands[i].Cards[:PassCount])
+	}
+
+	for i := Seat(0); i < NumPlayers; i++ {
+		if err := g.SetPass(i, passedCards[i]); err != nil {
+			t.Fatalf("SetPass(%d) error: %v", i, err)
+		}
+	}
+
+	if g.PassHistory != passedCards {
+		t.Fatalf("PassHistory = %v, want %v", g.PassHistory, passedCards)
+	}
+}
+
+// TestPassHistoryResetOnDeal verifies that PassHistory is zeroed on a new deal.
+func TestPassHistoryResetOnDeal(t *testing.T) {
+	g := New()
+	playRandomRound(t, g)
+
+	// PassHistory should have data from the round just played.
+	// After a new Deal, it should be zeroed.
+	if err := g.Deal(); err != nil {
+		t.Fatalf("Deal error: %v", err)
+	}
+
+	zero := [NumPlayers][PassCount]cardcore.Card{}
+	if g.PassHistory != zero {
+		t.Fatalf("PassHistory after Deal is not zeroed: %v", g.PassHistory)
+	}
+}
+
+// TestPassHistoryHoldRound verifies that PassHistory is zeroed on hold rounds.
+func TestPassHistoryHoldRound(t *testing.T) {
+	g := New()
+	g.PassDir = PassHold
+	if err := g.Deal(); err != nil {
+		t.Fatalf("Deal error: %v", err)
+	}
+
+	zero := [NumPlayers][PassCount]cardcore.Card{}
+	if g.PassHistory != zero {
+		t.Fatalf("PassHistory on hold round is not zeroed: %v", g.PassHistory)
+	}
+}
+
+// TestTrickHistoryMidTrick verifies that TrickHistory only grows when a trick is completed.
+func TestTrickHistoryMidTrick(t *testing.T) {
+	g := setupFixedHands()
+
+	// Play first trick to completion.
+	for g.TrickNum == 0 {
+		playAnyValid(g, g.Turn)
+	}
+	if len(g.TrickHistory) != 1 {
+		t.Fatalf("len(TrickHistory) after trick 1 = %d, want 1", len(g.TrickHistory))
+	}
+
+	// Play 2 of 4 cards in the second trick.
+	playAnyValid(g, g.Turn)
+	playAnyValid(g, g.Turn)
+
+	if len(g.TrickHistory) != 1 {
+		t.Fatalf("len(TrickHistory) mid-trick = %d, want 1 (trick not yet complete)", len(g.TrickHistory))
+	}
+
+	// Complete the second trick.
+	playAnyValid(g, g.Turn)
+	playAnyValid(g, g.Turn)
+
+	if len(g.TrickHistory) != 2 {
+		t.Fatalf("len(TrickHistory) after trick 2 = %d, want 2", len(g.TrickHistory))
+	}
+}
+
+// TestTrickHistoryCloneIndependence verifies that cloned TrickHistory is independent from the original.
+func TestTrickHistoryCloneIndependence(t *testing.T) {
+	g := setupFixedHands()
+
+	// Play 5 tricks.
+	for g.TrickNum < 5 {
+		playAnyValid(g, g.Turn)
+	}
+	if len(g.TrickHistory) != 5 {
+		t.Fatalf("len(TrickHistory) = %d, want 5", len(g.TrickHistory))
+	}
+
+	clone := g.Clone()
+
+	if len(clone.TrickHistory) != 5 {
+		t.Fatalf("clone len(TrickHistory) = %d, want 5", len(clone.TrickHistory))
+	}
+
+	// Mutate clone's TrickHistory.
+	clone.TrickHistory[0].Leader = East
+	clone.TrickHistory[0].Count = 99
+
+	// Original must be unchanged.
+	if g.TrickHistory[0].Leader == East {
+		t.Error("original TrickHistory[0].Leader changed after clone mutation")
+	}
+	if g.TrickHistory[0].Count == 99 {
+		t.Error("original TrickHistory[0].Count changed after clone mutation")
+	}
+}
+
+// TestTrickHistoryResetOnDeal verifies that TrickHistory is cleared on a new deal.
+func TestTrickHistoryResetOnDeal(t *testing.T) {
+	g := New()
+	playRandomRound(t, g)
+
+	if err := g.Deal(); err != nil {
+		t.Fatalf("Deal error: %v", err)
+	}
+	if len(g.TrickHistory) != 0 {
+		t.Fatalf("len(TrickHistory) after Deal = %d, want 0", len(g.TrickHistory))
+	}
+}
+
+// TestTrickHistoryAccumulation verifies that all 13 tricks are recorded with correct point totals.
+func TestTrickHistoryAccumulation(t *testing.T) {
+	g := setupFixedHands()
+
+	for g.Phase == PhasePlay {
+		playAnyValid(g, g.Turn)
+	}
+
+	if len(g.TrickHistory) != HandSize {
+		t.Fatalf("len(TrickHistory) = %d, want %d", len(g.TrickHistory), HandSize)
+	}
+
+	for i, tr := range g.TrickHistory {
+		if tr.Count != NumPlayers {
+			t.Errorf("trick %d: Count = %d, want %d", i, tr.Count, NumPlayers)
+		}
+		ledSuit := tr.Cards[tr.Leader].Suit
+		if tr.LedSuit() != ledSuit {
+			t.Errorf("trick %d: LedSuit() = %v, want %v", i, tr.LedSuit(), ledSuit)
+		}
+	}
+	if pts := trickHistoryPoints(g.TrickHistory); pts != MoonPoints {
+		t.Errorf("total points across TrickHistory = %d, want %d", pts, MoonPoints)
+	}
+}
+
+// TestFullGameIntegration verifies that 5 random games run to completion with valid winners.
 func TestFullGameIntegration(t *testing.T) {
 	const (
 		numGames = 5
@@ -771,149 +951,7 @@ func TestFullGameIntegration(t *testing.T) {
 	}
 }
 
-func TestPassHistoryAccuracy(t *testing.T) {
-	g := newPassGame(t)
-
-	passedCards := [NumPlayers][PassCount]cardcore.Card{}
-	for i := Seat(0); i < NumPlayers; i++ {
-		copy(passedCards[i][:], g.Hands[i].Cards[:PassCount])
-	}
-
-	for i := Seat(0); i < NumPlayers; i++ {
-		if err := g.SetPass(i, passedCards[i]); err != nil {
-			t.Fatalf("SetPass(%d) error: %v", i, err)
-		}
-	}
-
-	if g.PassHistory != passedCards {
-		t.Fatalf("PassHistory = %v, want %v", g.PassHistory, passedCards)
-	}
-}
-
-func TestPassHistoryResetOnDeal(t *testing.T) {
-	g := New()
-	playRandomRound(t, g)
-
-	// PassHistory should have data from the round just played.
-	// After a new Deal, it should be zeroed.
-	if err := g.Deal(); err != nil {
-		t.Fatalf("Deal error: %v", err)
-	}
-
-	zero := [NumPlayers][PassCount]cardcore.Card{}
-	if g.PassHistory != zero {
-		t.Fatalf("PassHistory after Deal is not zeroed: %v", g.PassHistory)
-	}
-}
-
-func TestPassHistoryHoldRound(t *testing.T) {
-	g := New()
-	g.PassDir = PassHold
-	if err := g.Deal(); err != nil {
-		t.Fatalf("Deal error: %v", err)
-	}
-
-	zero := [NumPlayers][PassCount]cardcore.Card{}
-	if g.PassHistory != zero {
-		t.Fatalf("PassHistory on hold round is not zeroed: %v", g.PassHistory)
-	}
-}
-
-func TestTrickHistoryMidTrick(t *testing.T) {
-	g := setupFixedHands()
-
-	// Play first trick to completion.
-	for g.TrickNum == 0 {
-		playAnyValid(g, g.Turn)
-	}
-	if len(g.TrickHistory) != 1 {
-		t.Fatalf("len(TrickHistory) after trick 1 = %d, want 1", len(g.TrickHistory))
-	}
-
-	// Play 2 of 4 cards in the second trick.
-	playAnyValid(g, g.Turn)
-	playAnyValid(g, g.Turn)
-
-	if len(g.TrickHistory) != 1 {
-		t.Fatalf("len(TrickHistory) mid-trick = %d, want 1 (trick not yet complete)", len(g.TrickHistory))
-	}
-
-	// Complete the second trick.
-	playAnyValid(g, g.Turn)
-	playAnyValid(g, g.Turn)
-
-	if len(g.TrickHistory) != 2 {
-		t.Fatalf("len(TrickHistory) after trick 2 = %d, want 2", len(g.TrickHistory))
-	}
-}
-
-func TestTrickHistoryCloneIndependence(t *testing.T) {
-	g := setupFixedHands()
-
-	// Play 5 tricks.
-	for g.TrickNum < 5 {
-		playAnyValid(g, g.Turn)
-	}
-	if len(g.TrickHistory) != 5 {
-		t.Fatalf("len(TrickHistory) = %d, want 5", len(g.TrickHistory))
-	}
-
-	clone := g.Clone()
-
-	if len(clone.TrickHistory) != 5 {
-		t.Fatalf("clone len(TrickHistory) = %d, want 5", len(clone.TrickHistory))
-	}
-
-	// Mutate clone's TrickHistory.
-	clone.TrickHistory[0].Leader = East
-	clone.TrickHistory[0].Count = 99
-
-	// Original must be unchanged.
-	if g.TrickHistory[0].Leader == East {
-		t.Error("original TrickHistory[0].Leader changed after clone mutation")
-	}
-	if g.TrickHistory[0].Count == 99 {
-		t.Error("original TrickHistory[0].Count changed after clone mutation")
-	}
-}
-
-func TestTrickHistoryResetOnDeal(t *testing.T) {
-	g := New()
-	playRandomRound(t, g)
-
-	if err := g.Deal(); err != nil {
-		t.Fatalf("Deal error: %v", err)
-	}
-	if len(g.TrickHistory) != 0 {
-		t.Fatalf("len(TrickHistory) after Deal = %d, want 0", len(g.TrickHistory))
-	}
-}
-
-func TestTrickHistoryAccumulation(t *testing.T) {
-	g := setupFixedHands()
-
-	for g.Phase == PhasePlay {
-		playAnyValid(g, g.Turn)
-	}
-
-	if len(g.TrickHistory) != HandSize {
-		t.Fatalf("len(TrickHistory) = %d, want %d", len(g.TrickHistory), HandSize)
-	}
-
-	for i, tr := range g.TrickHistory {
-		if tr.Count != NumPlayers {
-			t.Errorf("trick %d: Count = %d, want %d", i, tr.Count, NumPlayers)
-		}
-		ledSuit := tr.Cards[tr.Leader].Suit
-		if tr.LedSuit() != ledSuit {
-			t.Errorf("trick %d: LedSuit() = %v, want %v", i, tr.LedSuit(), ledSuit)
-		}
-	}
-	if pts := trickHistoryPoints(g.TrickHistory); pts != MoonPoints {
-		t.Errorf("total points across TrickHistory = %d, want %d", pts, MoonPoints)
-	}
-}
-
+// TestShootTheMoonIntegration verifies end-to-end shoot-the-moon scoring with scripted hands.
 func TestShootTheMoonIntegration(t *testing.T) {
 	const (
 		numGames  = 5
@@ -930,28 +968,28 @@ func TestShootTheMoonIntegration(t *testing.T) {
 
 	moonHands := [NumPlayers][]cardcore.Card{
 		{ // South — the shooter
-			twoOfClubs, c(jack, clubs), c(queen, clubs), c(king, clubs),
-			c(queen, diamonds), c(king, diamonds), c(ace, diamonds),
-			c(queen, hearts), c(king, hearts), c(ace, hearts),
-			c(jack, spades), c(king, spades), c(ace, spades),
+			twoOfClubs, c(rJack, sClubs), c(rQueen, sClubs), c(rKing, sClubs),
+			c(rQueen, sDiamonds), c(rKing, sDiamonds), c(rAce, sDiamonds),
+			c(rQueen, sHearts), c(rKing, sHearts), c(rAce, sHearts),
+			c(rJack, sSpades), c(rKing, sSpades), c(rAce, sSpades),
 		},
 		{ // West
-			c(nine, clubs), c(ten, clubs), c(ace, clubs),
-			c(two, diamonds), c(five, diamonds), c(eight, diamonds), c(jack, diamonds),
-			c(four, hearts), c(seven, hearts), c(ten, hearts),
-			c(four, spades), c(seven, spades), c(ten, spades),
+			c(rNine, sClubs), c(rTen, sClubs), c(rAce, sClubs),
+			c(rTwo, sDiamonds), c(rFive, sDiamonds), c(rEight, sDiamonds), c(rJack, sDiamonds),
+			c(rFour, sHearts), c(rSeven, sHearts), c(rTen, sHearts),
+			c(rFour, sSpades), c(rSeven, sSpades), c(rTen, sSpades),
 		},
 		{ // North
-			c(three, clubs), c(five, clubs), c(eight, clubs),
-			c(four, diamonds), c(seven, diamonds), c(ten, diamonds),
-			c(two, hearts), c(five, hearts), c(eight, hearts), c(jack, hearts),
-			c(three, spades), c(six, spades), c(nine, spades),
+			c(rThree, sClubs), c(rFive, sClubs), c(rEight, sClubs),
+			c(rFour, sDiamonds), c(rSeven, sDiamonds), c(rTen, sDiamonds),
+			c(rTwo, sHearts), c(rFive, sHearts), c(rEight, sHearts), c(rJack, sHearts),
+			c(rThree, sSpades), c(rSix, sSpades), c(rNine, sSpades),
 		},
 		{ // East
-			c(four, clubs), c(six, clubs), c(seven, clubs),
-			c(three, diamonds), c(six, diamonds), c(nine, diamonds),
-			c(three, hearts), c(six, hearts), c(nine, hearts),
-			c(two, spades), c(five, spades), c(eight, spades), queenOfSpades,
+			c(rFour, sClubs), c(rSix, sClubs), c(rSeven, sClubs),
+			c(rThree, sDiamonds), c(rSix, sDiamonds), c(rNine, sDiamonds),
+			c(rThree, sHearts), c(rSix, sHearts), c(rNine, sHearts),
+			c(rTwo, sSpades), c(rFive, sSpades), c(rEight, sSpades), queenOfSpades,
 		},
 	}
 
@@ -959,94 +997,94 @@ func TestShootTheMoonIntegration(t *testing.T) {
 		// Trick 1: South leads 2♣, West wins with A♣. No penalty cards.
 		{
 			{South, twoOfClubs},
-			{West, c(ace, clubs)},
-			{North, c(three, clubs)},
-			{East, c(four, clubs)},
+			{West, c(rAce, sClubs)},
+			{North, c(rThree, sClubs)},
+			{East, c(rFour, sClubs)},
 		},
 		// Trick 2: West leads 2♦, South wins with A♦.
 		{
-			{West, c(two, diamonds)},
-			{North, c(four, diamonds)},
-			{East, c(three, diamonds)},
-			{South, c(ace, diamonds)},
+			{West, c(rTwo, sDiamonds)},
+			{North, c(rFour, sDiamonds)},
+			{East, c(rThree, sDiamonds)},
+			{South, c(rAce, sDiamonds)},
 		},
 		// Trick 3: South leads K♣, all follow clubs.
 		{
-			{South, c(king, clubs)},
-			{West, c(ten, clubs)},
-			{North, c(five, clubs)},
-			{East, c(six, clubs)},
+			{South, c(rKing, sClubs)},
+			{West, c(rTen, sClubs)},
+			{North, c(rFive, sClubs)},
+			{East, c(rSix, sClubs)},
 		},
 		// Trick 4: South leads Q♣, all follow clubs.
 		{
-			{South, c(queen, clubs)},
-			{West, c(nine, clubs)},
-			{North, c(eight, clubs)},
-			{East, c(seven, clubs)},
+			{South, c(rQueen, sClubs)},
+			{West, c(rNine, sClubs)},
+			{North, c(rEight, sClubs)},
+			{East, c(rSeven, sClubs)},
 		},
 		// Trick 5: South leads J♣, all void in clubs. Hearts broken.
 		// North sloughs 2♥, East sloughs Q♠. South takes 14 pts.
 		{
-			{South, c(jack, clubs)},
-			{West, c(jack, diamonds)},
-			{North, c(two, hearts)},
+			{South, c(rJack, sClubs)},
+			{West, c(rJack, sDiamonds)},
+			{North, c(rTwo, sHearts)},
 			{East, queenOfSpades},
 		},
 		// Trick 6: South leads K♦, all follow diamonds.
 		{
-			{South, c(king, diamonds)},
-			{West, c(five, diamonds)},
-			{North, c(seven, diamonds)},
-			{East, c(six, diamonds)},
+			{South, c(rKing, sDiamonds)},
+			{West, c(rFive, sDiamonds)},
+			{North, c(rSeven, sDiamonds)},
+			{East, c(rSix, sDiamonds)},
 		},
 		// Trick 7: South leads Q♦, all follow diamonds.
 		{
-			{South, c(queen, diamonds)},
-			{West, c(eight, diamonds)},
-			{North, c(ten, diamonds)},
-			{East, c(nine, diamonds)},
+			{South, c(rQueen, sDiamonds)},
+			{West, c(rEight, sDiamonds)},
+			{North, c(rTen, sDiamonds)},
+			{East, c(rNine, sDiamonds)},
 		},
 		// Trick 8: South leads A♠, all follow spades.
 		{
-			{South, c(ace, spades)},
-			{West, c(four, spades)},
-			{North, c(three, spades)},
-			{East, c(two, spades)},
+			{South, c(rAce, sSpades)},
+			{West, c(rFour, sSpades)},
+			{North, c(rThree, sSpades)},
+			{East, c(rTwo, sSpades)},
 		},
 		// Trick 9: South leads K♠, all follow spades.
 		{
-			{South, c(king, spades)},
-			{West, c(seven, spades)},
-			{North, c(six, spades)},
-			{East, c(five, spades)},
+			{South, c(rKing, sSpades)},
+			{West, c(rSeven, sSpades)},
+			{North, c(rSix, sSpades)},
+			{East, c(rFive, sSpades)},
 		},
 		// Trick 10: South leads J♠, all follow spades.
 		{
-			{South, c(jack, spades)},
-			{West, c(ten, spades)},
-			{North, c(nine, spades)},
-			{East, c(eight, spades)},
+			{South, c(rJack, sSpades)},
+			{West, c(rTen, sSpades)},
+			{North, c(rNine, sSpades)},
+			{East, c(rEight, sSpades)},
 		},
 		// Trick 11: South leads A♥. 4 pts.
 		{
-			{South, c(ace, hearts)},
-			{West, c(four, hearts)},
-			{North, c(five, hearts)},
-			{East, c(three, hearts)},
+			{South, c(rAce, sHearts)},
+			{West, c(rFour, sHearts)},
+			{North, c(rFive, sHearts)},
+			{East, c(rThree, sHearts)},
 		},
 		// Trick 12: South leads K♥. 4 pts.
 		{
-			{South, c(king, hearts)},
-			{West, c(seven, hearts)},
-			{North, c(eight, hearts)},
-			{East, c(six, hearts)},
+			{South, c(rKing, sHearts)},
+			{West, c(rSeven, sHearts)},
+			{North, c(rEight, sHearts)},
+			{East, c(rSix, sHearts)},
 		},
 		// Trick 13: South leads Q♥. 4 pts.
 		{
-			{South, c(queen, hearts)},
-			{West, c(ten, hearts)},
-			{North, c(jack, hearts)},
-			{East, c(nine, hearts)},
+			{South, c(rQueen, sHearts)},
+			{West, c(rTen, sHearts)},
+			{North, c(rJack, sHearts)},
+			{East, c(rNine, sHearts)},
 		},
 	}
 
@@ -1140,6 +1178,12 @@ func TestShootTheMoonIntegration(t *testing.T) {
 	}
 }
 
+// c is a shorthand constructor for cardcore.Card.
+func c(rank cardcore.Rank, suit cardcore.Suit) cardcore.Card {
+	return cardcore.Card{Rank: rank, Suit: suit}
+}
+
+// verifyWinner checks that the declared winner has the lowest score.
 func verifyWinner(t *testing.T, g *Game, game int) {
 	t.Helper()
 
@@ -1155,6 +1199,7 @@ func verifyWinner(t *testing.T, g *Game, game int) {
 	}
 }
 
+// newPassGame creates a dealt game in PhasePass for pass-related tests.
 func newPassGame(t *testing.T) *Game {
 	t.Helper()
 	g := New()
@@ -1164,6 +1209,7 @@ func newPassGame(t *testing.T) *Game {
 	return g
 }
 
+// playRandomRound plays one full round with random legal moves and validates invariants.
 func playRandomRound(t *testing.T, g *Game) {
 	t.Helper()
 
@@ -1233,6 +1279,7 @@ func playRandomRound(t *testing.T, g *Game) {
 	}
 }
 
+// newHoldGame creates a dealt hold-round game in PhasePlay.
 func newHoldGame(t *testing.T) *Game {
 	t.Helper()
 	g := New()
@@ -1243,6 +1290,7 @@ func newHoldGame(t *testing.T) *Game {
 	return g
 }
 
+// findHolder returns the seat holding the given card.
 func findHolder(g *Game, card cardcore.Card) Seat {
 	for i := Seat(0); i < NumPlayers; i++ {
 		if g.Hands[i].Contains(card) {
@@ -1252,6 +1300,7 @@ func findHolder(g *Game, card cardcore.Card) Seat {
 	panic("card not found in any hand")
 }
 
+// findAnyOtherCard returns any card in the seat's hand other than the excluded card.
 func findAnyOtherCard(g *Game, seat Seat, exclude cardcore.Card) cardcore.Card {
 	for _, card := range g.Hands[seat].Cards {
 		if !card.Equal(exclude) {
@@ -1261,11 +1310,12 @@ func findAnyOtherCard(g *Game, seat Seat, exclude cardcore.Card) cardcore.Card {
 	panic("no other card found")
 }
 
+// trickHistoryPoints sums penalty points across all completed tricks.
 func trickHistoryPoints(history []Trick) int {
 	pts := 0
 	for _, tr := range history {
 		for _, card := range tr.Cards {
-			if card.Suit == hearts {
+			if card.Suit == sHearts {
 				pts++
 			}
 			if card == queenOfSpades {
@@ -1276,6 +1326,7 @@ func trickHistoryPoints(history []Trick) int {
 	return pts
 }
 
+// playAnyValid plays a random legal card for the given seat.
 func playAnyValid(g *Game, seat Seat) {
 	legal, err := g.LegalMoves(seat)
 	if err != nil {
@@ -1298,32 +1349,31 @@ func setupFixedHands() *Game {
 	g.HeartsBroken = false
 
 	g.Hands[South] = cardcore.NewHand([]cardcore.Card{
-		twoOfClubs, c(five, clubs), c(jack, clubs),
-		c(three, diamonds), c(seven, diamonds), c(queen, diamonds),
-		c(four, hearts), c(eight, hearts), c(king, hearts),
-		c(three, spades), c(six, spades), c(ten, spades),
-		c(ace, spades),
+		twoOfClubs, c(rFive, sClubs), c(rJack, sClubs),
+		c(rThree, sDiamonds), c(rSeven, sDiamonds), c(rQueen, sDiamonds),
+		c(rFour, sHearts), c(rEight, sHearts), c(rKing, sHearts),
+		c(rThree, sSpades), c(rSix, sSpades), c(rTen, sSpades),
+		c(rAce, sSpades),
 	})
 	g.Hands[West] = cardcore.NewHand([]cardcore.Card{
-		c(three, clubs), c(seven, clubs), c(queen, clubs),
-		c(two, diamonds), c(six, diamonds), c(jack, diamonds),
-		c(two, hearts), c(six, hearts), c(ten, hearts),
-		c(four, spades), c(eight, spades), queenOfSpades,
-		c(king, spades),
+		c(rThree, sClubs), c(rSeven, sClubs), c(rQueen, sClubs),
+		c(rTwo, sDiamonds), c(rSix, sDiamonds), c(rJack, sDiamonds),
+		c(rTwo, sHearts), c(rSix, sHearts), c(rTen, sHearts),
+		c(rFour, sSpades), c(rEight, sSpades), queenOfSpades,
+		c(rKing, sSpades),
 	})
 	g.Hands[North] = cardcore.NewHand([]cardcore.Card{
-		c(four, clubs), c(eight, clubs), c(king, clubs),
-		c(four, diamonds), c(eight, diamonds), c(king, diamonds),
-		c(three, hearts), c(seven, hearts), c(jack, hearts),
-		c(two, spades), c(seven, spades), c(jack, spades),
-		c(ace, diamonds),
+		c(rFour, sClubs), c(rEight, sClubs), c(rKing, sClubs),
+		c(rFour, sDiamonds), c(rEight, sDiamonds), c(rKing, sDiamonds), c(rAce, sDiamonds),
+		c(rThree, sHearts), c(rSeven, sHearts), c(rJack, sHearts),
+		c(rTwo, sSpades), c(rSeven, sSpades), c(rJack, sSpades),
 	})
 	g.Hands[East] = cardcore.NewHand([]cardcore.Card{
-		c(six, clubs), c(nine, clubs), c(ten, clubs),
-		c(ace, clubs), c(five, diamonds), c(nine, diamonds),
-		c(ten, diamonds), c(five, hearts), c(nine, hearts),
-		c(queen, hearts), c(ace, hearts), c(five, spades),
-		c(nine, spades),
+		c(rSix, sClubs), c(rNine, sClubs), c(rTen, sClubs),
+		c(rAce, sClubs), c(rFive, sDiamonds), c(rNine, sDiamonds),
+		c(rTen, sDiamonds), c(rFive, sHearts), c(rNine, sHearts),
+		c(rQueen, sHearts), c(rAce, sHearts), c(rFive, sSpades),
+		c(rNine, sSpades),
 	})
 
 	g.Turn = South
@@ -1341,32 +1391,32 @@ func setupVoidClubs() *Game {
 	g.HeartsBroken = false
 
 	g.Hands[South] = cardcore.NewHand([]cardcore.Card{
-		twoOfClubs, c(three, clubs), c(four, clubs),
-		c(five, clubs), c(six, clubs), c(seven, clubs),
-		c(eight, clubs), c(nine, clubs), c(ten, clubs),
-		c(jack, clubs), c(queen, clubs), c(king, clubs),
-		c(ace, clubs),
+		twoOfClubs, c(rThree, sClubs), c(rFour, sClubs),
+		c(rFive, sClubs), c(rSix, sClubs), c(rSeven, sClubs),
+		c(rEight, sClubs), c(rNine, sClubs), c(rTen, sClubs),
+		c(rJack, sClubs), c(rQueen, sClubs), c(rKing, sClubs),
+		c(rAce, sClubs),
 	})
 	g.Hands[West] = cardcore.NewHand([]cardcore.Card{
-		c(two, diamonds), c(three, diamonds), c(four, diamonds),
-		c(two, hearts), c(three, hearts), c(four, hearts),
-		c(five, hearts), c(six, hearts), c(seven, hearts),
-		c(eight, hearts), c(nine, hearts), queenOfSpades,
-		c(two, spades),
+		c(rTwo, sDiamonds), c(rThree, sDiamonds), c(rFour, sDiamonds),
+		c(rTwo, sHearts), c(rThree, sHearts), c(rFour, sHearts),
+		c(rFive, sHearts), c(rSix, sHearts), c(rSeven, sHearts),
+		c(rEight, sHearts), c(rNine, sHearts),
+		c(rTwo, sSpades), queenOfSpades,
 	})
 	g.Hands[North] = cardcore.NewHand([]cardcore.Card{
-		c(five, diamonds), c(six, diamonds), c(seven, diamonds),
-		c(eight, diamonds), c(nine, diamonds), c(ten, diamonds),
-		c(jack, diamonds), c(queen, diamonds), c(king, diamonds),
-		c(three, spades), c(four, spades), c(five, spades),
-		c(six, spades),
+		c(rFive, sDiamonds), c(rSix, sDiamonds), c(rSeven, sDiamonds),
+		c(rEight, sDiamonds), c(rNine, sDiamonds), c(rTen, sDiamonds),
+		c(rJack, sDiamonds), c(rQueen, sDiamonds), c(rKing, sDiamonds),
+		c(rThree, sSpades), c(rFour, sSpades), c(rFive, sSpades),
+		c(rSix, sSpades),
 	})
 	g.Hands[East] = cardcore.NewHand([]cardcore.Card{
-		c(ace, diamonds), c(ten, hearts), c(jack, hearts),
-		c(queen, hearts), c(king, hearts), c(ace, hearts),
-		c(seven, spades), c(eight, spades), c(nine, spades),
-		c(ten, spades), c(jack, spades), c(king, spades),
-		c(ace, spades),
+		c(rAce, sDiamonds), c(rTen, sHearts), c(rJack, sHearts),
+		c(rQueen, sHearts), c(rKing, sHearts), c(rAce, sHearts),
+		c(rSeven, sSpades), c(rEight, sSpades), c(rNine, sSpades),
+		c(rTen, sSpades), c(rJack, sSpades), c(rKing, sSpades),
+		c(rAce, sSpades),
 	})
 
 	g.Turn = South
