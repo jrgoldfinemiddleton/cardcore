@@ -34,9 +34,14 @@ cardcore/
 │   │   ├── bug_report.yml
 │   │   └── config.yml   # Redirects features/questions to Discussions
 │   └── workflows/
-│       ├── pr.yml       # PR validation: title check, make check, changelog nudge
-│       ├── main.yml     # Push to main: make check
-│       └── release.yml  # Tag push: validate, test, create GitHub Release
+│       ├── pr.yml             # PR validation: title check, make check, changelog nudge
+│       ├── main.yml           # Push to main: make check
+│       ├── release.yml        # Tag push: validate, test, create GitHub Release
+│       ├── labels-sync.yml    # Push to main: provision repository label set
+│       └── labels-apply.yml   # PR events: auto-apply scope/state labels
+├── scripts/
+│   ├── sync-labels.sh   # Source of truth for the repository label set
+│   └── apply-labels.sh  # Compute and apply labels for a PR
 ├── CONTRIBUTING.md      # Contribution guidelines
 ├── SECURITY.md          # Vulnerability reporting
 ├── Makefile             # Build/test/lint targets
@@ -66,6 +71,7 @@ cardcore/
 - Never edit an ADR file after its initial commit — write a new one instead
 - Never use `//nolint` directives to silence lint errors — fix the code instead
 - Never tag a v1.0.0 or higher release — the root package is not yet stable enough for a v1.0.0 commitment
+- Never manually apply `scope:*` labels to PRs — they are computed automatically from changed paths by `scripts/apply-labels.sh`. Edit the script's path rules if a label is wrong.
 
 ## 5. Development Workflow
 1. Make a change

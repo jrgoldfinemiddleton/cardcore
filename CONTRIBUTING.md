@@ -45,23 +45,27 @@ This project follows **Rules-Driven Development** (see
 [ADR-006](doc/decisions/006-rules-driven-development.md)). When adding a
 new game:
 
-1. **Document the rules.** Write `doc/games/<game>/rules.md` with the
+1. **Register the label.** Add `scope:<game>` to
+   `scripts/sync-labels.sh` and add path-mapping rules for
+   `games/<game>/` and `games/<game>/ai/` to
+   `scripts/apply-labels.sh`.
+2. **Document the rules.** Write `doc/games/<game>/rules.md` with the
    complete standard rules and any known variants. The rules document is
    the specification — it must be precise, unambiguous, and readable by
    non-technical players. For established games, cite primary references.
    For original games, the rules document itself is the authoritative
    definition. The rules document may be submitted as its own PR before
    any implementation work begins.
-2. **Implement the game.** Create a package under `games/<game>/`. Build
+3. **Implement the game.** Create a package under `games/<game>/`. Build
    the implementation against the rules document.
-3. **Add a package doc.** Create `games/<game>/doc.go` with a concise
+4. **Add a package doc.** Create `games/<game>/doc.go` with a concise
    overview (see `games/hearts/doc.go` for the pattern).
-4. **Write tests.** Test every rule and edge case described in the rules
+5. **Write tests.** Test every rule and edge case described in the rules
    document. Include an integration test that plays a complete game from
    start to finish, verifying structural invariants (e.g., hand depletion,
    phase transitions) hold throughout. Implemented variants require
    integration tests.
-5. **Run `make check`.** Must pass clean before opening a PR.
+6. **Run `make check`.** Must pass clean before opening a PR.
 
 ## Changing Existing Rules
 
