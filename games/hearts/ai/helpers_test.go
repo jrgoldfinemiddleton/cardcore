@@ -37,8 +37,16 @@ func c(r cardcore.Rank, s cardcore.Suit) cardcore.Card {
 	return cardcore.Card{Rank: r, Suit: s}
 }
 
-// playRoundWithPlayer plays one complete round (deal, pass, play, score) and verifies point conservation.
+// playRoundWithPlayer plays one complete round using a single Player for all
+// four seats. Convenience wrapper around playRoundWithPlayers.
 func playRoundWithPlayer(t *testing.T, g *hearts.Game, p hearts.Player, seed uint64) {
+	t.Helper()
+	playRoundWithPlayers(t, g, [hearts.NumPlayers]hearts.Player{p, p, p, p}, seed)
+}
+
+// playRoundWithPlayers plays one complete round (deal, pass, play, score) using
+// a distinct Player per seat and verifies point conservation.
+func playRoundWithPlayers(t *testing.T, g *hearts.Game, players [hearts.NumPlayers]hearts.Player, seed uint64) {
 	t.Helper()
 
 	if err := g.Deal(); err != nil {
@@ -47,7 +55,7 @@ func playRoundWithPlayer(t *testing.T, g *hearts.Game, p hearts.Player, seed uin
 
 	if g.Phase == hearts.PhasePass {
 		for i := hearts.Seat(0); i < hearts.NumPlayers; i++ {
-			cards := p.ChoosePass(g.Clone(), i)
+			cards := players[i].ChoosePass(g.Clone(), i)
 			if err := g.SetPass(i, cards); err != nil {
 				t.Fatalf("seed %d: SetPass(%d) error: %v", seed, i, err)
 			}
@@ -56,7 +64,7 @@ func playRoundWithPlayer(t *testing.T, g *hearts.Game, p hearts.Player, seed uin
 
 	for g.Phase == hearts.PhasePlay {
 		seat := g.Turn
-		card := p.ChoosePlay(g.Clone(), seat)
+		card := players[seat].ChoosePlay(g.Clone(), seat)
 		if err := g.PlayCard(seat, card); err != nil {
 			t.Fatalf("seed %d: PlayCard(%d, %v) error: %v", seed, seat, card, err)
 		}

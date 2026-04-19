@@ -3,6 +3,7 @@ package ai
 import (
 	"math/rand/v2"
 	"testing"
+	"time"
 
 	"github.com/jrgoldfinemiddleton/cardcore"
 	"github.com/jrgoldfinemiddleton/cardcore/games/hearts"
@@ -2087,12 +2088,105 @@ func TestHeuristicFullGameIntegration(t *testing.T) {
 	}
 }
 
+// TestHeuristicStatisticalCompetenceIntegration runs 1000 complete games with
+// one Heuristic player against three Random opponents and asserts the
+// Heuristic wins more than 75% of the time, both in aggregate and per seat. A
+// purely random player would win ~25% by chance (1 in 4); the 75% threshold
+// represents a meaningful skill margin while leaving headroom for honest
+// future tuning. The Heuristic seat rotates across games (game % 4) so the
+// per-seat assertion catches position-dependent skill that the aggregate
+// would hide. The master seed is time-based and logged on every run so a
+// failure can be reproduced by temporarily hardcoding the logged seed.
+func TestHeuristicStatisticalCompetenceIntegration(t *testing.T) {
+	const (
+		numGames          = 1000
+		maxRounds         = 20
+		minWinRate        = 0.75
+		minWinRatePerSeat = 0.75
+	)
+	masterSeed := uint64(time.Now().UnixNano())
+	t.Logf("masterSeed = %d (hardcode this to reproduce a failure)", masterSeed)
+
+	var (
+		winsPerSeat  [hearts.NumPlayers]int
+		gamesPerSeat [hearts.NumPlayers]int
+	)
+
+	for game := range numGames {
+		heuristicSeat := hearts.Seat(game % int(hearts.NumPlayers))
+
+		// Each player gets its own deterministic RNG derived from the master
+		// seed and (game, seat) so runs are reproducible and players don't
+		// share RNG state.
+		var players [hearts.NumPlayers]hearts.Player
+		for seat := hearts.Seat(0); seat < hearts.NumPlayers; seat++ {
+			playerSeed := masterSeed + uint64(game)*uint64(hearts.NumPlayers) + uint64(seat)
+			if seat == heuristicSeat {
+				players[seat] = newSeededHeuristic(playerSeed)
+			} else {
+				players[seat] = newSeededRandom(playerSeed)
+			}
+		}
+
+		g := hearts.New()
+		for range maxRounds {
+			playRoundWithPlayers(t, g, players, uint64(game))
+			if g.Phase == hearts.PhaseEnd {
+				break
+			}
+		}
+		if g.Phase != hearts.PhaseEnd {
+			t.Fatalf("game %d: did not end within %d rounds", game, maxRounds)
+		}
+
+		winner, err := g.Winner()
+		if err != nil {
+			t.Fatalf("game %d: Winner error: %v", game, err)
+		}
+		gamesPerSeat[heuristicSeat]++
+		if winner == heuristicSeat {
+			winsPerSeat[heuristicSeat]++
+		}
+	}
+
+	totalWins := 0
+	for seat := hearts.Seat(0); seat < hearts.NumPlayers; seat++ {
+		totalWins += winsPerSeat[seat]
+	}
+	aggregateRate := float64(totalWins) / float64(numGames)
+
+	// Always log the breakdown so passing runs show the distribution too.
+	t.Logf("Heuristic wins: %d/%d aggregate (%.1f%%)",
+		totalWins, numGames, aggregateRate*100)
+	for seat := hearts.Seat(0); seat < hearts.NumPlayers; seat++ {
+		t.Logf("  seat %d: %d/%d (%.1f%%)",
+			seat, winsPerSeat[seat], gamesPerSeat[seat],
+			float64(winsPerSeat[seat])*100/float64(gamesPerSeat[seat]))
+	}
+
+	if aggregateRate <= minWinRate {
+		t.Errorf("aggregate: Heuristic won %d/%d (%.1f%%); want > %.0f%%",
+			totalWins, numGames, aggregateRate*100, minWinRate*100)
+	}
+	// Per-seat threshold catches position-dependent skill that aggregate hides.
+	for seat := hearts.Seat(0); seat < hearts.NumPlayers; seat++ {
+		seatRate := float64(winsPerSeat[seat]) / float64(gamesPerSeat[seat])
+		if seatRate <= minWinRatePerSeat {
+			t.Errorf("seat %d: Heuristic won %d/%d (%.1f%%); want > %.0f%%",
+				seat, winsPerSeat[seat], gamesPerSeat[seat],
+				seatRate*100, minWinRatePerSeat*100)
+		}
+	}
+}
+
 // newSeededHeuristic creates a Heuristic player with a deterministic RNG for
 // test
 // reproducibility.
 func newSeededHeuristic(seed uint64) *Heuristic {
 	return NewHeuristic(rand.New(rand.NewPCG(seed, seed+1)))
 }
+
+// TestHeuristicStatisticalCompetence runs 1000 complete games with one
 
 // setupPassHand replaces a player's hand with the given cards for pass testing.
 func setupPassHand(t *testing.T, g *hearts.Game, seat hearts.Seat, cards []cardcore.Card) {
