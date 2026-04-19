@@ -1,0 +1,24 @@
+name: Labels Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/sync-labels.sh
+      - .github/workflows/labels-sync.yml
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  sync:
+    name: Sync repository label set
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Sync labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/sync-labels.sh

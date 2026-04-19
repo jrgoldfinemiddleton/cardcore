@@ -1,5 +1,10 @@
 name: PR changelog
 
+# Maintainer note: uses pull_request_target so fork PRs get the
+# changelog reminder. Do NOT add `actions/checkout` of the PR ref in
+# future edits — that would execute fork code with write access. We
+# only read PR metadata via the GitHub API.
+
 on:
   pull_request_target:
     types: [opened, synchronize]
