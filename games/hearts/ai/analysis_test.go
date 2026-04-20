@@ -1103,8 +1103,8 @@ func TestDeriveShootActiveHeartsFromSeatReconstruction(t *testing.T) {
 func TestHoldsHighestHeartMidRankPositive(t *testing.T) {
 	a := analysis{}
 	// Mark A♥ through 6♥ as played.
-	for rank := cardcore.Ace; rank >= cardcore.Six; rank-- {
-		a.played[cardcore.Hearts][rank] = true
+	for rank := rAce; rank >= rSix; rank-- {
+		a.played[sHearts][rank] = true
 	}
 
 	// Seat holds 5♥ — the highest unplayed heart.
@@ -1130,8 +1130,8 @@ func TestHoldsHighestHeartMidRankPositive(t *testing.T) {
 func TestHoldsHighestHeartMidRankNegative(t *testing.T) {
 	a := analysis{}
 	// Mark A♥ through 6♥ as played.
-	for rank := cardcore.Ace; rank >= cardcore.Six; rank-- {
-		a.played[cardcore.Hearts][rank] = true
+	for rank := rAce; rank >= rSix; rank-- {
+		a.played[sHearts][rank] = true
 	}
 
 	// Seat holds 4♥ but NOT 5♥.
