@@ -115,7 +115,7 @@ func TestHandSort(t *testing.T) {
 
 	h.Sort()
 
-	expected := []Card{
+	want := []Card{
 		{Two, Clubs},
 		{King, Clubs},
 		{Five, Diamonds},
@@ -124,9 +124,9 @@ func TestHandSort(t *testing.T) {
 		{Ace, Spades},
 	}
 
-	for i, want := range expected {
-		if !h.Cards[i].Equal(want) {
-			t.Errorf("sorted[%d] = %v, want %v", i, h.Cards[i], want)
+	for i, c := range want {
+		if !h.Cards[i].Equal(c) {
+			t.Errorf("sorted[%d] = %v, want %v", i, h.Cards[i], c)
 		}
 	}
 }

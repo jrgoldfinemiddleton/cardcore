@@ -61,6 +61,7 @@ cardcore/
 - Place AI in `games/<game>/ai/` subpackages
 - Follow [ADR-008](doc/decisions/008-ai-design-principles.md) when implementing AI — read-only access to live game state, stdlib-only, separate type per difficulty
 - Keep the Go version in `go.mod` aligned with the minimum version stated in `README.md`
+- Read `CONTRIBUTING.md` for general project conventions (naming, changelog rules, code style, doc comments) before making changes — many rules live there rather than being duplicated here.
 
 ## 4. Never Do
 - Never add external dependencies — stdlib only
@@ -100,6 +101,7 @@ cardcore/
   - Scenarios that require multiple subsystems cooperating (e.g., trick resolution → point accumulation → score detection → special scoring logic) need their own integration tests — unit tests on each piece in isolation are not sufficient
   - Implemented variants require integration tests — exceptions need significant justification
   - Test files in game packages (and their subpackages) must define prefixed const aliases for `cardcore` ranks and suits — `rAce`, `rTwo`, …, `rKing` for ranks and `sClubs`, `sDiamonds`, `sHearts`, `sSpades` for suits. Use these aliases in all test code instead of qualified `cardcore.Rank`/`cardcore.Suit` constants. Place the alias definitions in a shared test helpers file (e.g., `helpers_test.go`). The root `cardcore` package is exempt since it defines the constants directly.
+  - In tests, name expected-value variables `want` (and corresponding actual-value variables `got`) — never `expected`/`actual`. This matches Go standard library convention and pairs naturally with `"got X, want Y"` error messages.
 - **Formatting**: `gofmt` is enforced by `make check`; never manually format — let the tool do it
 - **Function ordering**: follow the conventions in [CONTRIBUTING.md](CONTRIBUTING.md#code-conventions) — `convention_test.go` enforces them automatically via `make check`
 - **Comments**: every function and method needs a doc comment starting with its name — `convention_test.go` enforces this automatically via `make check`
