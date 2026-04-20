@@ -70,8 +70,11 @@ cardcore/
 - Never commit with failing tests or lint errors
 - Never edit an ADR file after its initial commit — write a new one instead
 - Never use `//nolint` directives to silence lint errors — fix the code instead
+- Never write a decrementing `for` loop over a `cardcore.Rank`, `cardcore.Suit`, or any other unsigned named type using a condition like `r >= Two` — at zero the value wraps to a huge number and the loop runs forever or indexes out of bounds. If you need to iterate descending, use the headerless form with an explicit guarded break before the decrement that would underflow (see `games/hearts/ai/analysis.go` for an example, introduced in [PR #15](https://github.com/jrgoldfinemiddleton/cardcore/pull/15)).
 - Never tag a v1.0.0 or higher release — the root package is not yet stable enough for a v1.0.0 commitment
 - Never manually apply `scope:*` labels to PRs — they are computed automatically from changed paths by `scripts/apply-labels.sh`. Edit the script's path rules if a label is wrong.
+- Never write multi-line commit messages — use a one-line subject only and put all detail in the PR description.
+- Never cite `AGENTS.md` as the source of a rule from any other file in the repo — `AGENTS.md` may reference other files, but not vice versa. Mere mention or listing of `AGENTS.md` as a file (e.g., scripts that operate on it) is fine; this rule is about citation/deference, not mention.
 
 ## 5. Development Workflow
 1. Make a change
