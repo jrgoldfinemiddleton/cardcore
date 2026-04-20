@@ -14,4 +14,7 @@ issues:
   exclude-rules:
     - path: _test\.go
       linters:
-        - dupl # tests are often deliberately parallel; collapsing can obscure intent
+        - dupl     # tests are often deliberately parallel; collapsing can obscure intent
+        - cyclop   # test setup/assertion chains are inherently branchy and reading top-to-bottom is the point
+        - funlen   # table-driven and integration tests legitimately grow long
+        - gocognit # same rationale as cyclop; complexity is in the scenario, not the logic
