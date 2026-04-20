@@ -102,6 +102,7 @@ cardcore/
   - Implemented variants require integration tests — exceptions need significant justification
   - Test files in game packages (and their subpackages) must define prefixed const aliases for `cardcore` ranks and suits — `rAce`, `rTwo`, …, `rKing` for ranks and `sClubs`, `sDiamonds`, `sHearts`, `sSpades` for suits. Use these aliases in all test code instead of qualified `cardcore.Rank`/`cardcore.Suit` constants. Place the alias definitions in a shared test helpers file (e.g., `helpers_test.go`). The root `cardcore` package is exempt since it defines the constants directly.
   - In tests, name expected-value variables `want` (and corresponding actual-value variables `got`) — never `expected`/`actual`. This matches Go standard library convention and pairs naturally with `"got X, want Y"` error messages.
+  - Test failure messages use `"got X, want Y"` form — never `"expected X, got Y"` (wrong order) or `"expected X"` (passive). No colon after `got` (`"got %v, want %v"`, not `"got: %v, want %v"`). Soft convention; not enforced by `convention_test.go`.
 - **Formatting**: `gofmt` is enforced by `make check`; never manually format — let the tool do it
 - **Function ordering**: follow the conventions in [CONTRIBUTING.md](CONTRIBUTING.md#code-conventions) — `convention_test.go` enforces them automatically via `make check`
 - **Comments**: every function and method needs a doc comment starting with its name — `convention_test.go` enforces this automatically via `make check`

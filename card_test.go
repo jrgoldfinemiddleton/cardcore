@@ -6,7 +6,7 @@ import "testing"
 func TestAllSuits(t *testing.T) {
 	suits := AllSuits()
 	if len(suits) != NumSuits {
-		t.Fatalf("expected %d suits, got %d", NumSuits, len(suits))
+		t.Fatalf("len(AllSuits()) = %d, want %d", len(suits), NumSuits)
 	}
 	for i, s := range suits {
 		if s != Suit(i) {
@@ -66,7 +66,7 @@ func TestInvalidSuit(t *testing.T) {
 func TestAllRanks(t *testing.T) {
 	ranks := AllRanks()
 	if len(ranks) != NumRanks {
-		t.Fatalf("expected %d ranks, got %d", NumRanks, len(ranks))
+		t.Fatalf("len(AllRanks()) = %d, want %d", len(ranks), NumRanks)
 	}
 	for i, r := range ranks {
 		if r != Rank(i) {
@@ -256,11 +256,11 @@ func TestDeckDealErrors(t *testing.T) {
 	d := NewStandardDeck()
 
 	if _, err := d.Deal(-1); err == nil {
-		t.Error("expected error for negative deal")
+		t.Error("Deal(-1) returned nil error, want non-nil")
 	}
 
 	if _, err := d.Deal(53); err == nil {
-		t.Error("expected error for over-deal")
+		t.Error("Deal(53) returned nil error, want non-nil")
 	}
 }
 

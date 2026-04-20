@@ -227,7 +227,7 @@ func TestChoosePassPassesUnprotectedQueen(t *testing.T) {
 	cards := h.ChoosePass(g, hearts.South)
 
 	if !passedContains(cards, queenOfSpades) {
-		t.Errorf("expected unprotected Q♠ to be passed, got %v", cards)
+		t.Errorf("got %v, want pass to contain unprotected Q♠", cards)
 	}
 }
 
@@ -259,7 +259,7 @@ func TestChoosePassKeepsProtectedQueen(t *testing.T) {
 	cards := h.ChoosePass(g, hearts.South)
 
 	if passedContains(cards, queenOfSpades) {
-		t.Errorf("expected protected Q♠ to be kept, but it was passed: %v", cards)
+		t.Errorf("pass = %v, want protected Q♠ kept", cards)
 	}
 }
 
@@ -292,10 +292,10 @@ func TestChoosePassKeepsHighSpadesWithProtectedQueen(t *testing.T) {
 	cards := h.ChoosePass(g, hearts.South)
 
 	if passedContains(cards, aceOfSpades) {
-		t.Errorf("expected A♠ to be kept with protected Q♠, but it was passed: %v", cards)
+		t.Errorf("pass = %v, want A♠ kept with protected Q♠", cards)
 	}
 	if passedContains(cards, kingOfSpades) {
-		t.Errorf("expected K♠ to be kept with protected Q♠, but it was passed: %v", cards)
+		t.Errorf("pass = %v, want K♠ kept with protected Q♠", cards)
 	}
 }
 
@@ -328,10 +328,10 @@ func TestChoosePassPrefersHighSpades(t *testing.T) {
 	cards := h.ChoosePass(g, hearts.South)
 
 	if !passedContains(cards, aceOfSpades) {
-		t.Errorf("expected A♠ to be passed, got %v", cards)
+		t.Errorf("got %v, want A♠ passed", cards)
 	}
 	if !passedContains(cards, kingOfSpades) {
-		t.Errorf("expected K♠ to be passed, got %v", cards)
+		t.Errorf("got %v, want K♠ passed", cards)
 	}
 }
 
@@ -363,7 +363,7 @@ func TestChoosePassVoidsShortSuit(t *testing.T) {
 	cards := h.ChoosePass(g, hearts.South)
 
 	if !passedContains(cards, c(rSeven, sDiamonds)) {
-		t.Errorf("expected singleton 7♦ to be passed, got %v", cards)
+		t.Errorf("got %v, want singleton 7♦ passed", cards)
 	}
 }
 
@@ -395,10 +395,10 @@ func TestChoosePassVoidsTwoShortSuits(t *testing.T) {
 	cards := h.ChoosePass(g, hearts.South)
 
 	if !passedContains(cards, c(rThree, sDiamonds)) {
-		t.Errorf("expected singleton 3♦ to be passed, got %v", cards)
+		t.Errorf("got %v, want singleton 3♦ passed", cards)
 	}
 	if !passedContains(cards, c(rTwo, sHearts)) {
-		t.Errorf("expected singleton 2♥ to be passed, got %v", cards)
+		t.Errorf("got %v, want singleton 2♥ passed", cards)
 	}
 }
 
@@ -440,7 +440,7 @@ func TestChoosePassTieBreaking(t *testing.T) {
 	}
 
 	if len(seen) <= hearts.PassCount {
-		t.Errorf("expected tie-breaking to vary selections across seeds, but only saw %d distinct cards", len(seen))
+		t.Errorf("distinct tie-broken cards across seeds = %d, want > PassCount (%d)", len(seen), hearts.PassCount)
 	}
 }
 
@@ -734,7 +734,7 @@ func TestChooseLeadAvoidsHearts(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.South)
 
 	if card.Suit == sHearts {
-		t.Errorf("expected non-heart lead, got %v", card)
+		t.Errorf("got %v, want non-heart lead", card)
 	}
 }
 
@@ -768,7 +768,7 @@ func TestFollowLastCleanTrickWinsWithHighest(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.East)
 
 	if card != c(rJack, sClubs) {
-		t.Errorf("expected J♣ (highest to win clean trick), got %v", card)
+		t.Errorf("got %v, want J♣ (highest to win clean trick)", card)
 	}
 }
 
@@ -810,7 +810,7 @@ func TestFollowLastTrickHasPointsShedsHighest(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.East)
 
 	if card != c(rJack, sHearts) {
-		t.Errorf("expected J♥ (forced to win, shed highest), got %v", card)
+		t.Errorf("got %v, want J♥ (forced to win, shed highest)", card)
 	}
 }
 
@@ -845,7 +845,7 @@ func TestFollowLastTrickHasPointsPrefersDuck(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.East)
 
 	if card != c(rEight, sClubs) {
-		t.Errorf("expected 8♣ (highest loser, +50 duck bonus over K♣), got %v", card)
+		t.Errorf("got %v, want 8♣ (highest loser, +50 duck bonus over K♣)", card)
 	}
 }
 
@@ -879,7 +879,7 @@ func TestFollowLastCleanTrickWins(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.East)
 
 	if card != c(rKing, sDiamonds) {
-		t.Errorf("expected K♦ (win clean trick, higher rank preferred), got %v", card)
+		t.Errorf("got %v, want K♦ (win clean trick, higher rank preferred)", card)
 	}
 }
 
@@ -914,7 +914,7 @@ func TestFollowLastCleanHighDangerPrefersDuck(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.East)
 
 	if card != c(rThree, sDiamonds) {
-		t.Errorf("expected 3♦ (high danger discourages winning clean trick), got %v", card)
+		t.Errorf("got %v, want 3♦ (high danger discourages winning clean trick)", card)
 	}
 }
 
@@ -948,7 +948,7 @@ func TestFollowNotLastPointsDucksLowestWinner(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.North)
 
 	if card != c(rEight, sDiamonds) {
-		t.Errorf("expected 8♦ (lowest winner to duck points), got %v", card)
+		t.Errorf("got %v, want 8♦ (lowest winner to duck points)", card)
 	}
 }
 
@@ -982,7 +982,7 @@ func TestFollowNotLastCleanWins(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.West)
 
 	if card != c(rKing, sDiamonds) {
-		t.Errorf("expected K♦ (win clean trick, higher rank preferred), got %v", card)
+		t.Errorf("got %v, want K♦ (win clean trick, higher rank preferred)", card)
 	}
 }
 
@@ -1012,7 +1012,7 @@ func TestFollowUnderWinnerShedsHighest(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.West)
 
 	if card != c(rEight, sClubs) {
-		t.Errorf("expected 8♣ (highest that still loses to 10♣), got %v", card)
+		t.Errorf("got %v, want 8♣ (highest that still loses to 10♣)", card)
 	}
 }
 
@@ -1044,7 +1044,7 @@ func TestFollowQueenOfSpadesDumpsUnderHigherSpade(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.East)
 
 	if card != queenOfSpades {
-		t.Errorf("expected Q♠ (dump under A♠ in trick), got %v", card)
+		t.Errorf("got %v, want Q♠ (dump under A♠ in trick)", card)
 	}
 }
 
@@ -1076,7 +1076,7 @@ func TestFollowQueenOfSpadesAvoidsWithoutHigherSpade(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.East)
 
 	if card == queenOfSpades {
-		t.Errorf("expected non-Q♠ (no spade above queen to hide behind), got Q♠")
+		t.Errorf("got Q♠, want non-Q♠ (no spade above queen to hide behind)")
 	}
 }
 
@@ -1107,7 +1107,7 @@ func TestVoidDumpsQueenOfSpades(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.West)
 
 	if card != queenOfSpades {
-		t.Errorf("expected Q♠ (dump over A♠), got %v", card)
+		t.Errorf("got %v, want Q♠ (dump over A♠)", card)
 	}
 }
 
@@ -1137,7 +1137,7 @@ func TestVoidDumpsAceOfSpades(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.West)
 
 	if card != aceOfSpades {
-		t.Errorf("expected A♠ (dump high spade over A♥ and A♦), got %v", card)
+		t.Errorf("got %v, want A♠ (dump high spade over A♥ and A♦)", card)
 	}
 }
 
@@ -1168,7 +1168,7 @@ func TestVoidPrefersHeartsOverNonPenalty(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.West)
 
 	if card != c(rKing, sHearts) {
-		t.Errorf("expected K♥ (hearts over same-rank non-penalty), got %v", card)
+		t.Errorf("got %v, want K♥ (hearts over same-rank non-penalty)", card)
 	}
 }
 
@@ -1199,7 +1199,7 @@ func TestFollowMoonBlockPrefersWinning(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.South)
 
 	if card != c(rTen, sSpades) {
-		t.Errorf("expected 10♠ (moon block prefers winning), got %v", card)
+		t.Errorf("got %v, want 10♠ (moon block prefers winning)", card)
 	}
 }
 
@@ -1228,7 +1228,7 @@ func TestFollowMoonBlockGateTrickNumTooLow(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.South)
 
 	if card == c(rTen, sSpades) {
-		t.Errorf("expected duck (trickNum < 6, no moon block), got 10♠")
+		t.Errorf("got 10♠, want duck (trickNum < 6, no moon block)")
 	}
 }
 
@@ -1255,7 +1255,7 @@ func TestFollowMoonBlockGateSelfIsThreat(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.East)
 
 	if card == c(rTen, sSpades) {
-		t.Errorf("expected normal play (self is threat, no block), got 10♠")
+		t.Errorf("got 10♠, want normal play (self is threat, no block)")
 	}
 }
 
@@ -1284,7 +1284,7 @@ func TestVoidMoonBlockSuppressesHeartsDumpWhenThreatWins(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.South)
 
 	if card.Suit == sHearts {
-		t.Errorf("expected non-heart (suppress hearts dump when threat wins), got %v", card)
+		t.Errorf("got %v, want non-heart (suppress hearts dump when threat wins)", card)
 	}
 }
 
@@ -1313,7 +1313,7 @@ func TestVoidMoonBlockAllowsHeartsDumpWhenThreatLoses(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.South)
 
 	if card != c(rKing, sHearts) {
-		t.Errorf("expected K♥ (highest heart, dump allowed when threat loses), got %v", card)
+		t.Errorf("got %v, want K♥ (highest heart, dump allowed when threat loses)", card)
 	}
 }
 
@@ -1342,7 +1342,7 @@ func TestVoidMoonBlockGateTrickNumTooLow(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.South)
 
 	if card != c(rKing, sHearts) {
-		t.Errorf("expected K♥ (gate fails, normal +10 dump, highest heart), got %v", card)
+		t.Errorf("got %v, want K♥ (gate fails, normal +10 dump, highest heart)", card)
 	}
 }
 
@@ -1367,7 +1367,7 @@ func TestLeadMoonBlockPrefersHighHearts(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.North)
 
 	if card != c(rAce, sHearts) {
-		t.Errorf("expected A♥ (high heart moon block lead), got %v", card)
+		t.Errorf("got %v, want A♥ (high heart moon block lead)", card)
 	}
 }
 
@@ -1391,7 +1391,7 @@ func TestLeadMoonBlockLowHeartsStillPreferred(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.North)
 
 	if card.Suit != sHearts {
-		t.Errorf("expected heart lead (moon block, +15 bonus), got %v", card)
+		t.Errorf("got %v, want heart lead (moon block, +15 bonus)", card)
 	}
 }
 
@@ -1436,7 +1436,7 @@ func TestLeadNoMoonThreatNormalHeartPenalty(t *testing.T) {
 	card := h.ChoosePlay(g, hearts.East)
 
 	if card.Suit == sHearts {
-		t.Errorf("expected non-heart (no moon threat, -15 penalty), got %v", card)
+		t.Errorf("got %v, want non-heart (no moon threat, -15 penalty)", card)
 	}
 }
 
@@ -1561,7 +1561,7 @@ func TestChoosePassShootKeepsHearts(t *testing.T) {
 
 	for _, card := range cards {
 		if card.Suit == sHearts {
-			t.Errorf("expected no hearts passed when shooting, but passed %v (all 3: %v)", card, cards)
+			t.Errorf("shooter passed heart %v, want all hearts kept (all 3: %v)", card, cards)
 			break
 		}
 	}

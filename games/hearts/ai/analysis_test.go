@@ -41,7 +41,7 @@ func TestAnalyzePlayedCards(t *testing.T) {
 	}
 	for _, card := range want {
 		if !a.played[card.Suit][card.Rank] {
-			t.Errorf("expected %v to be marked played", card)
+			t.Errorf("a.played[%v] = false, want true", card)
 		}
 	}
 
