@@ -135,40 +135,10 @@ func (a *analysis) detectShootCandidate(hand *cardcore.Hand) {
 	if len(heartCards) < 7 {
 		return
 	}
-
-	hasAceHearts := false
-	hasKingHearts := false
-	hasQueenHearts := false
-	for _, c := range heartCards {
-		switch c.Rank {
-		case cardcore.Ace:
-			hasAceHearts = true
-		case cardcore.King:
-			hasKingHearts = true
-		case cardcore.Queen:
-			hasQueenHearts = true
-		default:
-			// other ranks irrelevant for moon-shoot detection
-		}
-	}
-	if !hasAceHearts || !hasKingHearts || !hasQueenHearts {
+	if !hasAKQHearts(heartCards) {
 		return
 	}
-
-	hasSideAce := false
-	for _, suit := range []cardcore.Suit{cardcore.Clubs, cardcore.Diamonds, cardcore.Spades} {
-		for _, c := range hand.CardsOfSuit(suit) {
-			if c.Rank == cardcore.Ace {
-				hasSideAce = true
-				break
-			}
-		}
-		if hasSideAce {
-			break
-		}
-	}
-
-	a.considerShoot = hasSideAce
+	a.considerShoot = hasSideAce(hand)
 }
 
 // deriveShootActive determines whether the seat should play to shoot
@@ -204,23 +174,8 @@ func (a *analysis) deriveShootActive(hand *cardcore.Hand) {
 		return
 	}
 
-	hasAceHearts := false
-	hasKingHearts := false
-	hasQueenHearts := false
-	for _, c := range hand.CardsOfSuit(cardcore.Hearts) {
-		switch c.Rank {
-		case cardcore.Ace:
-			hasAceHearts = true
-		case cardcore.King:
-			hasKingHearts = true
-		case cardcore.Queen:
-			hasQueenHearts = true
-		default:
-			// other ranks irrelevant for moon-shoot detection
-		}
-	}
-
-	a.shootActive = hasAceHearts && hasKingHearts && hasQueenHearts
+	heartCards := hand.CardsOfSuit(cardcore.Hearts)
+	a.shootActive = hasAKQHearts(heartCards)
 }
 
 // holdsHighestHeart reports whether the seat holds the highest heart
@@ -276,6 +231,34 @@ func (a *analysis) guaranteedLowest(card cardcore.Card) bool {
 func (a *analysis) opponentVoidInSuit(suit cardcore.Suit) bool {
 	for s := hearts.Seat(0); s < hearts.NumPlayers; s++ {
 		if s != a.seat && a.voids[s][suit] {
+			return true
+		}
+	}
+	return false
+}
+
+// hasAKQHearts reports whether heartCards contains all three of A♥, K♥, Q♥.
+func hasAKQHearts(heartCards []cardcore.Card) bool {
+	var a, k, q bool
+	for _, c := range heartCards {
+		switch c.Rank {
+		case cardcore.Ace:
+			a = true
+		case cardcore.King:
+			k = true
+		case cardcore.Queen:
+			q = true
+		default:
+			// other ranks irrelevant for moon-shoot detection
+		}
+	}
+	return a && k && q
+}
+
+// hasSideAce reports whether hand holds the ace of any non-heart suit.
+func hasSideAce(hand *cardcore.Hand) bool {
+	for _, suit := range []cardcore.Suit{cardcore.Clubs, cardcore.Diamonds, cardcore.Spades} {
+		if hand.Contains(cardcore.Card{Rank: cardcore.Ace, Suit: suit}) {
 			return true
 		}
 	}

@@ -273,6 +273,38 @@ func shootVoidScore(card cardcore.Card, _ *hearts.Game, _ analysis) int {
 	return int(cardcore.Ace) - int(card.Rank)
 }
 
+// spadeFlushScore returns the spade-flush adjustment when leading
+// spades below an unseen Q♠. Returns 0 when the rule does not apply.
+func spadeFlushScore(card cardcore.Card, hand *cardcore.Hand, a analysis) int {
+	if card.Suit != cardcore.Spades || a.queen == queenPlayed || a.queen == queenInHand {
+		return 0
+	}
+	if hand.Contains(aceOfSpades) || hand.Contains(kingOfSpades) {
+		// High spades at risk — avoid leading spades.
+		return -20
+	}
+	// No high spades — safe to flush. Prefer highest below Q♠
+	// to maximize chance of winning the trick and leading again.
+	return 10 + int(card.Rank)
+}
+
+// heartLeadScore returns the hearts-lead adjustment. Generally avoid
+// leading hearts; under moon threat, lead them to block (high hearts
+// win outright; low hearts open the contest). Returns 0 for non-hearts.
+func heartLeadScore(card cardcore.Card, g *hearts.Game, a analysis) int {
+	if card.Suit != cardcore.Hearts {
+		return 0
+	}
+	moonBlock := a.moonThreat >= 0 && a.moonThreat != int(a.seat) && g.TrickNum >= 6
+	if !moonBlock {
+		return -15
+	}
+	if card.Rank >= cardcore.King {
+		return 30
+	}
+	return 15
+}
+
 // leadScore returns how desirable it is to lead this card.
 // Higher scores are preferred.
 func leadScore(card cardcore.Card, g *hearts.Game, a analysis) int {
@@ -314,34 +346,8 @@ func leadScore(card cardcore.Card, g *hearts.Game, a analysis) int {
 		score -= 40
 	}
 
-	// Spade flush: lead spades below Q♠ to draw it out.
-	if suit == cardcore.Spades && a.queen != queenPlayed && a.queen != queenInHand {
-		if hand.Contains(aceOfSpades) || hand.Contains(kingOfSpades) {
-			// High spades at risk — avoid leading spades.
-			score -= 20
-		} else {
-			// No high spades — safe to flush. Prefer highest below Q♠
-			// to maximize chance of winning the trick and leading again.
-			score += 10
-			score += int(card.Rank)
-		}
-	}
-
-	// Hearts: generally avoid leading.
-	// Under moon threat, lead hearts to block. High hearts
-	// (A♥, K♥) win the trick outright; low hearts open the contest.
-	moonBlock := a.moonThreat >= 0 && a.moonThreat != int(a.seat) && g.TrickNum >= 6
-	if suit == cardcore.Hearts {
-		if moonBlock {
-			if card.Rank >= cardcore.King {
-				score += 30
-			} else {
-				score += 15
-			}
-		} else {
-			score -= 15
-		}
-	}
+	score += spadeFlushScore(card, hand, a)
+	score += heartLeadScore(card, g, a)
 
 	return score
 }

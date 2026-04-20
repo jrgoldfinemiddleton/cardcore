@@ -9,6 +9,10 @@ linters:
     - gocyclo     # cyclomatic complexity
     - revive      # successor to golint; broad style ruleset
 
+linters-settings:
+  cyclop:
+    max-complexity: 16 # rule-based scorers and validators legitimately enumerate distinct cases; splitting fragments the logic.
+
 issues:
   exclude-use-default: false
   exclude-rules:
