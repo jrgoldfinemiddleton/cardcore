@@ -274,26 +274,30 @@ func (g *Game) validatePlay(seat Seat, card cardcore.Card) error {
 	if !g.Hands[seat].Contains(card) {
 		return fmt.Errorf("player %d does not have %v", seat, card)
 	}
+	if g.Trick.Count == 0 {
+		return g.validateLead(seat, card)
+	}
+	return g.validateFollow(seat, card)
+}
 
-	isLeading := g.Trick.Count == 0
-
-	if isLeading {
-		// First trick of the round: must lead 2♣.
-		if g.TrickNum == 0 {
-			if card != twoOfClubs {
-				return fmt.Errorf("first trick must be led with 2♣")
-			}
-			return nil
-		}
-		// Cannot lead hearts until broken (unless only hearts remain).
-		if card.Suit == cardcore.Hearts && !g.HeartsBroken {
-			if !g.onlyHasHearts(seat) {
-				return fmt.Errorf("cannot lead hearts until hearts are broken")
-			}
+// validateLead checks that card is a legal lead for seat.
+func (g *Game) validateLead(seat Seat, card cardcore.Card) error {
+	// First trick of the round: must lead 2♣.
+	if g.TrickNum == 0 {
+		if card != twoOfClubs {
+			return fmt.Errorf("first trick must be led with 2♣")
 		}
 		return nil
 	}
+	// Cannot lead hearts until broken (unless only hearts remain).
+	if card.Suit == cardcore.Hearts && !g.HeartsBroken && !g.onlyHasHearts(seat) {
+		return fmt.Errorf("cannot lead hearts until hearts are broken")
+	}
+	return nil
+}
 
+// validateFollow checks that card is a legal follow for seat in the current trick.
+func (g *Game) validateFollow(seat Seat, card cardcore.Card) error {
 	// Must follow suit if possible.
 	ledSuit := g.Trick.LedSuit()
 	if card.Suit != ledSuit && g.Hands[seat].HasSuit(ledSuit) {
@@ -303,15 +307,11 @@ func (g *Game) validatePlay(seat Seat, card cardcore.Card) error {
 	// First trick: cannot play hearts or Q♠ unless the player has no
 	// non-penalty cards (outside the led suit).
 	if g.TrickNum == 0 {
-		if card.Suit == cardcore.Hearts {
-			if g.hasNonPointCards(seat) {
-				return fmt.Errorf("cannot play hearts on the first trick")
-			}
+		if card.Suit == cardcore.Hearts && g.hasNonPointCards(seat) {
+			return fmt.Errorf("cannot play hearts on the first trick")
 		}
-		if card == queenOfSpades {
-			if g.hasNonPointCards(seat) {
-				return fmt.Errorf("cannot play Q♠ on the first trick")
-			}
+		if card == queenOfSpades && g.hasNonPointCards(seat) {
+			return fmt.Errorf("cannot play Q♠ on the first trick")
 		}
 	}
 
