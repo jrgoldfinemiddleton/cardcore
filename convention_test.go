@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -47,6 +48,56 @@ type testDeclInfo struct {
 	name  string
 	group testGroup
 	line  int
+}
+
+// forbiddenCardcoreSelectors lists the cardcore identifiers that game-package
+// test code must reference via prefixed aliases (rAce..rKing, sClubs..sSpades)
+// rather than as qualified cardcore.X selectors. See AGENTS.md §6.
+var forbiddenCardcoreSelectors = []string{
+	"Two", "Three", "Four", "Five", "Six",
+	"Seven", "Eight", "Nine", "Ten",
+	"Jack", "Queen", "King", "Ace",
+	"Clubs", "Diamonds", "Hearts", "Spades",
+}
+
+// TestRankSuitAliasesInGameTests walks every _test.go file under games/
+// and verifies that no test code references cardcore rank or suit
+// constants via qualified selectors (e.g. cardcore.Ace, cardcore.Hearts).
+// Per AGENTS.md §6, game-package tests must use the prefixed aliases
+// (rAce..rKing, sClubs..sSpades) defined in their helpers_test.go.
+func TestRankSuitAliasesInGameTests(t *testing.T) {
+	root, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd: %v", err)
+	}
+
+	gamesDir := filepath.Join(root, "games")
+	if _, err := os.Stat(gamesDir); os.IsNotExist(err) {
+		return
+	}
+
+	err = filepath.WalkDir(gamesDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			base := d.Name()
+			if base == ".git" || base == "vendor" || base == "testdata" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(path, "_test.go") {
+			return nil
+		}
+
+		rel, _ := filepath.Rel(root, path)
+		checkTestAliasUsage(t, path, rel)
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("WalkDir: %v", err)
+	}
 }
 
 // TestFunctionOrdering walks every .go file in the module and verifies
@@ -355,6 +406,48 @@ func checkPackageDoc(t *testing.T, path, rel string) {
 	if !strings.HasPrefix(first, prefix) {
 		t.Errorf("%s: package doc comment must start with %q, got %q",
 			rel, "// Package "+f.Name.Name+" ...", first)
+	}
+}
+
+// checkTestAliasUsage reports any cardcore.X selector in the file that
+// references a rank or suit constant requiring an alias. Selectors inside
+// const declarations are skipped so the alias definitions themselves
+// (e.g. const rAce = cardcore.Ace) do not trigger the rule.
+func checkTestAliasUsage(t *testing.T, path, rel string) {
+	t.Helper()
+
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, path, nil, 0)
+	if err != nil {
+		t.Errorf("%s: parse error: %v", rel, err)
+		return
+	}
+
+	report := func(n ast.Node) {
+		ast.Inspect(n, func(n ast.Node) bool {
+			sel, ok := n.(*ast.SelectorExpr)
+			if !ok {
+				return true
+			}
+			ident, ok := sel.X.(*ast.Ident)
+			if !ok || ident.Name != "cardcore" {
+				return true
+			}
+			if !slices.Contains(forbiddenCardcoreSelectors, sel.Sel.Name) {
+				return true
+			}
+			line := fset.Position(sel.Pos()).Line
+			t.Errorf("%s:%d: cardcore.%s must use the prefixed alias (rAce..rKing, sClubs..sSpades) — see AGENTS.md §6",
+				rel, line, sel.Sel.Name)
+			return true
+		})
+	}
+
+	for _, decl := range f.Decls {
+		if gd, ok := decl.(*ast.GenDecl); ok && gd.Tok == token.CONST {
+			continue
+		}
+		report(decl)
 	}
 }
 
