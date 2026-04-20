@@ -52,7 +52,7 @@ type testDeclInfo struct {
 
 // forbiddenCardcoreSelectors lists the cardcore identifiers that game-package
 // test code must reference via prefixed aliases (rAce..rKing, sClubs..sSpades)
-// rather than as qualified cardcore.X selectors. See AGENTS.md §6.
+// rather than as qualified cardcore.X selectors.
 var forbiddenCardcoreSelectors = []string{
 	"Two", "Three", "Four", "Five", "Six",
 	"Seven", "Eight", "Nine", "Ten",
@@ -60,23 +60,129 @@ var forbiddenCardcoreSelectors = []string{
 	"Clubs", "Diamonds", "Hearts", "Spades",
 }
 
+// modulePath is this module's import path. Imports starting with this
+// prefix are treated as internal and allowed by TestNoExternalDeps.
+const modulePath = "github.com/jrgoldfinemiddleton/cardcore"
+
+// walkOpts configures walkGoFiles. Zero values give sensible defaults:
+// root defaults to cwd, suffix defaults to ".go", and skipDirs/skipFiles
+// add to the always-skipped set (.git, vendor, testdata).
+type walkOpts struct {
+	root      string
+	suffix    string
+	skipDirs  []string
+	skipFiles []string
+}
+
 // TestRankSuitAliasesInGameTests walks every _test.go file under games/
 // and verifies that no test code references cardcore rank or suit
 // constants via qualified selectors (e.g. cardcore.Ace, cardcore.Hearts).
-// Per AGENTS.md §6, game-package tests must use the prefixed aliases
-// (rAce..rKing, sClubs..sSpades) defined in their helpers_test.go.
+// Game-package tests must use the prefixed aliases (rAce..rKing,
+// sClubs..sSpades) defined in their helpers_test.go.
 func TestRankSuitAliasesInGameTests(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd: %v", err)
+	}
+	walkGoFiles(t, walkOpts{root: filepath.Join(cwd, "games"), suffix: "_test.go"}, func(path, rel string) {
+		checkTestAliasUsage(t, path, rel)
+	})
+}
+
+// TestNoNolint walks every .go file in the module and fails if any
+// //nolint directive is present. Lint errors must be fixed in code
+// rather than suppressed.
+func TestNoNolint(t *testing.T) {
+	walkGoFiles(t, walkOpts{}, func(path, rel string) {
+		checkNoNolint(t, path, rel)
+	})
+}
+
+// TestNoExternalDeps walks every .go file in the module and fails if any
+// import is neither stdlib nor a sub-package of this module. The project
+// uses the standard library only at runtime.
+func TestNoExternalDeps(t *testing.T) {
+	walkGoFiles(t, walkOpts{}, func(path, rel string) {
+		checkNoExternalDeps(t, path, rel)
+	})
+}
+
+// TestNoGameImportsInRootPkg walks the .go files in the repository root
+// and fails if any of them import a package under games/. Game-specific
+// logic must live in subpackages, not the root.
+func TestNoGameImportsInRootPkg(t *testing.T) {
 	root, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("Getwd: %v", err)
 	}
 
-	gamesDir := filepath.Join(root, "games")
-	if _, err := os.Stat(gamesDir); os.IsNotExist(err) {
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		t.Fatalf("ReadDir: %v", err)
+	}
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".go") {
+			continue
+		}
+		path := filepath.Join(root, e.Name())
+		checkNoGameImports(t, path, e.Name())
+	}
+}
+
+// TestFunctionOrdering walks every .go file in the module and verifies
+// that function declarations follow the ordering conventions described
+// in CONTRIBUTING.md.
+func TestFunctionOrdering(t *testing.T) {
+	walkGoFiles(t, walkOpts{skipDirs: []string{"doc"}, skipFiles: []string{"doc.go"}}, func(path, rel string) {
+		checkDeclsBeforeFuncs(t, path, rel)
+		if strings.HasSuffix(path, "_test.go") {
+			checkTestFile(t, path, rel)
+		} else {
+			checkProdFile(t, path, rel)
+		}
+	})
+}
+
+// TestDocComments walks every .go file in the module and verifies that
+// every function and method has a doc comment starting with its name.
+// For doc.go files, it verifies the package doc comment exists and
+// starts with "Package <name>".
+func TestDocComments(t *testing.T) {
+	walkGoFiles(t, walkOpts{skipDirs: []string{"doc"}}, func(path, rel string) {
+		if strings.HasSuffix(path, "doc.go") {
+			checkPackageDoc(t, path, rel)
+			return
+		}
+		checkDocComments(t, path, rel)
+	})
+}
+
+// walkGoFiles walks Go source files under opts.root (default: cwd) and
+// invokes fn for each file matching opts.suffix (default: ".go").
+// Directories named .git, vendor, or testdata are always skipped, plus
+// any in opts.skipDirs. Files whose basename appears in opts.skipFiles
+// are skipped. rel is the path relative to the working directory.
+func walkGoFiles(t *testing.T, opts walkOpts, fn func(path, rel string)) {
+	t.Helper()
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd: %v", err)
+	}
+	root := opts.root
+	if root == "" {
+		root = cwd
+	}
+	suffix := opts.suffix
+	if suffix == "" {
+		suffix = ".go"
+	}
+
+	if _, err := os.Stat(root); os.IsNotExist(err) {
 		return
 	}
 
-	err = filepath.WalkDir(gamesDir, func(path string, d fs.DirEntry, err error) error {
+	err = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -85,99 +191,25 @@ func TestRankSuitAliasesInGameTests(t *testing.T) {
 			if base == ".git" || base == "vendor" || base == "testdata" {
 				return filepath.SkipDir
 			}
-			return nil
-		}
-		if !strings.HasSuffix(path, "_test.go") {
-			return nil
-		}
-
-		rel, _ := filepath.Rel(root, path)
-		checkTestAliasUsage(t, path, rel)
-		return nil
-	})
-	if err != nil {
-		t.Fatalf("WalkDir: %v", err)
-	}
-}
-
-// TestFunctionOrdering walks every .go file in the module and verifies
-// that function declarations follow the ordering conventions described
-// in CONTRIBUTING.md.
-func TestFunctionOrdering(t *testing.T) {
-	root, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Getwd: %v", err)
-	}
-
-	err = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			base := d.Name()
-			if base == ".git" || base == "vendor" || base == "testdata" || base == "doc" {
-				return filepath.SkipDir
+			for _, s := range opts.skipDirs {
+				if base == s {
+					return filepath.SkipDir
+				}
 			}
 			return nil
 		}
-		if !strings.HasSuffix(path, ".go") {
+		if !strings.HasSuffix(path, suffix) {
 			return nil
 		}
-		// Skip doc.go files — they have no functions.
-		if strings.HasSuffix(path, "doc.go") {
-			return nil
-		}
-
-		rel, _ := filepath.Rel(root, path)
-
-		checkDeclsBeforeFuncs(t, path, rel)
-		if strings.HasSuffix(path, "_test.go") {
-			checkTestFile(t, path, rel)
-		} else {
-			checkProdFile(t, path, rel)
-		}
-
-		return nil
-	})
-	if err != nil {
-		t.Fatalf("WalkDir: %v", err)
-	}
-}
-
-// TestDocComments walks every .go file in the module and verifies that
-// every function and method has a doc comment starting with its name.
-// For doc.go files, it verifies the package doc comment exists and
-// starts with "Package <name>".
-func TestDocComments(t *testing.T) {
-	root, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Getwd: %v", err)
-	}
-
-	err = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			base := d.Name()
-			if base == ".git" || base == "vendor" || base == "testdata" || base == "doc" {
-				return filepath.SkipDir
+		base := filepath.Base(path)
+		for _, s := range opts.skipFiles {
+			if base == s {
+				return nil
 			}
-			return nil
-		}
-		if !strings.HasSuffix(path, ".go") {
-			return nil
 		}
 
-		rel, _ := filepath.Rel(root, path)
-
-		if strings.HasSuffix(path, "doc.go") {
-			checkPackageDoc(t, path, rel)
-			return nil
-		}
-
-		checkDocComments(t, path, rel)
-
+		rel, _ := filepath.Rel(cwd, path)
+		fn(path, rel)
 		return nil
 	})
 	if err != nil {
@@ -437,7 +469,7 @@ func checkTestAliasUsage(t *testing.T, path, rel string) {
 				return true
 			}
 			line := fset.Position(sel.Pos()).Line
-			t.Errorf("%s:%d: cardcore.%s must use the prefixed alias (rAce..rKing, sClubs..sSpades) — see AGENTS.md §6",
+			t.Errorf("%s:%d: cardcore.%s must use the prefixed alias (rAce..rKing, sClubs..sSpades)",
 				rel, line, sel.Sel.Name)
 			return true
 		})
@@ -448,6 +480,85 @@ func checkTestAliasUsage(t *testing.T, path, rel string) {
 			continue
 		}
 		report(decl)
+	}
+}
+
+// checkNoNolint reports any //nolint directive in the file. The check
+// walks AST comments rather than scanning raw lines so that a literal
+// "//nolint" appearing inside a string (such as the error message in
+// this very test) is not treated as a directive.
+func checkNoNolint(t *testing.T, path, rel string) {
+	t.Helper()
+
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
+	if err != nil {
+		t.Errorf("%s: parse error: %v", rel, err)
+		return
+	}
+
+	for _, cg := range f.Comments {
+		for _, c := range cg.List {
+			text := strings.TrimPrefix(c.Text, "//")
+			text = strings.TrimPrefix(text, "/*")
+			text = strings.TrimSpace(text)
+			if strings.HasPrefix(text, "nolint") {
+				line := fset.Position(c.Pos()).Line
+				t.Errorf("%s:%d: nolint directive forbidden — fix the code instead",
+					rel, line)
+			}
+		}
+	}
+}
+
+// checkNoExternalDeps reports any import that is neither stdlib nor a
+// sub-package of this module. Stdlib packages are recognized by the
+// absence of a "." in their first path segment (e.g. "fmt", "go/ast"),
+// since every public Go module path includes a domain.
+func checkNoExternalDeps(t *testing.T, path, rel string) {
+	t.Helper()
+
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, path, nil, parser.ImportsOnly)
+	if err != nil {
+		t.Errorf("%s: parse error: %v", rel, err)
+		return
+	}
+
+	for _, imp := range f.Imports {
+		p := strings.Trim(imp.Path.Value, `"`)
+		if p == modulePath || strings.HasPrefix(p, modulePath+"/") {
+			continue
+		}
+		first, _, _ := strings.Cut(p, "/")
+		if !strings.Contains(first, ".") {
+			continue
+		}
+		line := fset.Position(imp.Pos()).Line
+		t.Errorf("%s:%d: external dependency %q forbidden — stdlib only",
+			rel, line, p)
+	}
+}
+
+// checkNoGameImports reports any import that points into a game
+// subpackage of this module. Used by TestNoGameImportsInRootPkg.
+func checkNoGameImports(t *testing.T, path, rel string) {
+	t.Helper()
+
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, path, nil, parser.ImportsOnly)
+	if err != nil {
+		t.Errorf("%s: parse error: %v", rel, err)
+		return
+	}
+
+	for _, imp := range f.Imports {
+		p := strings.Trim(imp.Path.Value, `"`)
+		if strings.HasPrefix(p, modulePath+"/games/") {
+			line := fset.Position(imp.Pos()).Line
+			t.Errorf("%s:%d: root cardcore package must not import game subpackage %q",
+				rel, line, p)
+		}
 	}
 }
 
