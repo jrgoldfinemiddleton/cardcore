@@ -8,6 +8,7 @@ import (
 // Suit represents a card suit.
 type Suit uint8
 
+// Standard suits, in canonical order (Clubs, Diamonds, Hearts, Spades).
 const (
 	Clubs    Suit = iota // ♣
 	Diamonds             // ♦
@@ -24,6 +25,7 @@ var suitSymbols = [NumSuits]string{"♣", "♦", "♥", "♠"}
 // Rank represents a card rank (2 through Ace).
 type Rank uint8
 
+// Standard ranks, in ascending order (Two through Ace).
 const (
 	Two   Rank = iota // 2
 	Three             // 3
