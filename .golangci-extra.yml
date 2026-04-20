@@ -11,3 +11,7 @@ linters:
 
 issues:
   exclude-use-default: false
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - dupl # tests are often deliberately parallel; collapsing can obscure intent

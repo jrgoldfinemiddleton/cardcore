@@ -390,38 +390,26 @@ func TestAnalyzePointsTaken(t *testing.T) {
 	g.Hands[hearts.East] = cardcore.NewHand(nil)
 
 	g.TrickHistory = []hearts.Trick{
-		{
-			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(rTwo, sClubs),
-				hearts.West:  c(rFive, sClubs),
-				hearts.North: c(rJack, sClubs),
-				hearts.East:  c(rAce, sClubs),
-			},
-			Leader: hearts.South,
-			Count:  hearts.NumPlayers,
-		},
+		pointTrick(hearts.South, [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rTwo, sClubs),
+			hearts.West:  c(rFive, sClubs),
+			hearts.North: c(rJack, sClubs),
+			hearts.East:  c(rAce, sClubs),
+		}),
 		// South leads A♠, West plays Q♠. South wins (highest spade).
-		{
-			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: aceOfSpades,
-				hearts.West:  queenOfSpades,
-				hearts.North: c(rFive, sSpades),
-				hearts.East:  c(rNine, sSpades),
-			},
-			Leader: hearts.South,
-			Count:  hearts.NumPlayers,
-		},
+		pointTrick(hearts.South, [hearts.NumPlayers]cardcore.Card{
+			hearts.South: aceOfSpades,
+			hearts.West:  queenOfSpades,
+			hearts.North: c(rFive, sSpades),
+			hearts.East:  c(rNine, sSpades),
+		}),
 		// South leads K♦, West discards 2♥. South wins.
-		{
-			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(rKing, sDiamonds),
-				hearts.West:  c(rTwo, sHearts),
-				hearts.North: c(rThree, sDiamonds),
-				hearts.East:  c(rFive, sDiamonds),
-			},
-			Leader: hearts.South,
-			Count:  hearts.NumPlayers,
-		},
+		pointTrick(hearts.South, [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rKing, sDiamonds),
+			hearts.West:  c(rTwo, sHearts),
+			hearts.North: c(rThree, sDiamonds),
+			hearts.East:  c(rFive, sDiamonds),
+		}),
 	}
 
 	a := analyze(g, hearts.North)
@@ -447,36 +435,24 @@ func TestAnalyzeMoonThreat(t *testing.T) {
 
 	// East wins both point tricks and collects all distributed points.
 	g.TrickHistory = []hearts.Trick{
-		{
-			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(rTwo, sClubs),
-				hearts.West:  c(rFive, sClubs),
-				hearts.North: c(rJack, sClubs),
-				hearts.East:  c(rAce, sClubs),
-			},
-			Leader: hearts.South,
-			Count:  hearts.NumPlayers,
-		},
-		{
-			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(rTwo, sSpades),
-				hearts.West:  queenOfSpades,
-				hearts.North: c(rFive, sSpades),
-				hearts.East:  aceOfSpades,
-			},
-			Leader: hearts.East,
-			Count:  hearts.NumPlayers,
-		},
-		{
-			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(rThree, sDiamonds),
-				hearts.West:  c(rTwo, sHearts),
-				hearts.North: c(rFive, sDiamonds),
-				hearts.East:  c(rAce, sDiamonds),
-			},
-			Leader: hearts.East,
-			Count:  hearts.NumPlayers,
-		},
+		pointTrick(hearts.South, [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rTwo, sClubs),
+			hearts.West:  c(rFive, sClubs),
+			hearts.North: c(rJack, sClubs),
+			hearts.East:  c(rAce, sClubs),
+		}),
+		pointTrick(hearts.East, [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rTwo, sSpades),
+			hearts.West:  queenOfSpades,
+			hearts.North: c(rFive, sSpades),
+			hearts.East:  aceOfSpades,
+		}),
+		pointTrick(hearts.East, [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rThree, sDiamonds),
+			hearts.West:  c(rTwo, sHearts),
+			hearts.North: c(rFive, sDiamonds),
+			hearts.East:  c(rAce, sDiamonds),
+		}),
 	}
 
 	a := analyze(g, hearts.South)
@@ -499,36 +475,24 @@ func TestAnalyzeMoonThreatSplit(t *testing.T) {
 
 	// Points split between South and East — no moon threat.
 	g.TrickHistory = []hearts.Trick{
-		{
-			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(rTwo, sClubs),
-				hearts.West:  c(rFive, sClubs),
-				hearts.North: c(rJack, sClubs),
-				hearts.East:  c(rAce, sClubs),
-			},
-			Leader: hearts.South,
-			Count:  hearts.NumPlayers,
-		},
-		{
-			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: aceOfSpades,
-				hearts.West:  queenOfSpades,
-				hearts.North: c(rFive, sSpades),
-				hearts.East:  c(rNine, sSpades),
-			},
-			Leader: hearts.East,
-			Count:  hearts.NumPlayers,
-		},
-		{
-			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(rThree, sDiamonds),
-				hearts.West:  c(rFive, sDiamonds),
-				hearts.North: c(rTwo, sHearts),
-				hearts.East:  c(rAce, sDiamonds),
-			},
-			Leader: hearts.East,
-			Count:  hearts.NumPlayers,
-		},
+		pointTrick(hearts.South, [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rTwo, sClubs),
+			hearts.West:  c(rFive, sClubs),
+			hearts.North: c(rJack, sClubs),
+			hearts.East:  c(rAce, sClubs),
+		}),
+		pointTrick(hearts.East, [hearts.NumPlayers]cardcore.Card{
+			hearts.South: aceOfSpades,
+			hearts.West:  queenOfSpades,
+			hearts.North: c(rFive, sSpades),
+			hearts.East:  c(rNine, sSpades),
+		}),
+		pointTrick(hearts.East, [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rThree, sDiamonds),
+			hearts.West:  c(rFive, sDiamonds),
+			hearts.North: c(rTwo, sHearts),
+			hearts.East:  c(rAce, sDiamonds),
+		}),
 	}
 
 	a := analyze(g, hearts.South)
@@ -664,9 +628,7 @@ func TestDetectShootCandidateFullChecklist(t *testing.T) {
 // when the hand has fewer than 7 hearts. Hand: 6 hearts (A♥ K♥ Q♥ J♥
 // 10♥ 9♥) + A♣ + 6 low clubs.
 func TestDetectShootCandidateTooFewHearts(t *testing.T) {
-	g := hearts.New()
-	g.Phase = hearts.PhasePass
-	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+	g := setupShootCandidateSouth([]cardcore.Card{
 		c(rTwo, sClubs),
 		c(rThree, sClubs),
 		c(rFour, sClubs),
@@ -681,9 +643,6 @@ func TestDetectShootCandidateTooFewHearts(t *testing.T) {
 		c(rAce, sHearts),
 		c(rTwo, sSpades),
 	})
-	g.Hands[hearts.West] = cardcore.NewHand(nil)
-	g.Hands[hearts.North] = cardcore.NewHand(nil)
-	g.Hands[hearts.East] = cardcore.NewHand(nil)
 
 	a := analyze(g, hearts.South)
 
@@ -696,9 +655,7 @@ func TestDetectShootCandidateTooFewHearts(t *testing.T) {
 // is false when Q♥ is absent. Hand: 7 hearts
 // (A♥ K♥ J♥ 10♥ 9♥ 8♥ 7♥) + A♣ + 5 clubs.
 func TestDetectShootCandidateMissingQueenOfHearts(t *testing.T) {
-	g := hearts.New()
-	g.Phase = hearts.PhasePass
-	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+	g := setupShootCandidateSouth([]cardcore.Card{
 		c(rTwo, sClubs),
 		c(rThree, sClubs),
 		c(rFour, sClubs),
@@ -713,9 +670,6 @@ func TestDetectShootCandidateMissingQueenOfHearts(t *testing.T) {
 		c(rAce, sHearts),
 		c(rTwo, sSpades),
 	})
-	g.Hands[hearts.West] = cardcore.NewHand(nil)
-	g.Hands[hearts.North] = cardcore.NewHand(nil)
-	g.Hands[hearts.East] = cardcore.NewHand(nil)
 
 	a := analyze(g, hearts.South)
 
@@ -728,9 +682,7 @@ func TestDetectShootCandidateMissingQueenOfHearts(t *testing.T) {
 // when no non-heart ace is present. Hand: 7 hearts
 // (A♥ K♥ Q♥ J♥ 10♥ 9♥ 8♥) + K♣ + 5 low clubs.
 func TestDetectShootCandidateNoSideAce(t *testing.T) {
-	g := hearts.New()
-	g.Phase = hearts.PhasePass
-	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+	g := setupShootCandidateSouth([]cardcore.Card{
 		c(rTwo, sClubs),
 		c(rThree, sClubs),
 		c(rFour, sClubs),
@@ -745,9 +697,6 @@ func TestDetectShootCandidateNoSideAce(t *testing.T) {
 		c(rAce, sHearts),
 		c(rTwo, sSpades),
 	})
-	g.Hands[hearts.West] = cardcore.NewHand(nil)
-	g.Hands[hearts.North] = cardcore.NewHand(nil)
-	g.Hands[hearts.East] = cardcore.NewHand(nil)
 
 	a := analyze(g, hearts.South)
 
@@ -834,10 +783,7 @@ func TestDeriveShootActiveNoPointsStrongHand(t *testing.T) {
 // East took 2♥ in trick history so totalDistributed > 0 blocks activation.
 // Branch: early-game path, totalDistributed > 0 exit.
 func TestDeriveShootActivePointsDistributed(t *testing.T) {
-	g := hearts.New()
-	g.Phase = hearts.PhasePlay
-	g.TrickNum = 2
-	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+	g := setupShootActiveEarlyGame([]cardcore.Card{
 		c(rTwo, sClubs),
 		c(rThree, sClubs),
 		c(rEight, sHearts),
@@ -849,23 +795,16 @@ func TestDeriveShootActivePointsDistributed(t *testing.T) {
 		c(rAce, sHearts),
 		c(rTwo, sSpades),
 		c(rThree, sSpades),
-	})
-	g.Hands[hearts.West] = cardcore.NewHand(nil)
-	g.Hands[hearts.North] = cardcore.NewHand(nil)
-	g.Hands[hearts.East] = cardcore.NewHand(nil)
-	g.TrickHistory = []hearts.Trick{
-		validFirstTrick(),
-		{
-			Leader: hearts.East,
-			Count:  hearts.NumPlayers,
-			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(rFive, sDiamonds),
-				hearts.West:  c(rTwo, sHearts),
-				hearts.North: c(rSix, sDiamonds),
-				hearts.East:  c(rAce, sDiamonds),
-			},
+	}, hearts.Trick{
+		Leader: hearts.East,
+		Count:  hearts.NumPlayers,
+		Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rFive, sDiamonds),
+			hearts.West:  c(rTwo, sHearts),
+			hearts.North: c(rSix, sDiamonds),
+			hearts.East:  c(rAce, sDiamonds),
 		},
-	}
+	})
 
 	a := analyze(g, hearts.South)
 
@@ -881,10 +820,7 @@ func TestDeriveShootActivePointsDistributed(t *testing.T) {
 // and K♥ are missing.
 // Branch: early-game path, A♥+K♥+Q♥ check.
 func TestDeriveShootActiveNoPointsMissingTopHearts(t *testing.T) {
-	g := hearts.New()
-	g.Phase = hearts.PhasePlay
-	g.TrickNum = 2
-	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+	g := setupShootActiveEarlyGame([]cardcore.Card{
 		c(rTwo, sClubs),
 		c(rThree, sClubs),
 		c(rFour, sClubs),
@@ -896,23 +832,16 @@ func TestDeriveShootActiveNoPointsMissingTopHearts(t *testing.T) {
 		c(rTen, sHearts),
 		c(rJack, sHearts),
 		c(rQueen, sHearts),
-	})
-	g.Hands[hearts.West] = cardcore.NewHand(nil)
-	g.Hands[hearts.North] = cardcore.NewHand(nil)
-	g.Hands[hearts.East] = cardcore.NewHand(nil)
-	g.TrickHistory = []hearts.Trick{
-		validFirstTrick(),
-		{
-			Leader: hearts.East,
-			Count:  hearts.NumPlayers,
-			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(rFive, sDiamonds),
-				hearts.West:  c(rSix, sDiamonds),
-				hearts.North: c(rSeven, sDiamonds),
-				hearts.East:  c(rEight, sDiamonds),
-			},
+	}, hearts.Trick{
+		Leader: hearts.East,
+		Count:  hearts.NumPlayers,
+		Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rFive, sDiamonds),
+			hearts.West:  c(rSix, sDiamonds),
+			hearts.North: c(rSeven, sDiamonds),
+			hearts.East:  c(rEight, sDiamonds),
 		},
-	}
+	})
 
 	a := analyze(g, hearts.South)
 
@@ -926,10 +855,7 @@ func TestDeriveShootActiveNoPointsMissingTopHearts(t *testing.T) {
 // not Q♥. South has 7 hearts (A♥, K♥, J♥, 10♥, 9♥, 8♥, 7♥) plus
 // 4 clubs. Without Q♥, the early-game gate rejects shoot activation.
 func TestDeriveShootActiveNoPointsMissingQueenHearts(t *testing.T) {
-	g := hearts.New()
-	g.Phase = hearts.PhasePlay
-	g.TrickNum = 2
-	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+	g := setupShootActiveEarlyGame([]cardcore.Card{
 		c(rTwo, sClubs),
 		c(rThree, sClubs),
 		c(rFour, sClubs),
@@ -941,23 +867,16 @@ func TestDeriveShootActiveNoPointsMissingQueenHearts(t *testing.T) {
 		c(rJack, sHearts),
 		c(rKing, sHearts),
 		c(rAce, sHearts),
-	})
-	g.Hands[hearts.West] = cardcore.NewHand(nil)
-	g.Hands[hearts.North] = cardcore.NewHand(nil)
-	g.Hands[hearts.East] = cardcore.NewHand(nil)
-	g.TrickHistory = []hearts.Trick{
-		validFirstTrick(),
-		{
-			Leader: hearts.East,
-			Count:  hearts.NumPlayers,
-			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(rFive, sDiamonds),
-				hearts.West:  c(rSix, sDiamonds),
-				hearts.North: c(rSeven, sDiamonds),
-				hearts.East:  c(rEight, sDiamonds),
-			},
+	}, hearts.Trick{
+		Leader: hearts.East,
+		Count:  hearts.NumPlayers,
+		Cards: [hearts.NumPlayers]cardcore.Card{
+			hearts.South: c(rFive, sDiamonds),
+			hearts.West:  c(rSix, sDiamonds),
+			hearts.North: c(rSeven, sDiamonds),
+			hearts.East:  c(rEight, sDiamonds),
 		},
-	}
+	})
 
 	a := analyze(g, hearts.South)
 

@@ -37,6 +37,12 @@ func c(r cardcore.Rank, s cardcore.Suit) cardcore.Card {
 	return cardcore.Card{Rank: r, Suit: s}
 }
 
+// pointTrick is a shorthand constructor for a complete (4-card) hearts.Trick.
+// Used to keep large TrickHistory literals readable.
+func pointTrick(leader hearts.Seat, cards [hearts.NumPlayers]cardcore.Card) hearts.Trick {
+	return hearts.Trick{Leader: leader, Count: hearts.NumPlayers, Cards: cards}
+}
+
 // playRoundWithPlayer plays one complete round using a single Player for all
 // four seats. Convenience wrapper around playRoundWithPlayers.
 func playRoundWithPlayer(t *testing.T, g *hearts.Game, p hearts.Player, seed uint64) {
@@ -86,4 +92,33 @@ func playRoundWithPlayers(
 	if err := g.EndRound(); err != nil {
 		t.Fatalf("seed %d: EndRound error: %v", seed, err)
 	}
+}
+
+// setupShootActiveEarlyGame builds a PhasePlay game at TrickNum 2 with the
+// given hand for South (other seats empty), TrickHistory = validFirstTrick()
+// followed by secondTrick. Used by TestDeriveShootActive* tests that exercise
+// the early-game shoot-activation gate.
+func setupShootActiveEarlyGame(southHand []cardcore.Card, secondTrick hearts.Trick) *hearts.Game {
+	g := hearts.New()
+	g.Phase = hearts.PhasePlay
+	g.TrickNum = 2
+	g.Hands[hearts.South] = cardcore.NewHand(southHand)
+	g.Hands[hearts.West] = cardcore.NewHand(nil)
+	g.Hands[hearts.North] = cardcore.NewHand(nil)
+	g.Hands[hearts.East] = cardcore.NewHand(nil)
+	g.TrickHistory = []hearts.Trick{validFirstTrick(), secondTrick}
+	return g
+}
+
+// setupShootCandidateSouth builds a PhasePass game with the given hand for
+// South (other seats empty). Used by TestDetectShootCandidate* tests that
+// exercise the considerShoot gate.
+func setupShootCandidateSouth(southHand []cardcore.Card) *hearts.Game {
+	g := hearts.New()
+	g.Phase = hearts.PhasePass
+	g.Hands[hearts.South] = cardcore.NewHand(southHand)
+	g.Hands[hearts.West] = cardcore.NewHand(nil)
+	g.Hands[hearts.North] = cardcore.NewHand(nil)
+	g.Hands[hearts.East] = cardcore.NewHand(nil)
+	return g
 }
