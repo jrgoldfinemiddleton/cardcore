@@ -107,6 +107,8 @@ categories:
 - **Tests are required.** Every code change should include corresponding tests.
 - **Run `make check`** before pushing. It runs formatting, vetting, linting, and tests.
 - **Update the changelog.** Add a note under the `## [Unreleased]` section in `CHANGELOG.md` for user-facing changes.
+- **Naming.** `cardcore` (lowercase) is the Go module name; `Cardcore` (capitalized) is the project name. Use the lowercase form for code identifiers (imports, package references) and the capitalized form in prose (docs, READMEs, PR descriptions).
+- **AI naming.** Computer-controlled players in `games/<game>/ai/` are named for their **technique** (e.g., `Random`, `Heuristic`, `MonteCarlo`), not for difficulty tiers (e.g., not `Easy`, `Hard`, `Expert`). Difficulty is a downstream concern that may map onto techniques but does not name them.
 
 ## Code Conventions
 

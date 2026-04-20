@@ -708,10 +708,10 @@ func TestGameEnd(t *testing.T) {
 func TestPassDirectionRotation(t *testing.T) {
 	g := New()
 
-	expected := []PassDirection{PassLeft, PassRight, PassAcross, PassHold, PassLeft}
-	for i, want := range expected {
-		if g.PassDir != want {
-			t.Errorf("round %d: passDir = %d, want %d", i, g.PassDir, want)
+	want := []PassDirection{PassLeft, PassRight, PassAcross, PassHold, PassLeft}
+	for i, dir := range want {
+		if g.PassDir != dir {
+			t.Errorf("round %d: passDir = %d, want %d", i, g.PassDir, dir)
 		}
 
 		g.RoundPts = [NumPlayers]int{3, 5, 8, 10}
