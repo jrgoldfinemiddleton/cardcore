@@ -1,15 +1,37 @@
 linters:
   enable:
-    - errcheck
-    - govet
-    - staticcheck
-    - unused
-    - gofmt
-    - misspell
+    - errcheck     # unchecked errors
+    - gofmt        # standard Go formatting
+    - govet        # suspicious constructs (shadowing, printf args, etc.)
+    - misspell     # common English misspellings
+    - staticcheck  # broad correctness, performance, and style checks
+    - unused       # unused code (vars, funcs, types, fields)
+    - errorlint    # mishandling wrapped errors (errors.Is/As, %w)
+    - exhaustive   # missing cases in switch over enum-like types (Suit, Rank, Phase)
+    - nilerr       # returning nil after seeing a non-nil error
+    - unparam      # unused function parameters / always-same return values
+    - godot        # doc comments end with a period
+    - whitespace   # leading/trailing whitespace inside funcs
+    - thelper      # test helpers must call t.Helper()
+    - nolintlint   # police any //nolint usage (convention_test.go bans them entirely; this is defense in depth)
+    - gci          # import grouping (stdlib / third-party / local)
+    - goconst      # repeated string/number literals that should be constants
+    - lll          # line length
+    - prealloc     # slices that should be preallocated
 
 linters-settings:
+  exhaustive:
+    default-signifies-exhaustive: true
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/jrgoldfinemiddleton/cardcore)
   gofmt:
     simplify: true
+  lll:
+    line-length: 100
+    tab-width: 4
 
 issues:
   exclude-use-default: false

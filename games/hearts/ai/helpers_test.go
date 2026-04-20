@@ -46,7 +46,12 @@ func playRoundWithPlayer(t *testing.T, g *hearts.Game, p hearts.Player, seed uin
 
 // playRoundWithPlayers plays one complete round (deal, pass, play, score) using
 // a distinct Player per seat and verifies point conservation.
-func playRoundWithPlayers(t *testing.T, g *hearts.Game, players [hearts.NumPlayers]hearts.Player, seed uint64) {
+func playRoundWithPlayers(
+	t *testing.T,
+	g *hearts.Game,
+	players [hearts.NumPlayers]hearts.Player,
+	seed uint64,
+) {
 	t.Helper()
 
 	if err := g.Deal(); err != nil {

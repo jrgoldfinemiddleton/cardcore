@@ -1,0 +1,13 @@
+linters:
+  disable-all: true
+  enable:
+    - cyclop      # cyclomatic complexity (alternative to gocyclo)
+    - dupl        # duplicate code blocks
+    - funlen      # function length
+    - gocognit    # cognitive complexity
+    - gocritic    # many small "could be cleaner" checks
+    - gocyclo     # cyclomatic complexity
+    - revive      # successor to golint; broad style ruleset
+
+issues:
+  exclude-use-default: false

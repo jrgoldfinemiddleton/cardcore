@@ -151,5 +151,7 @@ func AllSuits() [NumSuits]Suit {
 
 // AllRanks returns all thirteen ranks in ascending order.
 func AllRanks() [NumRanks]Rank {
-	return [NumRanks]Rank{Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace}
+	return [NumRanks]Rank{
+		Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace,
+	}
 }

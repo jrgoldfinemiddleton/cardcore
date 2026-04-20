@@ -261,7 +261,8 @@ func TestAnalyzeQueenPassedThenPlayed(t *testing.T) {
 	a := analyze(g, hearts.South)
 
 	if a.queen != queenPlayed {
-		t.Errorf("queen = %d, want queenPlayed (%d) — played overrides passed", a.queen, queenPlayed)
+		t.Errorf("queen = %d, want queenPlayed (%d) — played overrides passed",
+			a.queen, queenPlayed)
 	}
 }
 
@@ -1117,7 +1118,8 @@ func TestHoldsHighestHeartMidRankPositive(t *testing.T) {
 	})
 
 	if !a.holdsHighestHeart(hand) {
-		t.Error("holdsHighestHeart should be true: 5♥ is the highest unplayed heart and seat holds it")
+		t.Error("holdsHighestHeart should be true: " +
+			"5♥ is the highest unplayed heart and seat holds it")
 	}
 }
 
@@ -1144,7 +1146,8 @@ func TestHoldsHighestHeartMidRankNegative(t *testing.T) {
 	})
 
 	if a.holdsHighestHeart(hand) {
-		t.Error("holdsHighestHeart should be false: 5♥ is the highest unplayed heart but seat holds 4♥, not 5♥")
+		t.Error("holdsHighestHeart should be false: " +
+			"5♥ is the highest unplayed heart but seat holds 4♥, not 5♥")
 	}
 }
 
