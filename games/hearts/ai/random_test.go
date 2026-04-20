@@ -10,7 +10,8 @@ import (
 // Compile-time check that Random satisfies hearts.Player.
 var _ hearts.Player = (*Random)(nil)
 
-// TestChoosePassReturnsDistinctCardsFromHand verifies that ChoosePass returns three distinct cards that exist in the player's hand.
+// TestChoosePassReturnsDistinctCardsFromHand verifies that ChoosePass returns
+// three distinct cards that exist in the player's hand.
 func TestChoosePassReturnsDistinctCardsFromHand(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -52,7 +53,8 @@ func TestChoosePlayReturnsLegalCard(t *testing.T) {
 	}
 }
 
-// TestDeterminism verifies that identical seeds produce identical ChoosePass and ChoosePlay results.
+// TestDeterminism verifies that identical seeds produce identical ChoosePass
+// and ChoosePlay results.
 func TestDeterminism(t *testing.T) {
 	g := hearts.New()
 	if err := g.Deal(); err != nil {
@@ -99,7 +101,8 @@ func TestLegalityAcrossGames(t *testing.T) {
 	}
 }
 
-// TestFullGameIntegration runs 10 complete games with Random players and verifies structural invariants: games terminate, winner has the lowest score.
+// TestFullGameIntegration runs 10 complete games with Random players and
+// verifies structural invariants: games terminate, winner has the lowest score.
 func TestFullGameIntegration(t *testing.T) {
 	const (
 		numGames  = 10

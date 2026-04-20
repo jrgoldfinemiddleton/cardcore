@@ -147,6 +147,8 @@ func (a *analysis) detectShootCandidate(hand *cardcore.Hand) {
 			hasKingHearts = true
 		case cardcore.Queen:
 			hasQueenHearts = true
+		default:
+			// other ranks irrelevant for moon-shoot detection
 		}
 	}
 	if !hasAceHearts || !hasKingHearts || !hasQueenHearts {
@@ -213,6 +215,8 @@ func (a *analysis) deriveShootActive(hand *cardcore.Hand) {
 			hasKingHearts = true
 		case cardcore.Queen:
 			hasQueenHearts = true
+		default:
+			// other ranks irrelevant for moon-shoot detection
 		}
 	}
 

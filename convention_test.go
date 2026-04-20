@@ -84,9 +84,10 @@ func TestRankSuitAliasesInGameTests(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Getwd: %v", err)
 	}
-	walkGoFiles(t, walkOpts{root: filepath.Join(cwd, "games"), suffix: "_test.go"}, func(path, rel string) {
-		checkTestAliasUsage(t, path, rel)
-	})
+	walkGoFiles(t, walkOpts{root: filepath.Join(cwd, "games"), suffix: "_test.go"},
+		func(path, rel string) {
+			checkTestAliasUsage(t, path, rel)
+		})
 }
 
 // TestNoNolint walks every .go file in the module and fails if any
@@ -133,14 +134,15 @@ func TestNoGameImportsInRootPkg(t *testing.T) {
 // that function declarations follow the ordering conventions described
 // in CONTRIBUTING.md.
 func TestFunctionOrdering(t *testing.T) {
-	walkGoFiles(t, walkOpts{skipDirs: []string{"doc"}, skipFiles: []string{"doc.go"}}, func(path, rel string) {
-		checkDeclsBeforeFuncs(t, path, rel)
-		if strings.HasSuffix(path, "_test.go") {
-			checkTestFile(t, path, rel)
-		} else {
-			checkProdFile(t, path, rel)
-		}
-	})
+	walkGoFiles(t, walkOpts{skipDirs: []string{"doc"}, skipFiles: []string{"doc.go"}},
+		func(path, rel string) {
+			checkDeclsBeforeFuncs(t, path, rel)
+			if strings.HasSuffix(path, "_test.go") {
+				checkTestFile(t, path, rel)
+			} else {
+				checkProdFile(t, path, rel)
+			}
+		})
 }
 
 // TestDocComments walks every .go file in the module and verifies that
@@ -230,7 +232,7 @@ func checkProdFile(t *testing.T, path, rel string) {
 		return
 	}
 
-	var funcs []funcInfo
+	funcs := make([]funcInfo, 0, len(f.Decls))
 	for _, decl := range f.Decls {
 		fn, ok := decl.(*ast.FuncDecl)
 		if !ok {
@@ -269,7 +271,9 @@ func checkProdFile(t *testing.T, path, rel string) {
 			for j := prev + 1; j < i; j++ {
 				between := funcs[j]
 				if between.receiver != fi.receiver {
-					t.Errorf("%s:%d: %s (receiver %s) is separated from %s:%d: %s by %s:%d: %s (receiver %q)",
+					t.Errorf(
+						"%s:%d: %s (receiver %s) is separated from %s:%d: %s "+
+							"by %s:%d: %s (receiver %q)",
 						rel, fi.line, fi.name, fi.receiver,
 						rel, funcs[prev].line, funcs[prev].name,
 						rel, between.line, between.name, receiverLabel(between.receiver))
@@ -374,7 +378,9 @@ func checkDeclsBeforeFuncs(t *testing.T, path, rel string) {
 		}
 		line := fset.Position(gd.Pos()).Line
 		if line > firstFuncLine {
-			t.Errorf("%s:%d: %s declaration appears after first function %s (line %d) — declarations must precede all functions",
+			t.Errorf(
+				"%s:%d: %s declaration appears after first function %s (line %d) — "+
+					"declarations must precede all functions",
 				rel, line, gd.Tok, firstFuncName, firstFuncLine)
 		}
 	}
@@ -469,7 +475,8 @@ func checkTestAliasUsage(t *testing.T, path, rel string) {
 				return true
 			}
 			line := fset.Position(sel.Pos()).Line
-			t.Errorf("%s:%d: cardcore.%s must use the prefixed alias (rAce..rKing, sClubs..sSpades)",
+			t.Errorf(
+				"%s:%d: cardcore.%s must use the prefixed alias (rAce..rKing, sClubs..sSpades)",
 				rel, line, sel.Sel.Name)
 			return true
 		})

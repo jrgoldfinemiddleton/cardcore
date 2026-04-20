@@ -2,7 +2,8 @@ package cardcore
 
 import "testing"
 
-// TestNewHand verifies that NewHand creates a hand with the correct size and copies the input slice.
+// TestNewHand verifies that NewHand creates a hand with the correct size and
+// copies the input slice.
 func TestNewHand(t *testing.T) {
 	cards := []Card{{Queen, Hearts}, {Ace, Spades}}
 	h := NewHand(cards)
@@ -82,7 +83,8 @@ func TestHandHasSuit(t *testing.T) {
 	}
 }
 
-// TestHandCardsOfSuit verifies that CardsOfSuit returns matching cards and an empty slice for absent suits.
+// TestHandCardsOfSuit verifies that CardsOfSuit returns matching cards and an
+// empty slice for absent suits.
 func TestHandCardsOfSuit(t *testing.T) {
 	h := NewHand([]Card{
 		{Two, Clubs},

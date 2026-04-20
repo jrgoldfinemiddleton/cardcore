@@ -195,7 +195,8 @@ func TestPassScoreShortSuitBonus(t *testing.T) {
 	longSuitScore := passScore(c(rKing, sClubs), hand)
 
 	if singletonScore <= longSuitScore {
-		t.Errorf("singleton A♦ score (%d) should exceed long-suit K♣ score (%d)", singletonScore, longSuitScore)
+		t.Errorf("singleton A♦ score (%d) should exceed long-suit K♣ score (%d)",
+			singletonScore, longSuitScore)
 	}
 }
 
@@ -207,7 +208,7 @@ func TestChoosePassPassesUnprotectedQueen(t *testing.T) {
 		t.Fatalf("Deal error: %v", err)
 	}
 
-	setupPassHand(t, g, hearts.South, []cardcore.Card{
+	setupPassHand(t, g, []cardcore.Card{
 		c(rTwo, sClubs),
 		c(rThree, sClubs),
 		c(rFour, sClubs),
@@ -239,7 +240,7 @@ func TestChoosePassKeepsProtectedQueen(t *testing.T) {
 		t.Fatalf("Deal error: %v", err)
 	}
 
-	setupPassHand(t, g, hearts.South, []cardcore.Card{
+	setupPassHand(t, g, []cardcore.Card{
 		c(rEight, sHearts),
 		c(rNine, sHearts),
 		c(rTen, sHearts),
@@ -272,7 +273,7 @@ func TestChoosePassKeepsHighSpadesWithProtectedQueen(t *testing.T) {
 		t.Fatalf("Deal error: %v", err)
 	}
 
-	setupPassHand(t, g, hearts.South, []cardcore.Card{
+	setupPassHand(t, g, []cardcore.Card{
 		c(rTen, sHearts),
 		c(rJack, sHearts),
 		c(rQueen, sHearts),
@@ -308,7 +309,7 @@ func TestChoosePassPrefersHighSpades(t *testing.T) {
 		t.Fatalf("Deal error: %v", err)
 	}
 
-	setupPassHand(t, g, hearts.South, []cardcore.Card{
+	setupPassHand(t, g, []cardcore.Card{
 		c(rTwo, sClubs),
 		c(rThree, sClubs),
 		c(rFour, sClubs),
@@ -343,7 +344,7 @@ func TestChoosePassVoidsShortSuit(t *testing.T) {
 		t.Fatalf("Deal error: %v", err)
 	}
 
-	setupPassHand(t, g, hearts.South, []cardcore.Card{
+	setupPassHand(t, g, []cardcore.Card{
 		c(rTwo, sClubs),
 		c(rThree, sClubs),
 		c(rFour, sClubs),
@@ -375,7 +376,7 @@ func TestChoosePassVoidsTwoShortSuits(t *testing.T) {
 		t.Fatalf("Deal error: %v", err)
 	}
 
-	setupPassHand(t, g, hearts.South, []cardcore.Card{
+	setupPassHand(t, g, []cardcore.Card{
 		c(rTwo, sClubs),
 		c(rThree, sClubs),
 		c(rFour, sClubs),
@@ -430,7 +431,7 @@ func TestChoosePassTieBreaking(t *testing.T) {
 		if err := g.Deal(); err != nil {
 			t.Fatalf("Deal error: %v", err)
 		}
-		setupPassHand(t, g, hearts.South, hand)
+		setupPassHand(t, g, hand)
 
 		h := newSeededHeuristic(seed)
 		cards := h.ChoosePass(g, hearts.South)
@@ -440,7 +441,8 @@ func TestChoosePassTieBreaking(t *testing.T) {
 	}
 
 	if len(seen) <= hearts.PassCount {
-		t.Errorf("distinct tie-broken cards across seeds = %d, want > PassCount (%d)", len(seen), hearts.PassCount)
+		t.Errorf("distinct tie-broken cards across seeds = %d, want > PassCount (%d)",
+			len(seen), hearts.PassCount)
 	}
 }
 
@@ -468,7 +470,8 @@ func TestLeadScorePrefersLowFromLongSuit(t *testing.T) {
 	aceScore := leadScore(c(rAce, sClubs), g, a)
 
 	if sixScore <= aceScore {
-		t.Errorf("6♣ lead score (%d) should exceed A♣ lead score (%d) from long suit", sixScore, aceScore)
+		t.Errorf("6♣ lead score (%d) should exceed A♣ lead score (%d) from long suit",
+			sixScore, aceScore)
 	}
 }
 
@@ -498,7 +501,8 @@ func TestLeadScorePrefersHighFromShortSuitEarly(t *testing.T) {
 	threeScore := leadScore(c(rThree, sDiamonds), g, a)
 
 	if kingScore <= threeScore {
-		t.Errorf("K♦ lead score (%d) should exceed 3♦ lead score (%d) from short suit early", kingScore, threeScore)
+		t.Errorf("K♦ lead score (%d) should exceed 3♦ lead score (%d) from short suit early",
+			kingScore, threeScore)
 	}
 }
 
@@ -520,7 +524,8 @@ func TestLeadScorePrefersLowFromShortSuitLate(t *testing.T) {
 	kingScore := leadScore(c(rKing, sDiamonds), g, a)
 
 	if sixScore <= kingScore {
-		t.Errorf("6♦ lead score (%d) should exceed K♦ score (%d) from short suit late game", sixScore, kingScore)
+		t.Errorf("6♦ lead score (%d) should exceed K♦ score (%d) from short suit late game",
+			sixScore, kingScore)
 	}
 }
 
@@ -564,11 +569,13 @@ func TestLeadScoreAvoidsOpponentVoidSuit(t *testing.T) {
 	sixDiamondScore := leadScore(c(rSix, sDiamonds), g, a)
 
 	if kingDiamondScore >= clubScore {
-		t.Errorf("K♦ lead score (%d) should be less than 10♣ lead score (%d) when opponent void in diamonds",
+		t.Errorf("K♦ lead score (%d) should be less than 10♣ lead score (%d) "+
+			"when opponent void in diamonds",
 			kingDiamondScore, clubScore)
 	}
 	if sixDiamondScore >= clubScore {
-		t.Errorf("6♦ lead score (%d) should be less than 10♣ lead score (%d) — lower diamond still penalized by void",
+		t.Errorf("6♦ lead score (%d) should be less than 10♣ lead score (%d) — "+
+			"lower diamond still penalized by void",
 			sixDiamondScore, clubScore)
 	}
 }
@@ -613,7 +620,9 @@ func TestLeadScoreSafeWhenGuaranteedLowest(t *testing.T) {
 	clubScore := leadScore(c(rSix, sClubs), g, a)
 
 	if fourDiamondScore < clubScore {
-		t.Errorf("guaranteed lowest 4♦ lead score (%d) should be >= 6♣ score (%d) despite opponent void", fourDiamondScore, clubScore)
+		t.Errorf("guaranteed lowest 4♦ lead score (%d) should be >= 6♣ score (%d) "+
+			"despite opponent void",
+			fourDiamondScore, clubScore)
 	}
 }
 
@@ -1402,24 +1411,33 @@ func TestLeadNoMoonThreatNormalHeartPenalty(t *testing.T) {
 	cleanHistory := moonThreatHistory()
 	cleanHistory = cleanHistory[:4]
 	cleanHistory = append(cleanHistory,
-		hearts.Trick{Leader: hearts.North, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(rQueen, sDiamonds),
-			hearts.West:  c(rSeven, sHearts),
-			hearts.North: c(rAce, sDiamonds),
-			hearts.East:  c(rKing, sDiamonds),
-		}},
-		hearts.Trick{Leader: hearts.North, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(rTwo, sHearts),
-			hearts.West:  c(rThree, sSpades),
-			hearts.North: c(rTwo, sSpades),
-			hearts.East:  c(rAce, sClubs),
-		}},
-		hearts.Trick{Leader: hearts.West, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(rFour, sSpades),
-			hearts.West:  c(rFive, sSpades),
-			hearts.North: c(rSix, sSpades),
-			hearts.East:  c(rSeven, sSpades),
-		}},
+		hearts.Trick{
+			Leader: hearts.North,
+			Count:  hearts.NumPlayers,
+			Cards: [hearts.NumPlayers]cardcore.Card{
+				hearts.South: c(rQueen, sDiamonds),
+				hearts.West:  c(rSeven, sHearts),
+				hearts.North: c(rAce, sDiamonds),
+				hearts.East:  c(rKing, sDiamonds),
+			}},
+		hearts.Trick{
+			Leader: hearts.North,
+			Count:  hearts.NumPlayers,
+			Cards: [hearts.NumPlayers]cardcore.Card{
+				hearts.South: c(rTwo, sHearts),
+				hearts.West:  c(rThree, sSpades),
+				hearts.North: c(rTwo, sSpades),
+				hearts.East:  c(rAce, sClubs),
+			}},
+		hearts.Trick{
+			Leader: hearts.West,
+			Count:  hearts.NumPlayers,
+			Cards: [hearts.NumPlayers]cardcore.Card{
+				hearts.South: c(rFour, sSpades),
+				hearts.West:  c(rFive, sSpades),
+				hearts.North: c(rSix, sSpades),
+				hearts.East:  c(rSeven, sSpades),
+			}},
 	)
 
 	g := setupLeadState(hearts.East, 7, []cardcore.Card{
@@ -1466,7 +1484,8 @@ func TestShootPassScoreKeepsHearts(t *testing.T) {
 	clubScore := shootPassScore(c(rTwo, sClubs), hand)
 
 	if heartScore >= clubScore {
-		t.Errorf("A♥ shoot pass score (%d) should be less than 2♣ score (%d)", heartScore, clubScore)
+		t.Errorf("A♥ shoot pass score (%d) should be less than 2♣ score (%d)",
+			heartScore, clubScore)
 	}
 }
 
@@ -1493,7 +1512,8 @@ func TestShootPassScoreKeepsQueenOfSpades(t *testing.T) {
 	clubScore := shootPassScore(c(rTwo, sClubs), hand)
 
 	if queenScore >= clubScore {
-		t.Errorf("Q♠ shoot pass score (%d) should be less than 2♣ score (%d)", queenScore, clubScore)
+		t.Errorf("Q♠ shoot pass score (%d) should be less than 2♣ score (%d)",
+			queenScore, clubScore)
 	}
 }
 
@@ -1540,7 +1560,7 @@ func TestChoosePassShootKeepsHearts(t *testing.T) {
 		t.Fatalf("Deal error: %v", err)
 	}
 
-	setupPassHand(t, g, hearts.South, []cardcore.Card{
+	setupPassHand(t, g, []cardcore.Card{
 		c(rTwo, sClubs),
 		c(rThree, sClubs),
 		c(rFour, sClubs),
@@ -1599,7 +1619,8 @@ func TestShootLeadScorePrefersSideAcesOverHearts(t *testing.T) {
 	aceHeartScore := shootLeadScore(c(rAce, sHearts), g, a)
 
 	if aceClubScore <= aceHeartScore {
-		t.Errorf("A♣ shoot lead score (%d) should exceed A♥ score (%d)", aceClubScore, aceHeartScore)
+		t.Errorf("A♣ shoot lead score (%d) should exceed A♥ score (%d)",
+			aceClubScore, aceHeartScore)
 	}
 }
 
@@ -2019,7 +2040,7 @@ func TestShootOrDuckDeterministic(t *testing.T) {
 	if err := gShoot.Deal(); err != nil {
 		t.Fatalf("Deal error: %v", err)
 	}
-	setupPassHand(t, gShoot, hearts.South, shooterHand)
+	setupPassHand(t, gShoot, shooterHand)
 	shootPassed := h.ChoosePass(gShoot, hearts.South)
 	for _, card := range shootPassed {
 		if card.Suit == sHearts {
@@ -2034,7 +2055,7 @@ func TestShootOrDuckDeterministic(t *testing.T) {
 	if err := gDuck.Deal(); err != nil {
 		t.Fatalf("Deal error: %v", err)
 	}
-	setupPassHand(t, gDuck, hearts.South, duckerHand)
+	setupPassHand(t, gDuck, duckerHand)
 	duckPassed := h.ChoosePass(gDuck, hearts.South)
 	passedHeart := false
 	for _, card := range duckPassed {
@@ -2188,10 +2209,10 @@ func newSeededHeuristic(seed uint64) *Heuristic {
 
 // TestHeuristicStatisticalCompetence runs 1000 complete games with one
 
-// setupPassHand replaces a player's hand with the given cards for pass testing.
-func setupPassHand(t *testing.T, g *hearts.Game, seat hearts.Seat, cards []cardcore.Card) {
+// setupPassHand replaces South's hand with the given cards for pass testing.
+func setupPassHand(t *testing.T, g *hearts.Game, cards []cardcore.Card) {
 	t.Helper()
-	g.Hands[seat] = cardcore.NewHand(cards)
+	g.Hands[hearts.South] = cardcore.NewHand(cards)
 }
 
 // passedContains reports whether target appears in the passed cards array.
@@ -2207,7 +2228,12 @@ func passedContains(cards [hearts.PassCount]cardcore.Card, target cardcore.Card)
 // setupLeadState creates a game in PhasePlay where seat is about to lead.
 // trickNum sets how many tricks have been played. trickHistory provides
 // completed tricks (may be nil).
-func setupLeadState(seat hearts.Seat, trickNum int, hand []cardcore.Card, trickHistory []hearts.Trick) *hearts.Game {
+func setupLeadState(
+	seat hearts.Seat,
+	trickNum int,
+	hand []cardcore.Card,
+	trickHistory []hearts.Trick,
+) *hearts.Game {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
 	g.Turn = seat
@@ -2319,18 +2345,24 @@ func moonThreatHistory() []hearts.Trick {
 	h := earlyMoonThreatHistory()
 	return append(h,
 		// Trick 5: East leads diamonds, North wins (clean).
-		hearts.Trick{Leader: hearts.East, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(rQueen, sDiamonds),
-			hearts.West:  c(rJack, sDiamonds),
-			hearts.North: c(rAce, sDiamonds),
-			hearts.East:  c(rKing, sDiamonds),
-		}},
+		hearts.Trick{
+			Leader: hearts.East,
+			Count:  hearts.NumPlayers,
+			Cards: [hearts.NumPlayers]cardcore.Card{
+				hearts.South: c(rQueen, sDiamonds),
+				hearts.West:  c(rJack, sDiamonds),
+				hearts.North: c(rAce, sDiamonds),
+				hearts.East:  c(rKing, sDiamonds),
+			}},
 		// Trick 6: North leads diamonds, North wins (clean).
-		hearts.Trick{Leader: hearts.North, Count: hearts.NumPlayers, Cards: [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(rAce, sClubs),
-			hearts.West:  c(rThree, sSpades),
-			hearts.North: c(rTwo, sDiamonds),
-			hearts.East:  c(rTwo, sSpades),
-		}},
+		hearts.Trick{
+			Leader: hearts.North,
+			Count:  hearts.NumPlayers,
+			Cards: [hearts.NumPlayers]cardcore.Card{
+				hearts.South: c(rAce, sClubs),
+				hearts.West:  c(rThree, sSpades),
+				hearts.North: c(rTwo, sDiamonds),
+				hearts.East:  c(rTwo, sSpades),
+			}},
 	)
 }

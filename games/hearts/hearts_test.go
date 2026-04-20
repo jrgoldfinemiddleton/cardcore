@@ -60,7 +60,8 @@ func TestCloneGame(t *testing.T) {
 	// Verify clone matches original.
 	for i := range NumPlayers {
 		if clone.Hands[i].Len() != g.Hands[i].Len() {
-			t.Fatalf("clone hand %d length = %d, want %d", i, clone.Hands[i].Len(), g.Hands[i].Len())
+			t.Fatalf("clone hand %d length = %d, want %d",
+				i, clone.Hands[i].Len(), g.Hands[i].Len())
 		}
 		for j, card := range g.Hands[i].Cards {
 			if !clone.Hands[i].Cards[j].Equal(card) {
@@ -101,7 +102,8 @@ func TestCloneGame(t *testing.T) {
 	clone.Trick.Cards[South] = c(rAce, sSpades)
 	clone.Trick.Count = 1
 	if g.Trick.Cards[South] != (cardcore.Card{}) {
-		t.Fatalf("original Trick.Cards[South] = %v after clone mutation, want zero card", g.Trick.Cards[South])
+		t.Fatalf("original Trick.Cards[South] = %v after clone mutation, want zero card",
+			g.Trick.Cards[South])
 	}
 	if g.Trick.Count != 0 {
 		t.Fatalf("original Trick.Count = %d after clone mutation, want 0", g.Trick.Count)
@@ -268,7 +270,8 @@ func TestLegalMovesOnlyHeartsRemain(t *testing.T) {
 	}
 }
 
-// TestLegalMovesFirstTrickNoPoints verifies that point cards are excluded on the first trick when following void.
+// TestLegalMovesFirstTrickNoPoints verifies that point cards are excluded on
+// the first trick when following void.
 func TestLegalMovesFirstTrickNoPoints(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
@@ -290,7 +293,8 @@ func TestLegalMovesFirstTrickNoPoints(t *testing.T) {
 	}
 }
 
-// TestLegalMovesFirstTrickOnlyPointCards verifies that all cards are legal on the first trick when only point cards remain.
+// TestLegalMovesFirstTrickOnlyPointCards verifies that all cards are legal on
+// the first trick when only point cards remain.
 func TestLegalMovesFirstTrickOnlyPointCards(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
@@ -312,7 +316,8 @@ func TestLegalMovesFirstTrickOnlyPointCards(t *testing.T) {
 	}
 }
 
-// TestLegalMovesRoundtrip verifies consistency between LegalMoves and PlayCard across 50 random games.
+// TestLegalMovesRoundtrip verifies consistency between LegalMoves and PlayCard
+// across 50 random games.
 func TestLegalMovesRoundtrip(t *testing.T) {
 	for seed := range 50 {
 		rng := rand.New(rand.NewPCG(uint64(seed), uint64(seed+1)))
@@ -332,7 +337,8 @@ func TestLegalMovesRoundtrip(t *testing.T) {
 				t.Fatalf("seed %d: LegalMoves error: %v", seed, err)
 			}
 			if len(legal) == 0 {
-				t.Fatalf("seed %d: no legal moves for seat %d with hand %v", seed, seat, g.Hands[seat].Cards)
+				t.Fatalf("seed %d: no legal moves for seat %d with hand %v",
+					seed, seat, g.Hands[seat].Cards)
 			}
 
 			// Every card NOT in legal must be rejected by PlayCard.
@@ -347,7 +353,8 @@ func TestLegalMovesRoundtrip(t *testing.T) {
 				if !isLegal {
 					clone := g.Clone()
 					if err := clone.PlayCard(seat, card); err == nil {
-						t.Fatalf("seed %d: PlayCard accepted %v but LegalMoves excluded it", seed, card)
+						t.Fatalf("seed %d: PlayCard accepted %v but LegalMoves excluded it",
+							seed, card)
 					}
 				}
 			}
@@ -485,7 +492,8 @@ func TestPassValidation(t *testing.T) {
 	}
 }
 
-// TestPassExchange verifies that passed cards are removed from the sender and added to the receiver.
+// TestPassExchange verifies that passed cards are removed from the sender and
+// added to the receiver.
 func TestPassExchange(t *testing.T) {
 	g := newPassGame(t)
 
@@ -562,7 +570,8 @@ func TestMustFollowSuit(t *testing.T) {
 	}
 }
 
-// TestCannotPlayPointsOnFirstTrick verifies that hearts and Q♠ cannot be played on the first trick when void.
+// TestCannotPlayPointsOnFirstTrick verifies that hearts and Q♠ cannot be played
+// on the first trick when void.
 func TestCannotPlayPointsOnFirstTrick(t *testing.T) {
 	g := setupVoidClubs()
 
@@ -605,7 +614,8 @@ func TestTrickResolution(t *testing.T) {
 	}
 }
 
-// TestHeartsBroken verifies that hearts are not broken initially and become broken when a heart is played.
+// TestHeartsBroken verifies that hearts are not broken initially and become
+// broken when a heart is played.
 func TestHeartsBroken(t *testing.T) {
 	g := setupFixedHands()
 
@@ -824,7 +834,8 @@ func TestTrickHistoryMidTrick(t *testing.T) {
 	playAnyValid(g, g.Turn)
 
 	if len(g.TrickHistory) != 1 {
-		t.Fatalf("len(TrickHistory) mid-trick = %d, want 1 (trick not yet complete)", len(g.TrickHistory))
+		t.Fatalf("len(TrickHistory) mid-trick = %d, want 1 (trick not yet complete)",
+			len(g.TrickHistory))
 	}
 
 	// Complete the second trick.
@@ -836,7 +847,8 @@ func TestTrickHistoryMidTrick(t *testing.T) {
 	}
 }
 
-// TestTrickHistoryCloneIndependence verifies that cloned TrickHistory is independent from the original.
+// TestTrickHistoryCloneIndependence verifies that cloned TrickHistory is
+// independent from the original.
 func TestTrickHistoryCloneIndependence(t *testing.T) {
 	g := setupFixedHands()
 
@@ -922,7 +934,8 @@ func TestFullGameIntegration(t *testing.T) {
 		for round := range maxRounds {
 			wantDir := PassDirection(round % NumPassDirections)
 			if g.PassDir != wantDir {
-				t.Fatalf("game %d, round %d: PassDir = %d, want %d", game, round, g.PassDir, wantDir)
+				t.Fatalf("game %d, round %d: PassDir = %d, want %d",
+					game, round, g.PassDir, wantDir)
 			}
 
 			playRandomRound(t, g)
@@ -1133,7 +1146,8 @@ func TestShootTheMoonIntegration(t *testing.T) {
 		for i, tr := range script {
 			for _, p := range tr {
 				if err := g.PlayCard(p.seat, p.card); err != nil {
-					t.Fatalf("game %d, trick %d: PlayCard(%d, %v): %v", game, i+1, p.seat, p.card, err)
+					t.Fatalf("game %d, trick %d: PlayCard(%d, %v): %v",
+						game, i+1, p.seat, p.card, err)
 				}
 			}
 		}
@@ -1219,7 +1233,8 @@ func playRandomRound(t *testing.T, g *Game) {
 
 	for i := Seat(0); i < NumPlayers; i++ {
 		if g.Hands[i].Len() != HandSize {
-			t.Fatalf("round %d: player %d hand size = %d, want %d", g.Round, i, g.Hands[i].Len(), HandSize)
+			t.Fatalf("round %d: player %d hand size = %d, want %d",
+				g.Round, i, g.Hands[i].Len(), HandSize)
 		}
 	}
 
@@ -1245,7 +1260,8 @@ func playRandomRound(t *testing.T, g *Game) {
 			playAnyValid(g, g.Turn)
 		}
 		if g.TrickNum != trick+1 && g.Phase != PhaseScore {
-			t.Fatalf("round %d, trick %d: TrickNum = %d, Phase = %d", g.Round, trick, g.TrickNum, g.Phase)
+			t.Fatalf("round %d, trick %d: TrickNum = %d, Phase = %d",
+				g.Round, trick, g.TrickNum, g.Phase)
 		}
 	}
 
@@ -1262,7 +1278,8 @@ func playRandomRound(t *testing.T, g *Game) {
 	}
 
 	if len(g.TrickHistory) != HandSize {
-		t.Fatalf("round %d: len(TrickHistory) = %d, want %d", g.Round, len(g.TrickHistory), HandSize)
+		t.Fatalf("round %d: len(TrickHistory) = %d, want %d",
+			g.Round, len(g.TrickHistory), HandSize)
 	}
 	if pts := trickHistoryPoints(g.TrickHistory); pts != MoonPoints {
 		t.Fatalf("round %d: sum(TrickHistory points) = %d, want %d", g.Round, pts, MoonPoints)

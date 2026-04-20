@@ -1,4 +1,4 @@
-.PHONY: test fmt vet lint build doc check create-labels apply-labels
+.PHONY: test fmt vet lint lint-extra build doc check create-labels apply-labels
 
 test:
 	go test ./...
@@ -11,6 +11,9 @@ vet:
 
 lint:
 	go tool golangci-lint run
+
+lint-extra:
+	go tool golangci-lint run --config .golangci-extra.yml
 
 build:
 	go build ./...
