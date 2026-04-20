@@ -25,6 +25,7 @@ const MoonPoints = 26
 // Phase represents the current phase of a Hearts round.
 type Phase uint8
 
+// Phases of a Hearts round, in the order they occur.
 const (
 	PhaseDeal  Phase = iota // Waiting to deal cards.
 	PhasePass               // Players selecting cards to pass.
@@ -36,6 +37,7 @@ const (
 // PassDirection determines which direction cards are passed each round.
 type PassDirection uint8
 
+// Pass directions, rotated each round (left, right, across, hold).
 const (
 	PassLeft   PassDirection = iota // Pass to the player on your left.
 	PassRight                       // Pass to the player on your right.
@@ -49,9 +51,10 @@ const NumPassDirections = 4
 var queenOfSpades = cardcore.Card{Rank: cardcore.Queen, Suit: cardcore.Spades}
 var twoOfClubs = cardcore.Card{Rank: cardcore.Two, Suit: cardcore.Clubs}
 
-// Player positions at the table.
+// Seat identifies a player position at the table.
 type Seat uint8
 
+// Seats at the table, in clockwise order from South.
 const (
 	South Seat = iota // The human player (in a typical setup).
 	West              // The player to South's left.
