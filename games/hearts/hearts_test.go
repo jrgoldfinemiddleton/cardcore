@@ -113,7 +113,7 @@ func TestLegalMovesWrongPhase(t *testing.T) {
 	g := New()
 	_, err := g.LegalMoves(South)
 	if err == nil {
-		t.Fatalf("expected error for LegalMoves in PhaseDeal")
+		t.Fatalf("LegalMoves in PhaseDeal returned nil error, want non-nil")
 	}
 	if !strings.Contains(err.Error(), "phase") {
 		t.Fatalf("error = %q, want mention of phase", err)
@@ -129,7 +129,7 @@ func TestLegalMovesWrongTurn(t *testing.T) {
 
 	_, err := g.LegalMoves(North)
 	if err == nil {
-		t.Fatalf("expected error for LegalMoves when not seat's turn")
+		t.Fatalf("LegalMoves(North) when South's turn returned nil error, want non-nil")
 	}
 	if !strings.Contains(err.Error(), "turn") {
 		t.Fatalf("error = %q, want mention of turn", err)
@@ -404,7 +404,7 @@ func TestDealWrongPhase(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
 	if err := g.Deal(); err == nil {
-		t.Error("expected error when dealing in wrong phase")
+		t.Error("Deal in PhasePlay returned nil error, want non-nil")
 	}
 }
 
@@ -414,7 +414,7 @@ func TestPassWrongPhase(t *testing.T) {
 	g.Phase = PhasePlay
 	cards := [PassCount]cardcore.Card{}
 	if err := g.SetPass(South, cards); err == nil {
-		t.Error("expected error when passing in wrong phase")
+		t.Error("SetPass in PhasePlay returned nil error, want non-nil")
 	}
 }
 
@@ -423,7 +423,7 @@ func TestPlayCardWrongPhase(t *testing.T) {
 	g := New()
 	g.Phase = PhasePass
 	if err := g.PlayCard(South, twoOfClubs); err == nil {
-		t.Error("expected error when playing in wrong phase")
+		t.Error("PlayCard in PhasePass returned nil error, want non-nil")
 	}
 }
 
@@ -432,7 +432,7 @@ func TestEndRoundWrongPhase(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
 	if err := g.EndRound(); err == nil {
-		t.Error("expected error when ending round in wrong phase")
+		t.Error("EndRound in PhasePlay returned nil error, want non-nil")
 	}
 }
 
@@ -441,7 +441,7 @@ func TestWinnerWrongPhase(t *testing.T) {
 	g := New()
 	g.Phase = PhasePlay
 	if _, err := g.Winner(); err == nil {
-		t.Error("expected error when calling Winner before game over")
+		t.Error("Winner before game over returned nil error, want non-nil")
 	}
 }
 
@@ -472,12 +472,12 @@ func TestPassValidation(t *testing.T) {
 		}
 	}
 	if err := g.SetPass(South, missing); err == nil {
-		t.Error("expected error for cards not in hand")
+		t.Error("SetPass with cards not in hand returned nil error, want non-nil")
 	}
 
 	dupes := [PassCount]cardcore.Card{hand.Cards[0], hand.Cards[0], hand.Cards[1]}
 	if err := g.SetPass(South, dupes); err == nil {
-		t.Error("expected error for duplicate cards")
+		t.Error("SetPass with duplicate cards returned nil error, want non-nil")
 	}
 
 	if err := g.SetPass(South, cards); err != nil {
@@ -533,10 +533,10 @@ func TestFirstTrickMustLead2C(t *testing.T) {
 	wrongCard := findAnyOtherCard(g, holder, twoOfClubs)
 	err := g.PlayCard(holder, wrongCard)
 	if err == nil {
-		t.Fatal("expected error for not leading 2♣ on first trick")
+		t.Fatal("PlayCard non-2♣ on first trick returned nil error, want non-nil")
 	}
 	if !strings.Contains(err.Error(), "first trick") {
-		t.Errorf("expected first trick error, got: %v", err)
+		t.Errorf("err = %v, want to contain %q", err, "first trick")
 	}
 
 	if err := g.PlayCard(holder, twoOfClubs); err != nil {
@@ -554,7 +554,7 @@ func TestMustFollowSuit(t *testing.T) {
 
 	// West has clubs and must follow suit.
 	if err := g.PlayCard(West, c(rTwo, sDiamonds)); err == nil {
-		t.Error("expected error for not following suit when able")
+		t.Error("PlayCard off-suit when able to follow returned nil error, want non-nil")
 	}
 
 	if err := g.PlayCard(West, c(rThree, sClubs)); err != nil {
@@ -573,12 +573,12 @@ func TestCannotPlayPointsOnFirstTrick(t *testing.T) {
 	// West is void in clubs and has non-penalty cards.
 	// Playing a heart should be rejected.
 	if err := g.PlayCard(West, c(rTwo, sHearts)); err == nil {
-		t.Error("expected error for playing hearts on first trick")
+		t.Error("PlayCard heart on first trick returned nil error, want non-nil")
 	}
 
 	// Playing Q♠ should be rejected.
 	if err := g.PlayCard(West, queenOfSpades); err == nil {
-		t.Error("expected error for playing Q♠ on first trick")
+		t.Error("PlayCard Q♠ on first trick returned nil error, want non-nil")
 	}
 
 	// Playing a non-penalty card should succeed.
@@ -637,7 +637,7 @@ func TestHeartsBroken(t *testing.T) {
 	}
 
 	if breakingCard.Suit != sHearts {
-		t.Error("expected a heart to trigger HeartsBroken")
+		t.Errorf("breakingCard.Suit = %v, want %v", breakingCard.Suit, sHearts)
 	}
 }
 
@@ -732,10 +732,10 @@ func TestWrongTurn(t *testing.T) {
 	card := g.Hands[wrongSeat].Cards[0]
 	err := g.PlayCard(wrongSeat, card)
 	if err == nil {
-		t.Fatal("expected error for playing out of turn")
+		t.Fatal("PlayCard out of turn returned nil error, want non-nil")
 	}
 	if !strings.Contains(err.Error(), "turn") {
-		t.Errorf("expected turn error, got: %v", err)
+		t.Errorf("err = %v, want to contain %q", err, "turn")
 	}
 }
 
