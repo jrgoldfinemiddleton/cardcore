@@ -104,22 +104,23 @@ func buildFollowWithPoints() (*hearts.Game, hearts.Seat) {
 	g.TrickNum = 4
 	g.HeartsBroken = true
 	g.TrickHistory = []hearts.Trick{
+		// Trick 1: validated 2♣ opener.
 		validFirstTrick(),
-		// T1: East leads A♣, all follow clubs, East wins.
+		// Trick 2: East leads A♣, all follow clubs, East wins.
 		pointTrick(hearts.East, [hearts.NumPlayers]cardcore.Card{
 			hearts.East:  c(rAce, sClubs),
 			hearts.South: c(rSix, sClubs),
 			hearts.West:  c(rTen, sClubs),
 			hearts.North: c(rKing, sClubs),
 		}),
-		// T2: East leads 2♦, North void in diamonds dumps Q♠, West wins.
+		// Trick 3: East leads 2♦, North void in diamonds dumps Q♠, West wins.
 		pointTrick(hearts.East, [hearts.NumPlayers]cardcore.Card{
 			hearts.East:  c(rTwo, sDiamonds),
 			hearts.South: c(rFive, sDiamonds),
 			hearts.West:  c(rKing, sDiamonds),
 			hearts.North: queenOfSpades,
 		}),
-		// T3: West leads A♦, North sloughs 4♥ (still void) → hearts break.
+		// Trick 4: West leads A♦, North sloughs 4♥ (still void) → hearts break.
 		pointTrick(hearts.West, [hearts.NumPlayers]cardcore.Card{
 			hearts.West:  c(rAce, sDiamonds),
 			hearts.North: c(rFour, sHearts),
@@ -209,50 +210,51 @@ func buildLateGameMoonThreat() (*hearts.Game, hearts.Seat) {
 	g.TrickNum = 8
 	g.HeartsBroken = true
 	g.TrickHistory = []hearts.Trick{
+		// Trick 1: validated 2♣ opener.
 		validFirstTrick(),
-		// T1: East leads A♣, all follow clubs, East wins.
+		// Trick 2: East leads A♣, all follow clubs, East wins.
 		pointTrick(hearts.East, [hearts.NumPlayers]cardcore.Card{
 			hearts.East:  c(rAce, sClubs),
 			hearts.South: c(rSix, sClubs),
 			hearts.West:  c(rTen, sClubs),
 			hearts.North: c(rKing, sClubs),
 		}),
-		// T2: East leads A♦, all follow diamonds, East wins.
+		// Trick 3: East leads A♦, all follow diamonds, East wins.
 		pointTrick(hearts.East, [hearts.NumPlayers]cardcore.Card{
 			hearts.East:  c(rAce, sDiamonds),
 			hearts.South: c(rTwo, sDiamonds),
 			hearts.West:  c(rFive, sDiamonds),
 			hearts.North: c(rKing, sDiamonds),
 		}),
-		// T3: East leads A♠, all follow spades (no Q♠ yet), East wins.
+		// Trick 4: East leads A♠, all follow spades (no Q♠ yet), East wins.
 		pointTrick(hearts.East, [hearts.NumPlayers]cardcore.Card{
 			hearts.East:  c(rAce, sSpades),
 			hearts.South: c(rTwo, sSpades),
 			hearts.West:  c(rFive, sSpades),
 			hearts.North: c(rKing, sSpades),
 		}),
-		// T4: East leads J♦, West void in diamonds sloughs Q♠, East wins.
+		// Trick 5: East leads J♦, West void in diamonds sloughs Q♠, East wins.
 		pointTrick(hearts.East, [hearts.NumPlayers]cardcore.Card{
 			hearts.East:  c(rJack, sDiamonds),
 			hearts.South: c(rThree, sDiamonds),
 			hearts.West:  queenOfSpades,
 			hearts.North: c(rFour, sDiamonds),
 		}),
-		// T5: East leads Q♦, West sloughs 3♥ (still void) → hearts break.
+		// Trick 6: East leads Q♦, West sloughs 3♥ (still void) → hearts break.
 		pointTrick(hearts.East, [hearts.NumPlayers]cardcore.Card{
 			hearts.East:  c(rQueen, sDiamonds),
 			hearts.South: c(rSix, sDiamonds),
 			hearts.West:  c(rThree, sHearts),
 			hearts.North: c(rSeven, sDiamonds),
 		}),
-		// T6: East leads K♥ (hearts broken), all follow, East wins +3♥.
+		// Trick 7: East leads K♥ (hearts broken), all follow, East wins +3♥.
 		pointTrick(hearts.East, [hearts.NumPlayers]cardcore.Card{
 			hearts.East:  c(rKing, sHearts),
 			hearts.South: c(rFive, sHearts),
 			hearts.West:  c(rSix, sHearts),
 			hearts.North: c(rSeven, sHearts),
 		}),
-		// T7: East leads A♥, all follow, East wins +4♥.
+		// Trick 8: East leads A♥, all follow, East wins +4♥.
 		pointTrick(hearts.East, [hearts.NumPlayers]cardcore.Card{
 			hearts.East:  c(rAce, sHearts),
 			hearts.South: c(rEight, sHearts),

@@ -151,7 +151,7 @@ func TestAnalyzeQueenPlayed(t *testing.T) {
 	g.Hands[hearts.East] = cardcore.NewHand(nil)
 
 	g.TrickHistory = []hearts.Trick{
-		// Trick 0: valid 2♣ lead.
+		// Trick 1: valid 2♣ lead.
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
 				hearts.South: c(rTwo, sClubs),
@@ -162,7 +162,7 @@ func TestAnalyzeQueenPlayed(t *testing.T) {
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
 		},
-		// Trick 1: spade lead, West plays Q♠. South wins with A♠.
+		// Trick 2: spade lead, West plays Q♠. South wins with A♠.
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
 				hearts.South: aceOfSpades,
@@ -325,7 +325,7 @@ func TestAnalyzeQueenHoldRound(t *testing.T) {
 }
 
 // TestAnalyzeHeartsPlayedAcrossMultipleTricks verifies that heartsPlayed
-// accumulates across multiple tricks. Three hearts across tricks 1-2.
+// accumulates across multiple tricks. Three hearts across tricks 2-3.
 func TestAnalyzeHeartsPlayedAcrossMultipleTricks(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePlay
@@ -336,7 +336,7 @@ func TestAnalyzeHeartsPlayedAcrossMultipleTricks(t *testing.T) {
 	g.Hands[hearts.East] = cardcore.NewHand(nil)
 
 	g.TrickHistory = []hearts.Trick{
-		// Trick 0: no hearts.
+		// Trick 1: no hearts.
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
 				hearts.South: c(rTwo, sClubs),
@@ -347,7 +347,7 @@ func TestAnalyzeHeartsPlayedAcrossMultipleTricks(t *testing.T) {
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
 		},
-		// Trick 1: one heart discarded.
+		// Trick 2: one heart discarded.
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
 				hearts.South: c(rKing, sDiamonds),
@@ -358,7 +358,7 @@ func TestAnalyzeHeartsPlayedAcrossMultipleTricks(t *testing.T) {
 			Leader: hearts.South,
 			Count:  hearts.NumPlayers,
 		},
-		// Trick 2: two more hearts.
+		// Trick 3: two more hearts.
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
 				hearts.South: c(rAce, sDiamonds),
