@@ -54,6 +54,8 @@ Dev tools like [golangci-lint](https://golangci-lint.run/) and [pkgsite](https:/
 | `make build` | Compile all packages |
 | `make doc` | Browse docs locally via [pkgsite](https://pkg.go.dev/golang.org/x/pkgsite) |
 | `make check` | Run fmt, vet, lint, and test |
+| `make bench` | Run all benchmarks |
+| `make help` | Show available targets |
 
 ## License
 

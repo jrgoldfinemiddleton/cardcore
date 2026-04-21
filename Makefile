@@ -1,31 +1,37 @@
-.PHONY: test fmt vet lint lint-extra build doc check create-labels apply-labels
+.PHONY: test fmt vet lint lint-extra build doc check bench help create-labels apply-labels
 
-test:
+test: ## Run all tests
 	go test ./...
 
-fmt:
+fmt: ## Format code with gofmt
 	gofmt -w .
 
-vet:
+vet: ## Run go vet
 	go vet ./...
 
-lint:
+lint: ## Run golangci-lint
 	go tool golangci-lint run
 
-lint-extra:
+lint-extra: ## Run golangci-lint with the extra-strict config
 	go tool golangci-lint run --config .golangci-extra.yml
 
-build:
+build: ## Compile all packages
 	go build ./...
 
-doc:
+doc: ## Browse docs locally via pkgsite
 	go tool pkgsite -open .
 
-check: fmt vet lint test
+check: fmt vet lint test ## Run fmt, vet, lint, and test
 
-create-labels:
+bench: ## Run all benchmarks
+	go test -bench=. -benchmem -run=^$$ ./...
+
+help: ## Show this help
+	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z_-]+:.*## / {printf "  %-14s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+create-labels: ## Provision the repository label set
 	./scripts/sync-labels.sh
 
-apply-labels:
+apply-labels: ## Compute and apply labels for PR=<n>
 	@if [ -z "$(PR)" ]; then echo "usage: make apply-labels PR=<pr-number>" >&2; exit 1; fi
 	./scripts/apply-labels.sh $(PR)
