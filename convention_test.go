@@ -30,8 +30,11 @@ type testGroup int
 const (
 	testGroupInterfaceCheck  testGroup = iota // var _ T = (*Impl)(nil)
 	testGroupUnitTest                         // func Test* (non-integration)
-	testGroupIntegrationTest                  // func Test*Integration or Test*FullGame*
-	testGroupHelper                           // Non-Test funcs
+	testGroupIntegrationTest                  // func Test*Integration
+	testGroupBenchmark                        // func Benchmark*
+	testGroupFuzz                             // func Fuzz*
+	testGroupExample                          // func Example*
+	testGroupHelper                           // Non-Test/Benchmark/Fuzz/Example funcs
 )
 
 // funcInfo captures the ordering-relevant properties of a single
@@ -599,12 +602,20 @@ func classifyTestFunc(fn *ast.FuncDecl) testDeclInfo {
 
 	var g testGroup
 	switch {
-	case !strings.HasPrefix(name, "Test"):
-		g = testGroupHelper
-	case isIntegrationTestName(name):
-		g = testGroupIntegrationTest
+	case strings.HasPrefix(name, "Test"):
+		if isIntegrationTestName(name) {
+			g = testGroupIntegrationTest
+		} else {
+			g = testGroupUnitTest
+		}
+	case strings.HasPrefix(name, "Benchmark"):
+		g = testGroupBenchmark
+	case strings.HasPrefix(name, "Fuzz"):
+		g = testGroupFuzz
+	case strings.HasPrefix(name, "Example"):
+		g = testGroupExample
 	default:
-		g = testGroupUnitTest
+		g = testGroupHelper
 	}
 
 	return testDeclInfo{name: name, group: g}
@@ -669,6 +680,12 @@ func testGroupName(g testGroup) string {
 		return "unit test"
 	case testGroupIntegrationTest:
 		return "integration test"
+	case testGroupBenchmark:
+		return "benchmark"
+	case testGroupFuzz:
+		return "fuzz"
+	case testGroupExample:
+		return "example"
 	case testGroupHelper:
 		return "helper"
 	default:
