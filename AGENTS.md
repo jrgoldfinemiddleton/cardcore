@@ -60,6 +60,8 @@ cardcore/
 - Follow Rules-Driven Development ([ADR-006](doc/decisions/006-rules-driven-development.md)) when adding a game — write the rules document before implementing
 - Place AI in `games/<game>/ai/` subpackages
 - Follow [ADR-008](doc/decisions/008-ai-design-principles.md) when implementing AI — read-only access to live game state, stdlib-only, separate type per difficulty
+- When adding benchmarks, use stdlib `testing.B` only and share deterministic fixtures via `*_helpers_test.go` builders. Place `Benchmark*` functions after `Test*` and before `Fuzz*`/`Example*` in the file (enforced by `convention_test.go`).
+- **Trick-taking games only**: in test fixtures that build trick history, **comments** that label tricks should use the form `// Trick N:` (spelled out, 1-indexed), where `Trick 1` is the first trick of the round. When a fixture uses `validFirstTrick()` (or equivalent opener helper), annotate the call with `// Trick 1: validated 2♣ opener.` (or the game's equivalent opener description). This applies to comments only — engine code may use whatever indexing it wants (e.g., `g.TrickNum` is 0-indexed).
 - Keep the Go version in `go.mod` aligned with the minimum version stated in `README.md`
 - Read `CONTRIBUTING.md` for general project conventions (naming, changelog rules, code style, doc comments) before making changes — many rules live there rather than being duplicated here.
 
