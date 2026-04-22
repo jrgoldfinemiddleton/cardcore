@@ -38,26 +38,20 @@ jobs:
       - name: Run checks
         run: make check
 
-      - name: Extract changelog section
-        id: changelog
+      - name: Extract changelog section to file
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          SECTION=$(sed -n "/^## \[${VERSION}\]/,/^## \[/{/^## \[${VERSION}\]/d;/^## \[/d;p;}" CHANGELOG.md)
-          if [ -z "$(echo "$SECTION" | tr -d '[:space:]')" ]; then
+          sed -n "/^## \[${VERSION}\]/,/^## \[/{/^## \[${VERSION}\]/d;/^## \[/d;p;}" CHANGELOG.md > release-notes.md
+          if [ -z "$(tr -d '[:space:]' < release-notes.md)" ]; then
             echo "::error::No changelog entry found for version ${VERSION}."
             echo "Add a '## [${VERSION}]' section to CHANGELOG.md before tagging."
             exit 1
           fi
-          {
-            echo "body<<EOCHANGELOG"
-            echo "$SECTION"
-            echo "EOCHANGELOG"
-          } >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "$GITHUB_REF_NAME" \
             --title "$GITHUB_REF_NAME" \
-            --notes '${{ steps.changelog.outputs.body }}'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            --notes-file release-notes.md
