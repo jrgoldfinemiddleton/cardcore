@@ -59,7 +59,7 @@ cardcore/
 - Read the relevant ADRs in `doc/decisions/` before making architectural decisions
 - Follow Rules-Driven Development ([ADR-006](doc/decisions/006-rules-driven-development.md)) when adding a game — write the rules document before implementing
 - Place AI in `games/<game>/ai/` subpackages
-- Follow [ADR-008](doc/decisions/008-ai-design-principles.md) when implementing AI — read-only access to live game state, stdlib-only, separate type per difficulty
+- Follow [ADR-009](doc/decisions/009-ai-difficulty-and-personality.md) when implementing AI — read-only access to live game state, stdlib-only, separate type per difficulty
 - When adding benchmarks, use stdlib `testing.B` only and share deterministic fixtures via `*_helpers_test.go` builders. Place `Benchmark*` functions after `Test*` and before `Fuzz*`/`Example*` in the file (enforced by `convention_test.go`).
 - **Trick-taking games only**: in test fixtures that build trick history, **comments** that label tricks should use the form `// Trick N:` (spelled out, 1-indexed), where `Trick 1` is the first trick of the round. When a fixture uses `validFirstTrick()` (or equivalent opener helper), annotate the call with `// Trick 1: validated 2♣ opener.` (or the game's equivalent opener description). This applies to comments only — engine code may use whatever indexing it wants (e.g., `g.TrickNum` is 0-indexed).
 - Keep the Go version in `go.mod` aligned with the minimum version stated in `README.md`
@@ -71,7 +71,8 @@ cardcore/
 - Never put game logic in the root `cardcore` package
 - Never extract generic abstractions (Player, GameState, Rules, etc.) until at least two games are implemented
 - Never commit with failing tests or lint errors
-- Never edit an ADR file after its initial commit — write a new one instead
+- Never edit the substantive content of an ADR file after its initial commit — write a new one instead. The Status line is the exception: update it when an ADR is superseded or deprecated (otherwise the `Superseded` / `Deprecated` status values would never apply).
+- When superseding an ADR, the new ADR must be self-contained: carry forward every part of the old ADR that remains valid, and amend or replace only the parts that change. A reader should never have to consult the superseded ADR to understand current policy. (Deprecation is different — a deprecated ADR has no successor carrying its content forward.)
 - Never use `//nolint` directives to silence lint errors — fix the code instead
 - Never write a decrementing `for` loop over a `cardcore.Rank`, `cardcore.Suit`, or any other unsigned named type using a condition like `r >= Two` — at zero the value wraps to a huge number and the loop runs forever or indexes out of bounds. If you need to iterate descending, use the headerless form with an explicit guarded break before the decrement that would underflow (see `games/hearts/ai/analysis.go` for an example, introduced in [PR #15](https://github.com/jrgoldfinemiddleton/cardcore/pull/15)).
 - Never tag a v1.0.0 or higher release — the root package is not yet stable enough for a v1.0.0 commitment
@@ -116,7 +117,7 @@ Read `doc/decisions/` for the rationale behind key choices. Important ADRs:
 - ADR-005: Why no generic abstractions yet
 - ADR-006: Rules-Driven Development for games
 - ADR-007: Automated code convention enforcement
-- ADR-008: AI design principles
+- ADR-009: AI difficulty and personality (supersedes ADR-008)
 
 ## 8. When to Check In With the Human
 - Before making any architectural change not covered by an ADR
