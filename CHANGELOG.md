@@ -8,6 +8,8 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-04-21
+
 ### Fixed
 - Release workflow no longer fails when changelog entries contain shell metacharacters such as apostrophes
 
