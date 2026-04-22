@@ -8,6 +8,8 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-21
+
 ### Added
 - AI prerequisites: Clone, LegalMoves, and Player interface (`games/hearts/`)
 - Random AI player (`games/hearts/ai/`)
