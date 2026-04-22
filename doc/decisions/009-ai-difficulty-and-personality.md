@@ -1,15 +1,32 @@
-# ADR-008: AI Design Principles
+# ADR-009: AI Difficulty and Personality
 
-**Date:** 2026-04-14
-**Status:** Superseded by [ADR-009](009-ai-difficulty-and-personality.md)
+**Date:** 2026-04-22
+**Status:** Accepted
 
 ## Context
-Cardcore games need computer-controlled players to fill empty seats in
-local and online play. AI for card games involves unique challenges:
-imperfect information (hidden hands), variant-specific strategy, and a
-wide range of desired difficulty levels. Without clear principles, AI
-implementations risk becoming tangled with engine internals, dependent
-on external frameworks, or inconsistent across games.
+This ADR supersedes [ADR-008](008-ai-design-principles.md). Its
+principles 1-8 and 10-16 are restated below unchanged. Principle 9 is
+amended.
+
+[ADR-008](008-ai-design-principles.md) §9 committed to two propositions
+that have aged poorly:
+
+1. Difficulty is "how deeply or broadly the AI searches" — implying
+   levels differ only by compute applied to the same algorithm.
+2. Personality is an independent axis controlled by evaluation weights.
+
+In practice, AI levels for a given game may differ by *technique*, not
+just compute. For Hearts, the planned progression is Random, heuristic
+scoring, Perfect Information Monte Carlo (PIMC), and PIMC plus
+opponent-belief modeling — each algorithmically distinct rather than a
+deeper-search version of the previous one. Other games may use other
+techniques.
+
+A user-facing personality parameter is also problematic. It is
+meaningful only on heuristic scoring (where it would be a choice of
+weight set), meaningless on Random, mostly invisible on PIMC, and
+strictly degrading on PIMC with belief modeling. There is no concrete
+demand to justify the API surface, test burden, and tuning effort.
 
 ## Decision
 We adopt the following principles for all game AI in Cardcore.
@@ -48,16 +65,17 @@ We adopt the following principles for all game AI in Cardcore.
    single type. Sharing implementation across difficulty levels via
    unexported helpers, embedded structs, or composition is encouraged
    — the rule constrains the public API surface, not the internals.
-9. Difficulty levels control how deeply or broadly the AI searches
-   (for example: number of determinizations, search depth, time
-   budget). A determinization is a single random assignment of unknown
-   cards to opponents; the AI simulates play in many such assignments
-   and picks the move that performs best on average (see
-   [Bax 2020, §2.3](https://studenttheses.uu.nl/bitstream/handle/20.500.12932/37736/Thesis_draft.pdf?sequence=1)
-   for a clear explanation of this technique in trick-taking games).
-   Personality — the AI's playing style — is controlled by evaluation
-   weights within a given difficulty level. Difficulty and personality
-   are independent axes.
+9. Difficulty levels reflect both algorithmic technique and compute
+   budget. A higher level may use a different algorithm from a lower
+   level (for example: rule-based heuristics versus Perfect Information
+   Monte Carlo (PIMC) with determinization sampling — see
+   [Bax 2020, §2.3](https://studenttheses.uu.nl/bitstream/handle/20.500.12932/37736/Thesis_draft.pdf?sequence=1)),
+   deeper or broader search within the same algorithm, or a richer
+   evaluation function. The project does not commit to a separate
+   "personality" axis. AIs are tuned to play as well as their
+   technique and budget allow, without configurable stylistic
+   variants. If concrete user demand for stylistic variants emerges,
+   a future ADR will address it.
 10. Every game must provide at minimum a random-legal-move
     implementation. This is the baseline for testing, development, and
     filling seats when no smarter AI is available.
@@ -106,9 +124,15 @@ We adopt the following principles for all game AI in Cardcore.
     against the same interface.
 (+) Rule changes that affect AI are caught during review, not
     discovered after release.
+(+) AI types are named and described by their technique, which
+    honestly reflects what they are.
+(+) Each implementation is one well-tuned AI rather than a family of
+    stylistic variants.
 (-) Each game's AI is self-contained, which means some structural
     patterns will be duplicated across games until a shared
     abstraction is justified (per ADR-005).
 (-) The stdlib-only constraint (principle 11) limits AI to algorithmic
     approaches, which may hit a ceiling for games where learned
     strategies significantly outperform search (for example, poker).
+(-) Users wanting stylistic variants are not served. The variety in
+    the AI catalog comes from the techniques themselves.
