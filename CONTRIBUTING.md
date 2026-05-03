@@ -170,6 +170,30 @@ Scan the **entire** file you changed, not just newly added sections.
 The convention tests cover all `.go` files in the module — a violation
 anywhere will fail `make check`.
 
+### Benchmarks
+
+When changing performance-sensitive code — card primitives, game engines,
+or AI — run benchmarks before and after your change and include the
+comparison in your PR description:
+
+```bash
+git stash
+make bench 2>&1 | tee /tmp/bench-old.txt
+git stash pop
+make bench 2>&1 | tee /tmp/bench-new.txt
+go tool benchstat /tmp/bench-old.txt /tmp/bench-new.txt
+```
+
+Note any regressions greater than 2× in the PR description. Smaller
+fluctuations are normal and do not need to be called out.
+
+Benchmark conventions:
+
+- Use stdlib `testing.B` only (no third-party benchmark frameworks).
+- Share deterministic fixtures via `*_helpers_test.go` builders.
+- Place `Benchmark*` functions after `Test*` and before `Fuzz*`/`Example*`
+  in the file (enforced by `convention_test.go`).
+
 ## Reporting Bugs
 
 Use the [bug report template](https://github.com/jrgoldfinemiddleton/cardcore/issues/new?template=bug_report.yml) on GitHub.
