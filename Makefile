@@ -23,8 +23,8 @@ doc: ## Browse docs locally via pkgsite
 
 check: fmt vet lint test ## Run fmt, vet, lint, and test
 
-bench: ## Run all benchmarks
-	go test -bench=. -benchmem -run=^$$ ./...
+bench: ## Run all benchmarks (6 rounds for benchstat)
+	go test -bench=. -benchmem -count=6 -run=^$$ ./...
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z_-]+:.*## / {printf "  %-14s %s\n", $$1, $$2}' $(MAKEFILE_LIST)

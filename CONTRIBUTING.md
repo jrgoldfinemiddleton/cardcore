@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-[Go](https://go.dev/) 1.24.1+. Dev tools like [golangci-lint](https://golangci-lint.run/) are managed via the `tool` directive in `go.mod` and compiled automatically on first use.
+[Go](https://go.dev/) 1.25.9+. Dev tools like [golangci-lint](https://golangci-lint.run/) are managed via the `tool` directive in `go.mod` and compiled automatically on first use.
 
 ## Development Workflow
 

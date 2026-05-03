@@ -26,8 +26,11 @@ type analysis struct {
 	// played tracks which cards have appeared in completed tricks.
 	played [cardcore.NumSuits][cardcore.NumRanks]bool
 
-	// voids tracks which seats are known to be void in a suit,
-	// derived from failing to follow suit in trick history.
+	// voids tracks which seats are known to be void in a suit, derived
+	// from failing to follow suit in trick history, suits absent from
+	// seat's own hand, and basic card counting (a suit fully accounted
+	// for in seat's hand plus played cards leaves no cards for anyone
+	// else).
 	voids [hearts.NumPlayers][cardcore.NumSuits]bool
 
 	// queen is the Q♠ location from this seat's perspective.
@@ -102,6 +105,28 @@ func (a *analysis) scanHandVoids(g *hearts.Game, seat hearts.Seat) {
 	for suit := cardcore.Suit(0); suit < cardcore.NumSuits; suit++ {
 		if !g.Hands[seat].HasSuit(suit) {
 			a.voids[seat][suit] = true
+		}
+	}
+}
+
+// scanExhaustedSuitVoids marks every other seat void in any suit whose
+// cards are all accounted for in seat's hand plus played cards. If
+// seat can see all 13, no opponent can hold any.
+func (a *analysis) scanExhaustedSuitVoids(g *hearts.Game, seat hearts.Seat) {
+	for suit := cardcore.Suit(0); suit < cardcore.NumSuits; suit++ {
+		seen := len(g.Hands[seat].CardsOfSuit(suit))
+		for rank := cardcore.Rank(0); rank < cardcore.NumRanks; rank++ {
+			if a.played[suit][rank] {
+				seen++
+			}
+		}
+		if seen != cardcore.NumRanks {
+			continue
+		}
+		for s := hearts.Seat(0); s < hearts.NumPlayers; s++ {
+			if s != seat {
+				a.voids[s][suit] = true
+			}
 		}
 	}
 }
@@ -266,7 +291,10 @@ func hasSideAce(hand *cardcore.Hand) bool {
 }
 
 // analyze builds a fresh analysis of the visible game state from the
-// given seat's perspective.
+// given seat's perspective. Voids include suits that any seat has
+// shown out of in trick history, suits absent from seat's own hand,
+// and suits whose cards are fully accounted for in seat's hand plus
+// played cards (basic card counting — no opponent can hold any).
 func analyze(g *hearts.Game, seat hearts.Seat) analysis {
 	a := analysis{
 		seat:       seat,
@@ -275,6 +303,7 @@ func analyze(g *hearts.Game, seat hearts.Seat) analysis {
 
 	a.scanTrickHistory(g)
 	a.scanHandVoids(g, seat)
+	a.scanExhaustedSuitVoids(g, seat)
 	a.locateQueen(g, seat)
 	a.detectMoonThreat()
 	a.detectShootCandidate(g.Hands[seat])

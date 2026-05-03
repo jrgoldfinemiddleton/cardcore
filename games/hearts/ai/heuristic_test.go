@@ -549,15 +549,15 @@ func TestLeadScoreAvoidsOpponentVoidSuit(t *testing.T) {
 	}
 
 	g := setupLeadState(hearts.South, 2, []cardcore.Card{
-		c(rSix, sClubs),
-		c(rSeven, sClubs),
-		c(rEight, sClubs),
-		c(rNine, sClubs),
 		c(rTen, sClubs),
 		c(rJack, sClubs),
 		c(rQueen, sClubs),
 		c(rKing, sClubs),
 		c(rAce, sClubs),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+		c(rFour, sSpades),
+		c(rFive, sSpades),
 		c(rSix, sDiamonds),
 		c(rKing, sDiamonds),
 	}, trickHistory)
