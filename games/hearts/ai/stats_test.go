@@ -9,8 +9,6 @@ import (
 	"github.com/jrgoldfinemiddleton/cardcore/games/hearts"
 )
 
-// CHECKME: New file — shoot-the-moon frequency stats, visible only with -v.
-
 // TestShootTheMoonFrequency runs 100 complete games per AI type and logs
 // how often any seat shoots the moon. Run with -v to see the stats.
 func TestShootTheMoonFrequency(t *testing.T) {
