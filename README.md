@@ -16,7 +16,8 @@ Cardcore is an engine for building card games with an API-first design. It is in
 - Minimal: abstractions are deferred until they become necessary.
 - Zero runtime dependencies: standard library only.
 - API-first: the engine exposes an API; clients are thin.
-- [Suckless](https://suckless.org/philosophy/): small, readable, and composable.
+- [Suckless](https://suckless.org/philosophy/) code design: small, readable, and composable.
+- Contributor-friendly: thorough docs, automated checks, and clear conventions lower the barrier to entry.
 
 ## Project Layout
 

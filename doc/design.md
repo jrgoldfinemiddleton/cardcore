@@ -4,7 +4,9 @@
 `cardcore` is a minimal, composable card game engine written in Go. It is designed as a library, not a standalone application. The engine provides the core logic and state management for card games, intended to be consumed by future HTTP or WebSocket APIs that will facilitate client-server interaction.
 
 ## Suckless Philosophy
-We adhere to the [suckless philosophy](https://suckless.org/philosophy/): maintaining a small, readable codebase with zero external runtime dependencies. We avoid premature abstraction; generics and shared interfaces for entities like `Player` or `GameState` are deferred until they become necessary. Following the "rule of two games," we will only extract common abstractions after building at least two distinct games.
+The code design follows the [suckless philosophy](https://suckless.org/philosophy/): a small, readable codebase with zero external runtime dependencies. We avoid premature abstraction; generics and shared interfaces for entities like `Player` or `GameState` are deferred until they become necessary. Following the "rule of two games," we will only extract common abstractions after building at least two distinct games.
+
+The project infrastructure — documentation, CI, convention enforcement, and contributor tooling — deliberately goes beyond what a pure suckless project would include. Cardcore is designed to be approachable by contributors who are new to Go, which requires guardrails and guidance that suckless projects targeting experienced users typically omit. The code should be simple enough to read without comments; the comments and conventions exist so that contributors can write code that matches.
 
 ## Core Primitives
 The engine is built on fundamental "atoms": `Suit`, `Rank`, `Card`, `Deck`, and `Hand`. These primitives represent the basic physical components of most card games. By keeping these simple and focused, the engine remains flexible and easy to extend for various game types.
