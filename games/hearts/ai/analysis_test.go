@@ -21,7 +21,7 @@ func TestAnalyzePlayedCards(t *testing.T) {
 	g.TrickHistory = []hearts.Trick{
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(rTwo, sClubs),
+				hearts.South: twoOfClubs,
 				hearts.West:  c(rFive, sClubs),
 				hearts.North: c(rJack, sClubs),
 				hearts.East:  c(rAce, sClubs),
@@ -34,7 +34,7 @@ func TestAnalyzePlayedCards(t *testing.T) {
 	a := analyze(g, hearts.South)
 
 	want := []cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rFive, sClubs),
 		c(rJack, sClubs),
 		c(rAce, sClubs),
@@ -65,7 +65,7 @@ func TestAnalyzeVoidDetection(t *testing.T) {
 	g.TrickHistory = []hearts.Trick{
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(rTwo, sClubs),
+				hearts.South: twoOfClubs,
 				hearts.West:  c(rThree, sDiamonds),
 				hearts.North: c(rFive, sClubs),
 				hearts.East:  c(rNine, sClubs),
@@ -99,7 +99,7 @@ func TestAnalyzeVoidFromOwnHand(t *testing.T) {
 
 	// South has only clubs and diamonds — void in hearts and spades.
 	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sDiamonds),
 	})
 	g.Hands[hearts.West] = cardcore.NewHand(nil)
@@ -217,7 +217,7 @@ func TestAnalyzeQueenPlayed(t *testing.T) {
 		// Trick 1: valid 2♣ lead.
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(rTwo, sClubs),
+				hearts.South: twoOfClubs,
 				hearts.West:  c(rFive, sClubs),
 				hearts.North: c(rJack, sClubs),
 				hearts.East:  c(rAce, sClubs),
@@ -301,7 +301,7 @@ func TestAnalyzeQueenPassedThenPlayed(t *testing.T) {
 	g.TrickHistory = []hearts.Trick{
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(rTwo, sClubs),
+				hearts.South: twoOfClubs,
 				hearts.West:  c(rFive, sClubs),
 				hearts.North: c(rJack, sClubs),
 				hearts.East:  c(rAce, sClubs),
@@ -402,7 +402,7 @@ func TestAnalyzeHeartsPlayedAcrossMultipleTricks(t *testing.T) {
 		// Trick 1: no hearts.
 		{
 			Cards: [hearts.NumPlayers]cardcore.Card{
-				hearts.South: c(rTwo, sClubs),
+				hearts.South: twoOfClubs,
 				hearts.West:  c(rFive, sClubs),
 				hearts.North: c(rJack, sClubs),
 				hearts.East:  c(rAce, sClubs),
@@ -454,7 +454,7 @@ func TestAnalyzePointsTaken(t *testing.T) {
 
 	g.TrickHistory = []hearts.Trick{
 		pointTrick(hearts.South, [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(rTwo, sClubs),
+			hearts.South: twoOfClubs,
 			hearts.West:  c(rFive, sClubs),
 			hearts.North: c(rJack, sClubs),
 			hearts.East:  c(rAce, sClubs),
@@ -499,7 +499,7 @@ func TestAnalyzeMoonThreat(t *testing.T) {
 	// East wins both point tricks and collects all distributed points.
 	g.TrickHistory = []hearts.Trick{
 		pointTrick(hearts.South, [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(rTwo, sClubs),
+			hearts.South: twoOfClubs,
 			hearts.West:  c(rFive, sClubs),
 			hearts.North: c(rJack, sClubs),
 			hearts.East:  c(rAce, sClubs),
@@ -539,7 +539,7 @@ func TestAnalyzeMoonThreatSplit(t *testing.T) {
 	// Points split between South and East — no moon threat.
 	g.TrickHistory = []hearts.Trick{
 		pointTrick(hearts.South, [hearts.NumPlayers]cardcore.Card{
-			hearts.South: c(rTwo, sClubs),
+			hearts.South: twoOfClubs,
 			hearts.West:  c(rFive, sClubs),
 			hearts.North: c(rJack, sClubs),
 			hearts.East:  c(rAce, sClubs),
@@ -572,7 +572,7 @@ func TestAnalyzeNoTrickHistory(t *testing.T) {
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 0
 	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 	})
 	g.Hands[hearts.West] = cardcore.NewHand(nil)
 	g.Hands[hearts.North] = cardcore.NewHand(nil)
@@ -643,7 +643,7 @@ func TestCurrentWinnerOffSuitIgnored(t *testing.T) {
 		Count:  3,
 		Cards: [hearts.NumPlayers]cardcore.Card{
 			hearts.South: c(rFive, sDiamonds),
-			hearts.West:  c(rAce, sSpades),
+			hearts.West:  aceOfSpades,
 			hearts.North: c(rNine, sDiamonds),
 		},
 	}
@@ -662,7 +662,7 @@ func TestDetectShootCandidateFullChecklist(t *testing.T) {
 	g := hearts.New()
 	g.Phase = hearts.PhasePass
 	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -692,7 +692,7 @@ func TestDetectShootCandidateFullChecklist(t *testing.T) {
 // 10♥ 9♥) + A♣ + 6 low clubs.
 func TestDetectShootCandidateTooFewHearts(t *testing.T) {
 	g := setupShootCandidateSouth([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -719,7 +719,7 @@ func TestDetectShootCandidateTooFewHearts(t *testing.T) {
 // (A♥ K♥ J♥ 10♥ 9♥ 8♥ 7♥) + A♣ + 5 clubs.
 func TestDetectShootCandidateMissingQueenOfHearts(t *testing.T) {
 	g := setupShootCandidateSouth([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -746,7 +746,7 @@ func TestDetectShootCandidateMissingQueenOfHearts(t *testing.T) {
 // (A♥ K♥ Q♥ J♥ 10♥ 9♥ 8♥) + K♣ + 5 low clubs.
 func TestDetectShootCandidateNoSideAce(t *testing.T) {
 	g := setupShootCandidateSouth([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -804,7 +804,7 @@ func TestDeriveShootActiveNoPointsStrongHand(t *testing.T) {
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 2
 	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rEight, sHearts),
@@ -847,7 +847,7 @@ func TestDeriveShootActiveNoPointsStrongHand(t *testing.T) {
 // Branch: early-game path, totalDistributed > 0 exit.
 func TestDeriveShootActivePointsDistributed(t *testing.T) {
 	g := setupShootActiveEarlyGame([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rEight, sHearts),
 		c(rNine, sHearts),
@@ -884,7 +884,7 @@ func TestDeriveShootActivePointsDistributed(t *testing.T) {
 // Branch: early-game path, A♥+K♥+Q♥ check.
 func TestDeriveShootActiveNoPointsMissingTopHearts(t *testing.T) {
 	g := setupShootActiveEarlyGame([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rAce, sClubs),
@@ -919,7 +919,7 @@ func TestDeriveShootActiveNoPointsMissingTopHearts(t *testing.T) {
 // 4 clubs. Without Q♥, the early-game gate rejects shoot activation.
 func TestDeriveShootActiveNoPointsMissingQueenHearts(t *testing.T) {
 	g := setupShootActiveEarlyGame([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -1092,7 +1092,7 @@ func TestHoldsHighestHeartMidRankPositive(t *testing.T) {
 
 	// Seat holds 5♥ — the highest unplayed heart.
 	hand := cardcore.NewHand([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rTwo, sHearts),
 		c(rThree, sHearts),
@@ -1120,7 +1120,7 @@ func TestHoldsHighestHeartMidRankNegative(t *testing.T) {
 
 	// Seat holds 4♥ but NOT 5♥.
 	hand := cardcore.NewHand([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rTwo, sHearts),
 		c(rThree, sHearts),
@@ -1146,7 +1146,7 @@ func TestHoldsHighestHeartAllPlayed(t *testing.T) {
 	}
 
 	hand := cardcore.NewHand([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 	})
 
