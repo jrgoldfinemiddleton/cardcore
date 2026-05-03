@@ -65,7 +65,7 @@ func TestHeuristicChoosePlayReturnsLegalCard(t *testing.T) {
 // unprotected.
 func TestPassScoreUnprotectedQueen(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -91,7 +91,7 @@ func TestPassScoreUnprotectedQueen(t *testing.T) {
 // an asset to keep.
 func TestPassScoreProtectedQueen(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -148,7 +148,7 @@ func TestPassScoreHighSpades(t *testing.T) {
 // (rank 12 + hearts 10 = 22) should outscore A♦ (rank 12, no bonus).
 func TestPassScoreHeartsBonus(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -176,7 +176,7 @@ func TestPassScoreHeartsBonus(t *testing.T) {
 // K♣ (rank 11).
 func TestPassScoreShortSuitBonus(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -209,7 +209,7 @@ func TestChoosePassPassesUnprotectedQueen(t *testing.T) {
 	}
 
 	setupPassHand(t, g, []cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -310,7 +310,7 @@ func TestChoosePassPrefersHighSpades(t *testing.T) {
 	}
 
 	setupPassHand(t, g, []cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -345,7 +345,7 @@ func TestChoosePassVoidsShortSuit(t *testing.T) {
 	}
 
 	setupPassHand(t, g, []cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -377,7 +377,7 @@ func TestChoosePassVoidsTwoShortSuits(t *testing.T) {
 	}
 
 	setupPassHand(t, g, []cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -410,7 +410,7 @@ func TestChoosePassTieBreaking(t *testing.T) {
 	// highest (score 4), but 5♣, 5♦, 5♠ all tie at score 3. Only 2 of
 	// the 3 tied cards can be passed, so the rng should vary which pair.
 	hand := []cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -909,8 +909,8 @@ func TestFollowLastCleanHighDangerPrefersDuck(t *testing.T) {
 		c(rAce, sHearts),
 		c(rTen, sSpades),
 		c(rJack, sSpades),
-		c(rKing, sSpades),
-		c(rAce, sSpades),
+		kingOfSpades,
+		aceOfSpades,
 	}, []hearts.Trick{validFirstTrick()},
 		hearts.South,
 		[]trickCard{
@@ -1286,7 +1286,7 @@ func TestVoidMoonBlockSuppressesHeartsDumpWhenThreatWins(t *testing.T) {
 		hearts.North,
 		[]trickCard{
 			{hearts.North, c(rFive, sSpades)},
-			{hearts.East, c(rAce, sSpades)},
+			{hearts.East, aceOfSpades},
 		})
 
 	h := newSeededHeuristic(42)
@@ -1391,8 +1391,8 @@ func TestLeadMoonBlockLowHeartsStillPreferred(t *testing.T) {
 		c(rFour, sHearts),
 		c(rFive, sHearts),
 		c(rSix, sHearts),
-		c(rKing, sSpades),
-		c(rAce, sSpades),
+		kingOfSpades,
+		aceOfSpades,
 	}, moonThreatHistory())
 	g.HeartsBroken = true
 
@@ -1465,7 +1465,7 @@ func TestLeadNoMoonThreatNormalHeartPenalty(t *testing.T) {
 // scores far below 2♣ (Ace - 0 = 12).
 func TestShootPassScoreKeepsHearts(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -1481,7 +1481,7 @@ func TestShootPassScoreKeepsHearts(t *testing.T) {
 	})
 
 	heartScore := shootPassScore(c(rAce, sHearts), hand)
-	clubScore := shootPassScore(c(rTwo, sClubs), hand)
+	clubScore := shootPassScore(twoOfClubs, hand)
 
 	if heartScore >= clubScore {
 		t.Errorf("A♥ shoot pass score (%d) should be less than 2♣ score (%d)",
@@ -1493,7 +1493,7 @@ func TestShootPassScoreKeepsHearts(t *testing.T) {
 // (-100) far below any non-penalty card.
 func TestShootPassScoreKeepsQueenOfSpades(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -1509,7 +1509,7 @@ func TestShootPassScoreKeepsQueenOfSpades(t *testing.T) {
 	})
 
 	queenScore := shootPassScore(queenOfSpades, hand)
-	clubScore := shootPassScore(c(rTwo, sClubs), hand)
+	clubScore := shootPassScore(twoOfClubs, hand)
 
 	if queenScore >= clubScore {
 		t.Errorf("Q♠ shoot pass score (%d) should be less than 2♣ score (%d)",
@@ -1521,7 +1521,7 @@ func TestShootPassScoreKeepsQueenOfSpades(t *testing.T) {
 // passing low non-heart cards. 2♣ (Ace - 0 = 12) outscores K♣ (Ace - 11 = 1).
 func TestShootPassScorePassesLowCardsFirst(t *testing.T) {
 	hand := cardcore.NewHand([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -1536,7 +1536,7 @@ func TestShootPassScorePassesLowCardsFirst(t *testing.T) {
 		c(rAce, sHearts),
 	})
 
-	twoScore := shootPassScore(c(rTwo, sClubs), hand)
+	twoScore := shootPassScore(twoOfClubs, hand)
 	kingScore := shootPassScore(c(rKing, sClubs), hand)
 
 	if twoScore <= kingScore {
@@ -1561,7 +1561,7 @@ func TestChoosePassShootKeepsHearts(t *testing.T) {
 	}
 
 	setupPassHand(t, g, []cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -1628,7 +1628,7 @@ func TestShootLeadScorePrefersSideAcesOverHearts(t *testing.T) {
 // leading and shooting. Leading Q♠ signals intent and risks losing the card.
 func TestShootLeadScoreAvoidsQueenOfSpades(t *testing.T) {
 	g := setupLeadState(hearts.South, 2, []cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rEight, sHearts),
 		c(rNine, sHearts),
 		c(rTen, sHearts),
@@ -2001,7 +2001,7 @@ func TestShootOrDuckDeterministic(t *testing.T) {
 	// Shooter hand: 7 hearts (A♥ K♥ Q♥ J♥ 10♥ 9♥ 8♥) + A♣ + 5 low cards.
 	// considerShoot triggers (≥7 hearts + side ace).
 	shooterHand := []cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
@@ -2018,7 +2018,7 @@ func TestShootOrDuckDeterministic(t *testing.T) {
 
 	// Ducker hand: 3 low hearts, no ace — does not trigger considerShoot.
 	duckerHand := []cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
