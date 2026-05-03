@@ -36,7 +36,7 @@ func buildLeadTrickOne() (*hearts.Game, hearts.Seat) {
 	g.Turn = hearts.South
 	g.Trick = hearts.Trick{Leader: hearts.South}
 	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
-		c(rTwo, sClubs),
+		twoOfClubs,
 		c(rFive, sClubs),
 		c(rSix, sClubs),
 		c(rJack, sClubs),
@@ -48,11 +48,54 @@ func buildLeadTrickOne() (*hearts.Game, hearts.Seat) {
 		c(rFour, sSpades),
 		c(rSeven, sSpades),
 		c(rTen, sSpades),
-		c(rQueen, sSpades),
+		queenOfSpades,
 	})
-	g.Hands[hearts.West] = cardcore.NewHand(nil)
-	g.Hands[hearts.North] = cardcore.NewHand(nil)
-	g.Hands[hearts.East] = cardcore.NewHand(nil)
+
+	g.Hands[hearts.West] = cardcore.NewHand([]cardcore.Card{
+		c(rThree, sClubs),
+		c(rSeven, sClubs),
+		c(rNine, sClubs),
+		c(rTwo, sDiamonds),
+		c(rFive, sDiamonds),
+		c(rSeven, sDiamonds),
+		c(rTen, sDiamonds),
+		c(rTwo, sHearts),
+		c(rFive, sHearts),
+		c(rNine, sHearts),
+		c(rTwo, sSpades),
+		c(rFive, sSpades),
+		c(rNine, sSpades),
+	})
+	g.Hands[hearts.North] = cardcore.NewHand([]cardcore.Card{
+		c(rFour, sClubs),
+		c(rEight, sClubs),
+		c(rQueen, sClubs),
+		c(rThree, sDiamonds),
+		c(rSix, sDiamonds),
+		c(rEight, sDiamonds),
+		c(rQueen, sDiamonds),
+		c(rFour, sHearts),
+		c(rSix, sHearts),
+		c(rTen, sHearts),
+		c(rThree, sSpades),
+		c(rSix, sSpades),
+		kingOfSpades,
+	})
+	g.Hands[hearts.East] = cardcore.NewHand([]cardcore.Card{
+		c(rTen, sClubs),
+		c(rKing, sClubs),
+		c(rAce, sClubs),
+		c(rFour, sDiamonds),
+		c(rKing, sDiamonds),
+		c(rAce, sDiamonds),
+		c(rSeven, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rAce, sHearts),
+		c(rEight, sSpades),
+		c(rJack, sSpades),
+		aceOfSpades,
+	})
 	return g, hearts.South
 }
 
@@ -88,9 +131,47 @@ func buildFollowClean() (*hearts.Game, hearts.Seat) {
 		c(rEight, sSpades),
 		c(rJack, sSpades),
 	})
-	g.Hands[hearts.South] = cardcore.NewHand(nil)
-	g.Hands[hearts.North] = cardcore.NewHand(nil)
-	g.Hands[hearts.East] = cardcore.NewHand(nil)
+
+	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+		c(rSix, sClubs),
+		c(rTen, sClubs),
+		c(rQueen, sClubs),
+		c(rTwo, sDiamonds),
+		c(rFour, sDiamonds),
+		c(rSeven, sDiamonds),
+		c(rThree, sHearts),
+		c(rFive, sHearts),
+		c(rEight, sHearts),
+		c(rTwo, sSpades),
+		c(rThree, sSpades),
+	})
+	g.Hands[hearts.North] = cardcore.NewHand([]cardcore.Card{
+		c(rAce, sClubs),
+		c(rSix, sDiamonds),
+		c(rEight, sDiamonds),
+		c(rNine, sDiamonds),
+		c(rJack, sDiamonds),
+		c(rFour, sHearts),
+		c(rSeven, sHearts),
+		c(rNine, sHearts),
+		c(rQueen, sHearts),
+		c(rFive, sSpades),
+		c(rSix, sSpades),
+		c(rSeven, sSpades),
+	})
+	g.Hands[hearts.East] = cardcore.NewHand([]cardcore.Card{
+		c(rQueen, sDiamonds),
+		c(rKing, sDiamonds),
+		c(rAce, sDiamonds),
+		c(rTen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rNine, sSpades),
+		c(rTen, sSpades),
+		queenOfSpades,
+		kingOfSpades,
+		aceOfSpades,
+	})
 	return g, hearts.West
 }
 
@@ -148,9 +229,38 @@ func buildFollowWithPoints() (*hearts.Game, hearts.Seat) {
 		c(rNine, sSpades),
 		c(rJack, sSpades),
 	})
-	g.Hands[hearts.South] = cardcore.NewHand(nil)
-	g.Hands[hearts.West] = cardcore.NewHand(nil)
-	g.Hands[hearts.North] = cardcore.NewHand(nil)
+
+	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+		c(rSeven, sClubs),
+		c(rFour, sDiamonds),
+		c(rSeven, sDiamonds),
+		c(rEight, sDiamonds),
+		c(rSix, sHearts),
+		c(rEight, sHearts),
+		c(rThree, sSpades),
+		c(rFive, sSpades),
+		c(rSix, sSpades),
+	})
+	g.Hands[hearts.West] = cardcore.NewHand([]cardcore.Card{
+		c(rQueen, sClubs),
+		c(rTen, sDiamonds),
+		c(rQueen, sDiamonds),
+		c(rNine, sHearts),
+		c(rAce, sHearts),
+		c(rEight, sSpades),
+		c(rTen, sSpades),
+		kingOfSpades,
+	})
+	g.Hands[hearts.North] = cardcore.NewHand([]cardcore.Card{
+		c(rJack, sClubs),
+		c(rTwo, sHearts),
+		c(rThree, sHearts),
+		c(rSeven, sHearts),
+		c(rJack, sHearts),
+		c(rFour, sSpades),
+		c(rSeven, sSpades),
+		aceOfSpades,
+	})
 	return g, hearts.East
 }
 
@@ -192,11 +302,47 @@ func buildVoidDiscard() (*hearts.Game, hearts.Seat) {
 		c(rTwo, sSpades),
 		c(rFive, sSpades),
 		c(rNine, sSpades),
-		c(rQueen, sSpades),
+		queenOfSpades,
 	})
-	g.Hands[hearts.West] = cardcore.NewHand(nil)
-	g.Hands[hearts.North] = cardcore.NewHand(nil)
-	g.Hands[hearts.East] = cardcore.NewHand(nil)
+
+	g.Hands[hearts.West] = cardcore.NewHand([]cardcore.Card{
+		c(rNine, sClubs),
+		c(rTwo, sDiamonds),
+		c(rFour, sDiamonds),
+		c(rSix, sDiamonds),
+		c(rEight, sDiamonds),
+		c(rTwo, sHearts),
+		c(rFive, sHearts),
+		c(rEight, sHearts),
+		c(rThree, sSpades),
+		c(rSix, sSpades),
+		c(rTen, sSpades),
+	})
+	g.Hands[hearts.North] = cardcore.NewHand([]cardcore.Card{
+		c(rQueen, sClubs),
+		c(rThree, sDiamonds),
+		c(rFive, sDiamonds),
+		c(rSeven, sDiamonds),
+		c(rNine, sDiamonds),
+		c(rFour, sHearts),
+		c(rSix, sHearts),
+		c(rNine, sHearts),
+		c(rFour, sSpades),
+		c(rSeven, sSpades),
+		c(rJack, sSpades),
+	})
+	g.Hands[hearts.East] = cardcore.NewHand([]cardcore.Card{
+		c(rTen, sDiamonds),
+		c(rJack, sDiamonds),
+		c(rQueen, sDiamonds),
+		c(rKing, sDiamonds),
+		c(rTen, sHearts),
+		c(rQueen, sHearts),
+		c(rAce, sHearts),
+		c(rEight, sSpades),
+		kingOfSpades,
+		aceOfSpades,
+	})
 	return g, hearts.South
 }
 
@@ -228,10 +374,10 @@ func buildLateGameMoonThreat() (*hearts.Game, hearts.Seat) {
 		}),
 		// Trick 4: East leads A♠, all follow spades (no Q♠ yet), East wins.
 		pointTrick(hearts.East, [hearts.NumPlayers]cardcore.Card{
-			hearts.East:  c(rAce, sSpades),
+			hearts.East:  aceOfSpades,
 			hearts.South: c(rTwo, sSpades),
 			hearts.West:  c(rFive, sSpades),
-			hearts.North: c(rKing, sSpades),
+			hearts.North: kingOfSpades,
 		}),
 		// Trick 5: East leads J♦, West void in diamonds sloughs Q♠, East wins.
 		pointTrick(hearts.East, [hearts.NumPlayers]cardcore.Card{
@@ -271,9 +417,30 @@ func buildLateGameMoonThreat() (*hearts.Game, hearts.Seat) {
 		c(rTen, sSpades),
 		c(rJack, sSpades),
 	})
-	g.Hands[hearts.South] = cardcore.NewHand(nil)
-	g.Hands[hearts.West] = cardcore.NewHand(nil)
-	g.Hands[hearts.North] = cardcore.NewHand(nil)
+
+	// Fixture 5 South must equal fixture 6 South (buildOpponentMoonThreat
+	// overrides South's hand with these same cards).
+	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
+		c(rEight, sClubs),
+		c(rNine, sDiamonds),
+		c(rTwo, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+	})
+	g.Hands[hearts.West] = cardcore.NewHand([]cardcore.Card{
+		c(rSeven, sClubs),
+		c(rNine, sClubs),
+		c(rThree, sSpades),
+		c(rSix, sSpades),
+		c(rEight, sSpades),
+	})
+	g.Hands[hearts.North] = cardcore.NewHand([]cardcore.Card{
+		c(rQueen, sClubs),
+		c(rEight, sDiamonds),
+		c(rFour, sSpades),
+		c(rSeven, sSpades),
+		c(rNine, sSpades),
+	})
 	return g, hearts.East
 }
 
@@ -299,7 +466,12 @@ func buildOpponentMoonThreat() (*hearts.Game, hearts.Seat) {
 		c(rJack, sHearts),
 		c(rQueen, sHearts),
 	})
-	g.Hands[hearts.East] = cardcore.NewHand(nil)
+	g.Hands[hearts.East] = cardcore.NewHand([]cardcore.Card{
+		c(rJack, sClubs),
+		c(rTen, sDiamonds),
+		c(rTen, sSpades),
+		c(rJack, sSpades),
+	})
 	return g, hearts.South
 }
 

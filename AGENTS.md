@@ -61,6 +61,9 @@ cardcore/
 - Place AI in `games/<game>/ai/` subpackages
 - Follow [ADR-009](doc/decisions/009-ai-difficulty-and-personality.md) when implementing AI — read-only access to live game state, stdlib-only, separate type per difficulty
 - When adding benchmarks, use stdlib `testing.B` only and share deterministic fixtures via `*_helpers_test.go` builders. Place `Benchmark*` functions after `Test*` and before `Fuzz*`/`Example*` in the file (enforced by `convention_test.go`).
+- Within any file, all type/var/const declarations must precede all function declarations (enforced by `convention_test.go`).
+- Within any test file, helpers must come last — after all unit tests, integration tests, benchmarks, fuzz tests, and examples (enforced by `convention_test.go`).
+- Stochastic test assertions must use the `tries=N` loop pattern. When verifying "different inputs produce different outputs" of a randomized function, try N distinct inputs and require at least one disagreement; a single comparison can collapse by RNG luck even when the function is correct. Examples in `games/hearts/ai/pimc_test.go` and `pimc_aggregate_test.go`.
 - **Trick-taking games only**: in test fixtures that build trick history, **comments** that label tricks should use the form `// Trick N:` (spelled out, 1-indexed), where `Trick 1` is the first trick of the round. When a fixture uses `validFirstTrick()` (or equivalent opener helper), annotate the call with `// Trick 1: validated 2♣ opener.` (or the game's equivalent opener description). This applies to comments only — engine code may use whatever indexing it wants (e.g., `g.TrickNum` is 0-indexed).
 - Keep the Go version in `go.mod` aligned with the minimum version stated in `README.md`
 - Read `CONTRIBUTING.md` for general project conventions (naming, changelog rules, code style, doc comments) before making changes — many rules live there rather than being duplicated here.

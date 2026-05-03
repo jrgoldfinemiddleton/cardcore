@@ -122,6 +122,69 @@ func TestAnalyzeVoidFromOwnHand(t *testing.T) {
 	}
 }
 
+// TestAnalyzeVoidFromExhaustedSuit verifies that when seat's hand plus
+// played cards account for every card of a suit, all other seats are
+// marked void in it.
+func TestAnalyzeVoidFromExhaustedSuit(t *testing.T) {
+	// South holds all 13 spades; no spades have been played. The
+	// other seats can hold no spades, so each is marked void in spades.
+	allSpades := make([]cardcore.Card, 0, cardcore.NumRanks)
+	for _, rank := range cardcore.AllRanks() {
+		allSpades = append(allSpades, c(rank, sSpades))
+	}
+	g := hearts.New()
+	g.Phase = hearts.PhasePlay
+	g.TrickNum = 0
+	g.Hands[hearts.South] = cardcore.NewHand(allSpades)
+	g.Hands[hearts.West] = cardcore.NewHand(nil)
+	g.Hands[hearts.North] = cardcore.NewHand(nil)
+	g.Hands[hearts.East] = cardcore.NewHand(nil)
+
+	a := analyze(g, hearts.South)
+
+	for s := hearts.Seat(0); s < hearts.NumPlayers; s++ {
+		if s == hearts.South {
+			continue
+		}
+		if !a.voids[s][sSpades] {
+			t.Errorf("voids[%v][Spades] got false, want true (all 13 spades visible to South)", s)
+		}
+	}
+}
+
+// TestAnalyzeNoVoidWhenSuitNotExhausted verifies that when one card of
+// a suit remains unaccounted for, no opponent is marked void in it
+// from the exhausted-suit inference.
+func TestAnalyzeNoVoidWhenSuitNotExhausted(t *testing.T) {
+	// South holds 12 spades; A♠ is unseen, so other seats might hold
+	// it. The exhausted-suit scan should not fire for spades.
+	twelveSpades := make([]cardcore.Card, 0, cardcore.NumRanks-1)
+	for _, rank := range cardcore.AllRanks() {
+		if rank == rAce {
+			continue
+		}
+		twelveSpades = append(twelveSpades, c(rank, sSpades))
+	}
+	g := hearts.New()
+	g.Phase = hearts.PhasePlay
+	g.TrickNum = 0
+	g.Hands[hearts.South] = cardcore.NewHand(twelveSpades)
+	g.Hands[hearts.West] = cardcore.NewHand([]cardcore.Card{aceOfSpades})
+	g.Hands[hearts.North] = cardcore.NewHand(nil)
+	g.Hands[hearts.East] = cardcore.NewHand(nil)
+
+	a := analyze(g, hearts.South)
+
+	for s := hearts.Seat(0); s < hearts.NumPlayers; s++ {
+		if s == hearts.South {
+			continue
+		}
+		if a.voids[s][sSpades] {
+			t.Errorf("voids[%v][Spades] got true, want false (A♠ still unseen)", s)
+		}
+	}
+}
+
 // TestAnalyzeQueenInHand verifies that holding Q♠ sets queen to queenInHand.
 func TestAnalyzeQueenInHand(t *testing.T) {
 	g := hearts.New()

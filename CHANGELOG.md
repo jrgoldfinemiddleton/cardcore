@@ -8,6 +8,12 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### Added
+- PIMC AI player with parallel Monte Carlo sampling (`games/hearts/ai/`)
+
+### Changed
+- Minimum Go version bumped from 1.24.1 to 1.25.9 (requires `sync.WaitGroup.Go`)
+
 ## [0.3.1] - 2026-04-21
 
 ### Fixed

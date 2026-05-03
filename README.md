@@ -31,7 +31,7 @@ cardcore/
 
 ## Requirements
 
-Go 1.24.1+ (uses the `tool` directive for dev tooling)
+Go 1.25.9+ (uses `sync.WaitGroup.Go`; dev tools managed via the `tool` directive)
 
 ## Getting Started
 
@@ -41,7 +41,7 @@ make check
 
 This runs formatting, vetting, linting, and tests. See [Makefile Targets](#makefile-targets) for individual targets.
 
-Dev tools like [golangci-lint](https://golangci-lint.run/) and [pkgsite](https://pkg.go.dev/golang.org/x/pkgsite) are declared in `go.mod` via the Go 1.24 `tool` directive and are compiled automatically on first use — no manual installation required.
+Dev tools like [golangci-lint](https://golangci-lint.run/) and [pkgsite](https://pkg.go.dev/golang.org/x/pkgsite) are declared in `go.mod` via the Go 1.25 `tool` directive and are compiled automatically on first use — no manual installation required.
 
 ## Makefile Targets
 
