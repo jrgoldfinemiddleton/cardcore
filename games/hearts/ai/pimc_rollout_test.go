@@ -361,13 +361,13 @@ func firstNonTwoOfClubs(cards []cardcore.Card) (cardcore.Card, bool) {
 }
 
 // replaceCard returns a fresh slice equal to cards with the first
-// occurrence of old replaced by new. Panics if old is not present.
-func replaceCard(cards []cardcore.Card, old, new cardcore.Card) []cardcore.Card {
+// occurrence of old replaced by replacement. Panics if old is not present.
+func replaceCard(cards []cardcore.Card, old, replacement cardcore.Card) []cardcore.Card {
 	out := make([]cardcore.Card, len(cards))
 	copy(out, cards)
 	for i, c := range out {
 		if c == old {
-			out[i] = new
+			out[i] = replacement
 			return out
 		}
 	}

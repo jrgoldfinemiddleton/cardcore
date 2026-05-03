@@ -1,37 +1,59 @@
+version: "2"
+
 linters:
   enable:
-    - errcheck     # unchecked errors
-    - gofmt        # standard Go formatting
-    - govet        # suspicious constructs (shadowing, printf args, etc.)
-    - misspell     # common English misspellings
-    - staticcheck  # broad correctness, performance, and style checks
-    - unused       # unused code (vars, funcs, types, fields)
     - errorlint    # mishandling wrapped errors (errors.Is/As, %w)
     - exhaustive   # missing cases in switch over enum-like types (Suit, Rank, Phase)
-    - nilerr       # returning nil after seeing a non-nil error
-    - unparam      # unused function parameters / always-same return values
-    - godot        # doc comments end with a period
-    - whitespace   # leading/trailing whitespace inside funcs
-    - thelper      # test helpers must call t.Helper()
-    - nolintlint   # police any //nolint usage (convention_test.go bans them entirely; this is defense in depth)
-    - gci          # import grouping (stdlib / third-party / local)
     - goconst      # repeated string/number literals that should be constants
+    - godoclint    # doc comment presence and format (supplements convention_test.go)
+    - godot        # doc comments end with a period
     - lll          # line length
+    - misspell     # common English misspellings
+    - nilerr       # returning nil after seeing a non-nil error
+    - nolintlint   # police any //nolint usage (convention_test.go bans them entirely; this is defense in depth)
     - prealloc     # slices that should be preallocated
+    - thelper      # test helpers must call t.Helper()
+    - unparam      # unused function parameters / always-same return values
+    - whitespace   # leading/trailing whitespace inside funcs
 
-linters-settings:
-  exhaustive:
-    default-signifies-exhaustive: true
-  gci:
-    sections:
-      - standard
-      - default
-      - prefix(github.com/jrgoldfinemiddleton/cardcore)
-  gofmt:
-    simplify: true
-  lll:
-    line-length: 100
-    tab-width: 4
+  settings:
+    exhaustive:
+      default-signifies-exhaustive: true
+    goconst:
+      ignore-tests: true
+    godoclint:
+      options:
+        start-with-name:
+          include-unexported: true
+          include-tests: true
+    lll:
+      line-length: 100
+      tab-width: 4
 
-issues:
-  exclude-use-default: false
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+
+formatters:
+  enable:
+    - gci          # import grouping (stdlib / third-party / local)
+    - gofmt        # standard Go formatting
+
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/jrgoldfinemiddleton/cardcore)
+    gofmt:
+      simplify: true
+
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

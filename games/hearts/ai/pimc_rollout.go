@@ -89,9 +89,9 @@ func leafScore(roundPts [hearts.NumPlayers]int, seat hearts.Seat) int {
 // it into a loud panic prevents silent contract violations (rollout
 // would otherwise discard deal[seat] and use g.Hands[seat] from the
 // clone, masking the bug).
-func assertDealMatchesSeatHand(deal sampledDeal, seat hearts.Seat, real *cardcore.Hand) {
+func assertDealMatchesSeatHand(deal sampledDeal, seat hearts.Seat, actual *cardcore.Hand) {
 	got := deal[seat].Cards
-	want := real.Cards
+	want := actual.Cards
 	if len(got) != len(want) {
 		panic(fmt.Sprintf(
 			"ai: rollout deal[seat=%d] has %d cards, want %d (caller contract violation)",
