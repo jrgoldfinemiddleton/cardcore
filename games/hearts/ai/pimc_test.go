@@ -34,9 +34,9 @@ func TestFingerprintDistinguishesDecisionPoints(t *testing.T) {
 		name string
 		mut  func(*hearts.Game) hearts.Seat
 	}{
-		{"different seat (West)", func(g *hearts.Game) hearts.Seat { return hearts.West }},
-		{"different seat (North)", func(g *hearts.Game) hearts.Seat { return hearts.North }},
-		{"different seat (East)", func(g *hearts.Game) hearts.Seat { return hearts.East }},
+		{"different seat (West)", func(_ *hearts.Game) hearts.Seat { return hearts.West }},
+		{"different seat (North)", func(_ *hearts.Game) hearts.Seat { return hearts.North }},
+		{"different seat (East)", func(_ *hearts.Game) hearts.Seat { return hearts.East }},
 		{"different Phase (PhasePass)", func(g *hearts.Game) hearts.Seat {
 			g.Phase = hearts.PhasePass
 			return baseSeat
@@ -431,9 +431,6 @@ func TestPIMCChoosePlayDifferentSeeds(t *testing.T) {
 	t.Errorf("ChoosePlay returned %v for all %d distinct seeds; RNG not flowing through",
 		baseCard, tries)
 }
-
-// CHECKME: new information-leakage fuzz test — mutates forbidden
-// fields, asserts ChoosePlay unchanged
 
 // TestPIMCChoosePlayInformationLeakage verifies that ChoosePlay depends
 // only on fields the seat is legitimately allowed to read. It runs

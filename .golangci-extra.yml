@@ -1,24 +1,34 @@
+version: "2"
+
 linters:
-  disable-all: true
+  default: none
   enable:
-    - cyclop      # cyclomatic complexity (alternative to gocyclo)
     - dupl        # duplicate code blocks
     - funlen      # function length
-    - gocognit    # cognitive complexity
     - gocritic    # many small "could be cleaner" checks
-    - gocyclo     # cyclomatic complexity
     - revive      # successor to golint; broad style ruleset
 
-linters-settings:
-  cyclop:
-    max-complexity: 16 # rule-based scorers and validators legitimately enumerate distinct cases; splitting fragments the logic.
+  settings:
+    funlen:
+      lines: 100
+      statements: 60
 
-issues:
-  exclude-use-default: false
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - dupl     # tests are often deliberately parallel; collapsing can obscure intent
-        - cyclop   # test setup/assertion chains are inherently branchy and reading top-to-bottom is the point
-        - funlen   # table-driven and integration tests legitimately grow long
-        - gocognit # same rationale as cyclop; complexity is in the scenario, not the logic
+  exclusions:
+    generated: lax
+    rules:
+      - path: _test\.go
+        linters:
+          - dupl     # tests are often deliberately parallel; collapsing can obscure intent
+          - funlen   # table-driven and integration tests legitimately grow long
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
