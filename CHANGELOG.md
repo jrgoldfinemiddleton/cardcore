@@ -8,6 +8,8 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-03
+
 ### Added
 - PIMC AI player with parallel Monte Carlo sampling (`games/hearts/ai/`)
 
