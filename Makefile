@@ -1,4 +1,4 @@
-.PHONY: test fmt vet lint lint-extra build doc check bench help create-labels apply-labels
+.PHONY: test fmt vet lint lint-extra build doc check bench stats help create-labels apply-labels
 
 test: ## Run all tests
 	go test ./...
@@ -25,6 +25,9 @@ check: fmt vet lint test ## Run fmt, vet, lint, and test
 
 bench: ## Run all benchmarks (6 rounds for benchstat)
 	go test -bench=. -benchmem -count=6 -run=^$$ ./...
+
+stats: ## Run AI statistical profiles (shoot-the-moon frequency)
+	go test -v -tags stats -run=^TestShootTheMoonFrequency$$ ./games/hearts/ai/
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z_-]+:.*## / {printf "  %-14s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
