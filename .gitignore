@@ -36,4 +36,4 @@ coverage.html
 doc/maintainer-runbook.md
 
 # Repository configuration script (local only)
-doc/configure-repo.sh
+scripts/configure-repo.sh
