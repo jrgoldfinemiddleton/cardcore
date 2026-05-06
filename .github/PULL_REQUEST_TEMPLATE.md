@@ -2,6 +2,10 @@
 
 <!-- What does this PR do? One or two sentences. -->
 
+## Details
+
+<!-- Per-file or per-component breakdown. Use **bold** for file/component names. -->
+
 ## Checklist
 
 - [ ] Tests added or updated
