@@ -29,6 +29,10 @@ coverage.html
 # golangci-lint cache
 .golangci-lint-cache/
 
+# Ignore nested AGENTS.md files (root AGENTS.md is the authority)
+**/AGENTS.md
+!/AGENTS.md
+
 # AI orchestration scratch directory (local only)
 .sisyphus/
 
