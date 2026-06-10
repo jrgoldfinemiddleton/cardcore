@@ -13,7 +13,7 @@ var _ hearts.Player = (*Random)(nil)
 // TestChoosePassReturnsDistinctCardsFromHand verifies that ChoosePass returns
 // three distinct cards that exist in the player's hand.
 func TestChoosePassReturnsDistinctCardsFromHand(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	if err := g.Deal(); err != nil {
 		t.Fatalf("Deal error: %v", err)
 	}
@@ -38,7 +38,7 @@ func TestChoosePassReturnsDistinctCardsFromHand(t *testing.T) {
 
 // TestChoosePlayReturnsLegalCard verifies that ChoosePlay returns a card accepted by PlayCard.
 func TestChoosePlayReturnsLegalCard(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.PassDir = hearts.PassHold
 	if err := g.Deal(); err != nil {
 		t.Fatalf("Deal error: %v", err)
@@ -56,7 +56,7 @@ func TestChoosePlayReturnsLegalCard(t *testing.T) {
 // TestDeterminism verifies that identical seeds produce identical ChoosePass
 // and ChoosePlay results.
 func TestDeterminism(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	if err := g.Deal(); err != nil {
 		t.Fatalf("Deal error: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestDeterminism(t *testing.T) {
 		t.Fatalf("same seed produced different passes: %v vs %v", pass1, pass2)
 	}
 
-	hold := hearts.New()
+	hold := hearts.New(rand.New(rand.NewPCG(2, 3)))
 	hold.PassDir = hearts.PassHold
 	if err := hold.Deal(); err != nil {
 		t.Fatalf("Deal error: %v", err)
@@ -95,7 +95,7 @@ func TestLegalityAcrossGames(t *testing.T) {
 	for seed := uint64(0); seed < 200; seed++ {
 		rng := rand.New(rand.NewPCG(seed, seed+1))
 		r := NewRandom(rng)
-		g := hearts.New()
+		g := hearts.New(rand.New(rand.NewPCG(seed+1000, seed+1001)))
 
 		playRoundWithPlayer(t, g, r, seed)
 	}
@@ -113,7 +113,7 @@ func TestFullGameIntegration(t *testing.T) {
 		seed := uint64(game)
 		rng := rand.New(rand.NewPCG(seed, seed+1))
 		r := NewRandom(rng)
-		g := hearts.New()
+		g := hearts.New(rand.New(rand.NewPCG(seed+1000, seed+1001)))
 
 		for range maxRounds {
 			playRoundWithPlayer(t, g, r, seed)

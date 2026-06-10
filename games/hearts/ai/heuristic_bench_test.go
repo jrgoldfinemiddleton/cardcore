@@ -11,7 +11,7 @@ import (
 func BenchmarkHeuristicPlay(b *testing.B) {
 	for _, tc := range benchFixtures() {
 		b.Run(tc.name, func(b *testing.B) {
-			g, seat := tc.build()
+			g, seat := tc.build(rand.New(rand.NewPCG(1, 2)))
 			h := NewHeuristic(rand.New(rand.NewPCG(3, 4)))
 			b.ReportAllocs()
 			for b.Loop() {
@@ -28,7 +28,7 @@ func BenchmarkHeuristicPlay(b *testing.B) {
 func BenchmarkHeuristicPlayWithClone(b *testing.B) {
 	for _, tc := range benchFixtures() {
 		b.Run(tc.name, func(b *testing.B) {
-			g, seat := tc.build()
+			g, seat := tc.build(rand.New(rand.NewPCG(1, 2)))
 			h := NewHeuristic(rand.New(rand.NewPCG(3, 4)))
 			b.ReportAllocs()
 			for b.Loop() {

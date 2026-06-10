@@ -2,6 +2,7 @@ package hearts
 
 import (
 	"fmt"
+	"math/rand/v2"
 
 	"github.com/jrgoldfinemiddleton/cardcore"
 )
@@ -84,15 +85,25 @@ type Game struct {
 	HeartsBroken bool                                 // Whether hearts have been played this round.
 	PassHistory  [NumPlayers][PassCount]cardcore.Card // Cards each seat passed this round.
 
+	// rng is the random number generator used for shuffling. Shared with
+	// clones via Game.Clone; not safe for concurrent use. The caller
+	// controls seeding for reproducible games.
+	rng *rand.Rand
+
 	// Pending passes: passCards[from] = cards to pass.
 	passCards [NumPlayers][PassCount]cardcore.Card
 	passReady [NumPlayers]bool
 }
 
-// New creates a new Hearts game ready to deal the first round.
-func New() *Game {
+// New creates a new Hearts game ready to deal the first round. The rng
+// parameter controls shuffling for reproducible games. Panics if rng is nil.
+func New(rng *rand.Rand) *Game {
+	if rng == nil {
+		panic("hearts: New requires a non-nil *rand.Rand")
+	}
 	return &Game{
 		Phase: PhaseDeal,
+		rng:   rng,
 	}
 }
 
@@ -103,6 +114,7 @@ func (tr *Trick) LedSuit() cardcore.Suit {
 
 // Clone returns a deep copy of the game state. The returned Game is
 // fully independent — mutating it does not affect the original.
+// The rng field is shared (shallow copy); callers must ensure sequential access.
 func (g *Game) Clone() *Game {
 	clone := *g
 	for i := range NumPlayers {
@@ -144,7 +156,7 @@ func (g *Game) Deal() error {
 	}
 
 	deck := cardcore.NewStandardDeck()
-	deck.Shuffle()
+	deck.Shuffle(g.rng)
 
 	for i := range NumPlayers {
 		cards, err := deck.Deal(HandSize)

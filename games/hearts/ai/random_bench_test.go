@@ -15,7 +15,7 @@ import (
 func BenchmarkRandomPlay(b *testing.B) {
 	for _, tc := range benchFixtures() {
 		b.Run(tc.name, func(b *testing.B) {
-			g, seat := tc.build()
+			g, seat := tc.build(rand.New(rand.NewPCG(1, 2)))
 			r := NewRandom(rand.New(rand.NewPCG(1, 2)))
 			b.ReportAllocs()
 			for b.Loop() {
@@ -32,7 +32,7 @@ func BenchmarkRandomPlay(b *testing.B) {
 func BenchmarkRandomPlayWithClone(b *testing.B) {
 	for _, tc := range benchFixtures() {
 		b.Run(tc.name, func(b *testing.B) {
-			g, seat := tc.build()
+			g, seat := tc.build(rand.New(rand.NewPCG(1, 2)))
 			r := NewRandom(rand.New(rand.NewPCG(1, 2)))
 			b.ReportAllocs()
 			for b.Loop() {

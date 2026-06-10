@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"math/rand/v2"
 	"testing"
 
 	"github.com/jrgoldfinemiddleton/cardcore"
@@ -98,8 +99,12 @@ func playRoundWithPlayers(
 // given hand for South (other seats empty), TrickHistory = validFirstTrick()
 // followed by secondTrick. Used by TestDeriveShootActive* tests that exercise
 // the early-game shoot-activation gate.
-func setupShootActiveEarlyGame(southHand []cardcore.Card, secondTrick hearts.Trick) *hearts.Game {
-	g := hearts.New()
+func setupShootActiveEarlyGame(
+	rng *rand.Rand,
+	southHand []cardcore.Card,
+	secondTrick hearts.Trick,
+) *hearts.Game {
+	g := hearts.New(rng)
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 2
 	g.Hands[hearts.South] = cardcore.NewHand(southHand)
@@ -113,8 +118,8 @@ func setupShootActiveEarlyGame(southHand []cardcore.Card, secondTrick hearts.Tri
 // setupShootCandidateSouth builds a PhasePass game with the given hand for
 // South (other seats empty). Used by TestDetectShootCandidate* tests that
 // exercise the considerShoot gate.
-func setupShootCandidateSouth(southHand []cardcore.Card) *hearts.Game {
-	g := hearts.New()
+func setupShootCandidateSouth(rng *rand.Rand, southHand []cardcore.Card) *hearts.Game {
+	g := hearts.New(rng)
 	g.Phase = hearts.PhasePass
 	g.Hands[hearts.South] = cardcore.NewHand(southHand)
 	g.Hands[hearts.West] = cardcore.NewHand(nil)

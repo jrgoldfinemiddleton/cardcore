@@ -114,9 +114,14 @@ func (d *Deck) Len() int {
 	return len(d.Cards)
 }
 
-// Shuffle randomizes the order of cards in the deck.
-func (d *Deck) Shuffle() {
-	rand.Shuffle(len(d.Cards), func(i, j int) {
+// Shuffle randomizes the order of cards in the deck using the provided random
+// number generator. The caller controls seeding for reproducible shuffles.
+// Panics if rng is nil.
+func (d *Deck) Shuffle(rng *rand.Rand) {
+	if rng == nil {
+		panic("cardcore: Shuffle requires a non-nil *rand.Rand")
+	}
+	rng.Shuffle(len(d.Cards), func(i, j int) {
 		d.Cards[i], d.Cards[j] = d.Cards[j], d.Cards[i]
 	})
 }

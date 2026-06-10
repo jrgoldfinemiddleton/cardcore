@@ -12,7 +12,7 @@ import (
 // TestFingerprintDeterminism verifies fingerprint produces the same
 // value when called twice with identical inputs.
 func TestFingerprintDeterminism(t *testing.T) {
-	g := baseFingerprintGame()
+	g := baseFingerprintGame(rand.New(rand.NewPCG(1, 2)))
 
 	got1 := fingerprint(g, hearts.South)
 	got2 := fingerprint(g, hearts.South)
@@ -26,7 +26,7 @@ func TestFingerprintDeterminism(t *testing.T) {
 // produces a distinct value when any scalar in the decision tuple
 // (seat, Phase, Round, TrickNum, Trick.Count) changes.
 func TestFingerprintDistinguishesDecisionPoints(t *testing.T) {
-	base := baseFingerprintGame()
+	base := baseFingerprintGame(rand.New(rand.NewPCG(1, 2)))
 	baseSeat := hearts.South
 	baseFP := fingerprint(base, baseSeat)
 
@@ -58,7 +58,7 @@ func TestFingerprintDistinguishesDecisionPoints(t *testing.T) {
 	seen := map[uint64]string{baseFP: "base"}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := baseFingerprintGame()
+			g := baseFingerprintGame(rand.New(rand.NewPCG(1, 2)))
 			seat := tt.mut(g)
 			got := fingerprint(g, seat)
 			if got == baseFP {
@@ -76,7 +76,7 @@ func TestFingerprintDistinguishesDecisionPoints(t *testing.T) {
 // TestFingerprintIgnoresExcludedFields verifies fingerprint is
 // unchanged when fields outside the decision tuple are mutated.
 func TestFingerprintIgnoresExcludedFields(t *testing.T) {
-	base := baseFingerprintGame()
+	base := baseFingerprintGame(rand.New(rand.NewPCG(1, 2)))
 	seat := hearts.South
 	want := fingerprint(base, seat)
 
@@ -123,7 +123,7 @@ func TestFingerprintIgnoresExcludedFields(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := baseFingerprintGame()
+			g := baseFingerprintGame(rand.New(rand.NewPCG(1, 2)))
 			tt.mut(g)
 			got := fingerprint(g, seat)
 			if got != want {
@@ -272,8 +272,8 @@ func TestPIMCChoosePassDelegatesToHeuristic(t *testing.T) {
 	// deriveRNG into the Heuristic's tiebreak shuffle.
 	factory := func(r *rand.Rand) hearts.Player { return NewRandom(r) }
 
-	makeGame := func() *hearts.Game {
-		g := hearts.New()
+	makeGame := func(rng *rand.Rand) *hearts.Game {
+		g := hearts.New(rng)
 		g.Phase = hearts.PhasePass
 		g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
 			twoOfClubs,
@@ -299,8 +299,8 @@ func TestPIMCChoosePassDelegatesToHeuristic(t *testing.T) {
 	p1 := NewPIMC(rand.New(rand.NewPCG(1, 2)), 10, factory, 1)
 	p2 := NewPIMC(rand.New(rand.NewPCG(1, 2)), 10, factory, 1)
 
-	got1 := p1.ChoosePass(makeGame(), hearts.South)
-	got2 := p2.ChoosePass(makeGame(), hearts.South)
+	got1 := p1.ChoosePass(makeGame(rand.New(rand.NewPCG(1, 2))), hearts.South)
+	got2 := p2.ChoosePass(makeGame(rand.New(rand.NewPCG(1, 2))), hearts.South)
 	if got1 != got2 {
 		t.Errorf("identically-seeded PIMCs disagree on ChoosePass: got %v and %v", got1, got2)
 	}
@@ -311,7 +311,7 @@ func TestPIMCChoosePassDelegatesToHeuristic(t *testing.T) {
 	allMatch := true
 	for i := uint64(100); i < 100+tries; i++ {
 		other := NewPIMC(rand.New(rand.NewPCG(i, i+1)), 10, factory, 1)
-		if other.ChoosePass(makeGame(), hearts.South) != got1 {
+		if other.ChoosePass(makeGame(rand.New(rand.NewPCG(1, 2))), hearts.South) != got1 {
 			allMatch = false
 			break
 		}
@@ -328,7 +328,7 @@ func TestPIMCChoosePlaySingleLegalMove(t *testing.T) {
 	// Build a position at trick 12 (TrickNum=12, 0-indexed) where South
 	// has exactly one card left: 7♠. The rollout factory panics if
 	// called, proving the short-circuit fires.
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.Turn = hearts.South
 	g.TrickNum = 12
@@ -364,7 +364,7 @@ func TestPIMCChoosePlaySingleLegalMove(t *testing.T) {
 func TestPIMCChoosePlayDeterminism(t *testing.T) {
 	factory := func(r *rand.Rand) hearts.Player { return NewHeuristic(r) }
 
-	g := freshPlayGame(t)
+	g := freshPlayGame(t, rand.New(rand.NewPCG(1, 2)))
 
 	p1 := NewPIMC(rand.New(rand.NewPCG(42, 43)), 10, factory, 1)
 	p2 := NewPIMC(rand.New(rand.NewPCG(42, 43)), 10, factory, 1)
@@ -382,7 +382,7 @@ func TestPIMCChoosePlayDeterminism(t *testing.T) {
 func TestPIMCChoosePlayDeterminismAcrossWorkers(t *testing.T) {
 	factory := func(r *rand.Rand) hearts.Player { return NewHeuristic(r) }
 
-	g := freshPlayGame(t)
+	g := freshPlayGame(t, rand.New(rand.NewPCG(1, 2)))
 	seat := g.Turn
 
 	workerCounts := []int{1, 2, 4, 8, 16}
@@ -408,7 +408,7 @@ func TestPIMCChoosePlayDifferentSeeds(t *testing.T) {
 
 	// Advance past trick 0 (forced 2♣ lead) so the leader has a real
 	// choice and RNG variation can surface.
-	g := freshPlayGame(t)
+	g := freshPlayGame(t, rand.New(rand.NewPCG(1, 2)))
 	policy := firstLegalPolicy{}
 	for g.TrickNum == 0 {
 		seat := g.Turn
@@ -443,7 +443,7 @@ func TestPIMCChoosePlayInformationLeakage(t *testing.T) {
 
 	// Use a PassHold round so there are no hard-pass constraints
 	// that would make opponent-hand swaps invalid.
-	g := freshPlayGameOnRound(t, 3)
+	g := freshPlayGameOnRound(t, rand.New(rand.NewPCG(1, 2)), 3)
 	seat := g.Turn
 
 	baseline := NewPIMC(rand.New(rand.NewPCG(seed[0], seed[1])), 20, factory, 2)
@@ -522,7 +522,7 @@ func TestPIMCFullGameIntegration(t *testing.T) {
 			)
 		}
 
-		g := hearts.New()
+		g := hearts.New(rand.New(rand.NewPCG(seed, seed+1)))
 		for range maxRounds {
 			playRoundWithPlayers(t, g, players, seed)
 			if g.Phase == hearts.PhaseEnd {
@@ -591,7 +591,7 @@ func TestPIMCStatisticalCompetenceIntegration(t *testing.T) {
 			}
 		}
 
-		g := hearts.New()
+		g := hearts.New(rand.New(rand.NewPCG(uint64(game), uint64(game)+1)))
 		for range maxRounds {
 			playRoundWithPlayers(t, g, players, uint64(game))
 			if g.Phase == hearts.PhaseEnd {
@@ -642,8 +642,8 @@ func TestPIMCStatisticalCompetenceIntegration(t *testing.T) {
 
 // baseFingerprintGame returns a minimal *hearts.Game suitable for
 // fingerprint testing. Callers mutate fields to produce variants.
-func baseFingerprintGame() *hearts.Game {
-	g := hearts.New()
+func baseFingerprintGame(rng *rand.Rand) *hearts.Game {
+	g := hearts.New(rng)
 	g.Phase = hearts.PhasePlay
 	g.Round = 0
 	g.TrickNum = 0
@@ -654,9 +654,9 @@ func baseFingerprintGame() *hearts.Game {
 // freshPlayGameOnRound plays through complete rounds using
 // firstLegalPolicy until the target round is reached, then returns
 // the game in PhasePlay of that round.
-func freshPlayGameOnRound(t *testing.T, targetRound int) *hearts.Game {
+func freshPlayGameOnRound(t *testing.T, rng *rand.Rand, targetRound int) *hearts.Game {
 	t.Helper()
-	g := hearts.New()
+	g := hearts.New(rng)
 	policy := firstLegalPolicy{}
 	for g.Round < targetRound || g.Phase != hearts.PhasePlay {
 		switch g.Phase {

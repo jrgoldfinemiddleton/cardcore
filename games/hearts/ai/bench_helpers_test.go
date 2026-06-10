@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"math/rand/v2"
 	"testing"
 
 	"github.com/jrgoldfinemiddleton/cardcore"
@@ -12,7 +13,7 @@ import (
 // to share a single source of truth for the fixture set.
 type benchFixture struct {
 	name  string
-	build func() (*hearts.Game, hearts.Seat)
+	build func(*rand.Rand) (*hearts.Game, hearts.Seat)
 }
 
 // TestFixturesAreLegalIntegration verifies that every benchmark fixture
@@ -20,7 +21,7 @@ type benchFixture struct {
 // at least one legal move.
 func TestFixturesAreLegalIntegration(t *testing.T) {
 	for _, f := range benchFixtures() {
-		g, seat := f.build()
+		g, seat := f.build(rand.New(rand.NewPCG(1, 2)))
 		legal := assertLegal(g, seat)
 		t.Logf("fixture %s: %d legal moves", f.name, len(legal))
 	}
@@ -29,8 +30,8 @@ func TestFixturesAreLegalIntegration(t *testing.T) {
 // buildLeadTrickOne returns a game in PhasePlay at TrickNum 0 where South
 // is on lead and holds 2♣ (the mandatory opening card). LegalMoves must
 // return exactly {2♣}.
-func buildLeadTrickOne() (*hearts.Game, hearts.Seat) {
-	g := hearts.New()
+func buildLeadTrickOne(rng *rand.Rand) (*hearts.Game, hearts.Seat) {
+	g := hearts.New(rng)
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 0
 	g.Turn = hearts.South
@@ -102,8 +103,8 @@ func buildLeadTrickOne() (*hearts.Game, hearts.Seat) {
 // buildFollowClean returns a game where West must follow a club lead in
 // trick 2 with no points on the table. West holds clubs, so LegalMoves
 // returns the club subset of West's hand.
-func buildFollowClean() (*hearts.Game, hearts.Seat) {
-	g := hearts.New()
+func buildFollowClean(rng *rand.Rand) (*hearts.Game, hearts.Seat) {
+	g := hearts.New(rng)
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 1
 	g.HeartsBroken = false
@@ -179,8 +180,8 @@ func buildFollowClean() (*hearts.Game, hearts.Seat) {
 // lead in trick 5; hearts are already broken and points are on the table
 // (Q♠ taken in an earlier trick). East holds hearts, so LegalMoves
 // returns the heart subset of East's hand.
-func buildFollowWithPoints() (*hearts.Game, hearts.Seat) {
-	g := hearts.New()
+func buildFollowWithPoints(rng *rand.Rand) (*hearts.Game, hearts.Seat) {
+	g := hearts.New(rng)
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 4
 	g.HeartsBroken = true
@@ -267,8 +268,8 @@ func buildFollowWithPoints() (*hearts.Game, hearts.Seat) {
 // buildVoidDiscard returns a game where South must follow a diamond lead
 // in trick 3 but holds no diamonds (void). LegalMoves returns South's
 // off-suit cards (the discard scenario), exercising scanHandVoids.
-func buildVoidDiscard() (*hearts.Game, hearts.Seat) {
-	g := hearts.New()
+func buildVoidDiscard(rng *rand.Rand) (*hearts.Game, hearts.Seat) {
+	g := hearts.New(rng)
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 2
 	g.HeartsBroken = true
@@ -350,8 +351,8 @@ func buildVoidDiscard() (*hearts.Game, hearts.Seat) {
 // won every prior trick and collected Q♠ + 8 hearts (21 penalty points
 // of 26 distributed), triggering analyze.detectMoonThreat → moonThreat
 // == East. East is on lead and must choose a card.
-func buildLateGameMoonThreat() (*hearts.Game, hearts.Seat) {
-	g := hearts.New()
+func buildLateGameMoonThreat(rng *rand.Rand) (*hearts.Game, hearts.Seat) {
+	g := hearts.New(rng)
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 8
 	g.HeartsBroken = true
@@ -449,8 +450,8 @@ func buildLateGameMoonThreat() (*hearts.Game, hearts.Seat) {
 // East leads T8 with 4♥, and South must decide. From South's perspective
 // East is the moon threat, exercising heuristic moonBlock branches
 // in followScore / voidScore / heartLeadScore.
-func buildOpponentMoonThreat() (*hearts.Game, hearts.Seat) {
-	g, _ := buildLateGameMoonThreat()
+func buildOpponentMoonThreat(rng *rand.Rand) (*hearts.Game, hearts.Seat) {
+	g, _ := buildLateGameMoonThreat(rng)
 	g.Turn = hearts.South
 	g.Trick = hearts.Trick{
 		Leader: hearts.East,
@@ -479,12 +480,24 @@ func buildOpponentMoonThreat() (*hearts.Game, hearts.Seat) {
 // the per-decision benchmarks and TestFixturesAreLegalIntegration.
 func benchFixtures() []benchFixture {
 	return []benchFixture{
-		{"lead_trick_one", buildLeadTrickOne},
-		{"follow_clean", buildFollowClean},
-		{"follow_with_points", buildFollowWithPoints},
-		{"void_discard", buildVoidDiscard},
-		{"late_game_moon_threat", buildLateGameMoonThreat},
-		{"opponent_moon_threat", buildOpponentMoonThreat},
+		{"lead_trick_one", func(rng *rand.Rand) (*hearts.Game, hearts.Seat) {
+			return buildLeadTrickOne(rng)
+		}},
+		{"follow_clean", func(rng *rand.Rand) (*hearts.Game, hearts.Seat) {
+			return buildFollowClean(rng)
+		}},
+		{"follow_with_points", func(rng *rand.Rand) (*hearts.Game, hearts.Seat) {
+			return buildFollowWithPoints(rng)
+		}},
+		{"void_discard", func(rng *rand.Rand) (*hearts.Game, hearts.Seat) {
+			return buildVoidDiscard(rng)
+		}},
+		{"late_game_moon_threat", func(rng *rand.Rand) (*hearts.Game, hearts.Seat) {
+			return buildLateGameMoonThreat(rng)
+		}},
+		{"opponent_moon_threat", func(rng *rand.Rand) (*hearts.Game, hearts.Seat) {
+			return buildOpponentMoonThreat(rng)
+		}},
 	}
 }
 

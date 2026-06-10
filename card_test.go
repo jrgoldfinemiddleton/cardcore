@@ -1,6 +1,9 @@
 package cardcore
 
-import "testing"
+import (
+	"math/rand/v2"
+	"testing"
+)
 
 // TestAllSuits verifies that AllSuits returns all four suits in iota order.
 func TestAllSuits(t *testing.T) {
@@ -167,7 +170,8 @@ func TestDeckShuffle(t *testing.T) {
 	original := make([]Card, DeckSize)
 	copy(original, d.Cards)
 
-	d.Shuffle()
+	rng := rand.New(rand.NewPCG(1, 2))
+	d.Shuffle(rng)
 
 	if d.Len() != DeckSize {
 		t.Fatalf("deck size after shuffle = %d, want %d", d.Len(), DeckSize)
@@ -192,6 +196,17 @@ func TestDeckShuffle(t *testing.T) {
 	if len(seen) != DeckSize {
 		t.Errorf("shuffle lost cards: %d unique, want %d", len(seen), DeckSize)
 	}
+}
+
+// TestDeckShuffleNilPanic verifies that Shuffle panics when called with a nil RNG.
+func TestDeckShuffleNilPanic(t *testing.T) {
+	d := NewStandardDeck()
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("Shuffle(nil) did not panic")
+		}
+	}()
+	d.Shuffle(nil)
 }
 
 // TestDeckDeal verifies dealing cards removes them from the deck, including edge cases

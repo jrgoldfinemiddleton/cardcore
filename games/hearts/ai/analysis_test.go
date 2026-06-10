@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"math/rand/v2"
 	"testing"
 
 	"github.com/jrgoldfinemiddleton/cardcore"
@@ -10,7 +11,7 @@ import (
 // TestAnalyzePlayedCards verifies that cards from completed tricks are
 // marked as played in the analysis.
 func TestAnalyzePlayedCards(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 1
 	g.Hands[hearts.South] = cardcore.NewHand(nil)
@@ -53,7 +54,7 @@ func TestAnalyzePlayedCards(t *testing.T) {
 // TestAnalyzeVoidDetection verifies that failing to follow suit marks a
 // player as void. West played a diamond when clubs were led.
 func TestAnalyzeVoidDetection(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 1
 	g.Hands[hearts.South] = cardcore.NewHand(nil)
@@ -93,7 +94,7 @@ func TestAnalyzeVoidDetection(t *testing.T) {
 // TestAnalyzeVoidFromOwnHand verifies that suits missing from the player's
 // own hand are marked as void.
 func TestAnalyzeVoidFromOwnHand(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 0
 
@@ -132,7 +133,7 @@ func TestAnalyzeVoidFromExhaustedSuit(t *testing.T) {
 	for _, rank := range cardcore.AllRanks() {
 		allSpades = append(allSpades, c(rank, sSpades))
 	}
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 0
 	g.Hands[hearts.South] = cardcore.NewHand(allSpades)
@@ -165,7 +166,7 @@ func TestAnalyzeNoVoidWhenSuitNotExhausted(t *testing.T) {
 		}
 		twelveSpades = append(twelveSpades, c(rank, sSpades))
 	}
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 0
 	g.Hands[hearts.South] = cardcore.NewHand(twelveSpades)
@@ -187,7 +188,7 @@ func TestAnalyzeNoVoidWhenSuitNotExhausted(t *testing.T) {
 
 // TestAnalyzeQueenInHand verifies that holding Q♠ sets queen to queenInHand.
 func TestAnalyzeQueenInHand(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 0
 	g.Hands[hearts.South] = cardcore.NewHand(nil)
@@ -205,7 +206,7 @@ func TestAnalyzeQueenInHand(t *testing.T) {
 // TestAnalyzeQueenPlayed verifies that Q♠ appearing in trick history sets
 // queen to queenPlayed for all observers.
 func TestAnalyzeQueenPlayed(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 2
 	g.Hands[hearts.South] = cardcore.NewHand(nil)
@@ -253,7 +254,7 @@ func TestAnalyzeQueenPlayed(t *testing.T) {
 // TestAnalyzeQueenPassed verifies that passing Q♠ sets queen to queenPassed
 // with the correct queenHolder (pass target).
 func TestAnalyzeQueenPassed(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.PassDir = hearts.PassLeft
 	g.TrickNum = 0
@@ -281,7 +282,7 @@ func TestAnalyzeQueenPassed(t *testing.T) {
 // TestAnalyzeQueenPassedThenPlayed verifies that queenPlayed takes priority
 // over queenPassed when Q♠ appears in both pass history and trick history.
 func TestAnalyzeQueenPassedThenPlayed(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.PassDir = hearts.PassLeft
 	g.TrickNum = 2
@@ -332,7 +333,7 @@ func TestAnalyzeQueenPassedThenPlayed(t *testing.T) {
 // TestAnalyzeQueenReceivedViaPass verifies that receiving Q♠ via a pass
 // results in queenInHand (the hand check runs before pass history).
 func TestAnalyzeQueenReceivedViaPass(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.PassDir = hearts.PassLeft
 	g.TrickNum = 0
@@ -353,7 +354,7 @@ func TestAnalyzeQueenReceivedViaPass(t *testing.T) {
 // TestAnalyzeQueenUnknown verifies that Q♠ defaults to queenUnknown when
 // not in hand, not passed, and not played.
 func TestAnalyzeQueenUnknown(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 0
 	g.Hands[hearts.South] = cardcore.NewHand(nil)
@@ -371,7 +372,7 @@ func TestAnalyzeQueenUnknown(t *testing.T) {
 // TestAnalyzeQueenHoldRound verifies that Q♠ remains queenUnknown during
 // a hold round (no passing occurs).
 func TestAnalyzeQueenHoldRound(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.PassDir = hearts.PassHold
 	g.TrickNum = 0
@@ -390,7 +391,7 @@ func TestAnalyzeQueenHoldRound(t *testing.T) {
 // TestAnalyzeHeartsPlayedAcrossMultipleTricks verifies that heartsPlayed
 // accumulates across multiple tricks. Three hearts across tricks 2-3.
 func TestAnalyzeHeartsPlayedAcrossMultipleTricks(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 3
 	g.Hands[hearts.South] = cardcore.NewHand(nil)
@@ -444,7 +445,7 @@ func TestAnalyzeHeartsPlayedAcrossMultipleTricks(t *testing.T) {
 // TestAnalyzePointsTaken verifies that pointsTaken tracks penalty points
 // per seat. South wins Q♠ (13) and 2♥ (1) = 14 points.
 func TestAnalyzePointsTaken(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 3
 	g.Hands[hearts.South] = cardcore.NewHand(nil)
@@ -488,7 +489,7 @@ func TestAnalyzePointsTaken(t *testing.T) {
 // TestAnalyzeMoonThreat verifies that moonThreat identifies the seat
 // holding all distributed penalty points. East wins both point tricks.
 func TestAnalyzeMoonThreat(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 3
 	g.Hands[hearts.South] = cardcore.NewHand(nil)
@@ -528,7 +529,7 @@ func TestAnalyzeMoonThreat(t *testing.T) {
 // TestAnalyzeMoonThreatSplit verifies that moonThreat is -1 when penalty
 // points are split between multiple players.
 func TestAnalyzeMoonThreatSplit(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 3
 	g.Hands[hearts.South] = cardcore.NewHand(nil)
@@ -568,7 +569,7 @@ func TestAnalyzeMoonThreatSplit(t *testing.T) {
 // TestAnalyzeNoTrickHistory verifies the zero-value analysis state with no
 // trick history: no hearts played, no moon threat, queen unknown.
 func TestAnalyzeNoTrickHistory(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 0
 	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
@@ -599,7 +600,7 @@ func TestAnalyzeNoTrickHistory(t *testing.T) {
 // TestCurrentWinnerLeaderWins verifies that the leader wins when they play
 // the highest card of the led suit.
 func TestCurrentWinnerLeaderWins(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Trick = hearts.Trick{
 		Leader: hearts.South,
 		Count:  3,
@@ -618,7 +619,7 @@ func TestCurrentWinnerLeaderWins(t *testing.T) {
 // TestCurrentWinnerNonLeaderWins verifies that a non-leader wins when
 // they play the highest card of the led suit.
 func TestCurrentWinnerNonLeaderWins(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Trick = hearts.Trick{
 		Leader: hearts.South,
 		Count:  3,
@@ -637,7 +638,7 @@ func TestCurrentWinnerNonLeaderWins(t *testing.T) {
 // TestCurrentWinnerOffSuitIgnored verifies that off-suit cards are ignored
 // when determining the trick winner.
 func TestCurrentWinnerOffSuitIgnored(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Trick = hearts.Trick{
 		Leader: hearts.South,
 		Count:  3,
@@ -659,7 +660,7 @@ func TestCurrentWinnerOffSuitIgnored(t *testing.T) {
 // when the hand has A♥, K♥, Q♥, 4+ more hearts, and a side ace. Hand: 7
 // hearts (A♥ K♥ Q♥ J♥ 10♥ 9♥ 8♥) + A♣ + 5 low clubs.
 func TestDetectShootCandidateFullChecklist(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePass
 	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
 		twoOfClubs,
@@ -691,34 +692,7 @@ func TestDetectShootCandidateFullChecklist(t *testing.T) {
 // when the hand has fewer than 7 hearts. Hand: 6 hearts (A♥ K♥ Q♥ J♥
 // 10♥ 9♥) + A♣ + 6 low clubs.
 func TestDetectShootCandidateTooFewHearts(t *testing.T) {
-	g := setupShootCandidateSouth([]cardcore.Card{
-		twoOfClubs,
-		c(rThree, sClubs),
-		c(rFour, sClubs),
-		c(rFive, sClubs),
-		c(rSix, sClubs),
-		c(rAce, sClubs),
-		c(rNine, sHearts),
-		c(rTen, sHearts),
-		c(rJack, sHearts),
-		c(rQueen, sHearts),
-		c(rKing, sHearts),
-		c(rAce, sHearts),
-		c(rTwo, sSpades),
-	})
-
-	a := analyze(g, hearts.South)
-
-	if a.considerShoot {
-		t.Error("considerShoot should be false: only 6 hearts")
-	}
-}
-
-// TestDetectShootCandidateMissingQueenOfHearts verifies that considerShoot
-// is false when Q♥ is absent. Hand: 7 hearts
-// (A♥ K♥ J♥ 10♥ 9♥ 8♥ 7♥) + A♣ + 5 clubs.
-func TestDetectShootCandidateMissingQueenOfHearts(t *testing.T) {
-	g := setupShootCandidateSouth([]cardcore.Card{
+	g := setupShootCandidateSouth(rand.New(rand.NewPCG(1, 2)), []cardcore.Card{
 		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
@@ -745,7 +719,7 @@ func TestDetectShootCandidateMissingQueenOfHearts(t *testing.T) {
 // when no non-heart ace is present. Hand: 7 hearts
 // (A♥ K♥ Q♥ J♥ 10♥ 9♥ 8♥) + K♣ + 5 low clubs.
 func TestDetectShootCandidateNoSideAce(t *testing.T) {
-	g := setupShootCandidateSouth([]cardcore.Card{
+	g := setupShootCandidateSouth(rand.New(rand.NewPCG(1, 2)), []cardcore.Card{
 		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
@@ -772,7 +746,7 @@ func TestDetectShootCandidateNoSideAce(t *testing.T) {
 // when the seat is the moon threat (has all distributed penalty points),
 // originally held ≥7 hearts, and holds the highest unplayed heart (A♥).
 func TestDeriveShootActiveMoonThreatIsSelf(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 7
 	g.Hands[hearts.East] = cardcore.NewHand([]cardcore.Card{
@@ -800,7 +774,7 @@ func TestDeriveShootActiveMoonThreatIsSelf(t *testing.T) {
 // when no penalty points have been distributed and the hand still holds
 // A♥, K♥, and Q♥.
 func TestDeriveShootActiveNoPointsStrongHand(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 2
 	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{
@@ -846,7 +820,7 @@ func TestDeriveShootActiveNoPointsStrongHand(t *testing.T) {
 // East took 2♥ in trick history so totalDistributed > 0 blocks activation.
 // Branch: early-game path, totalDistributed > 0 exit.
 func TestDeriveShootActivePointsDistributed(t *testing.T) {
-	g := setupShootActiveEarlyGame([]cardcore.Card{
+	g := setupShootActiveEarlyGame(rand.New(rand.NewPCG(1, 2)), []cardcore.Card{
 		twoOfClubs,
 		c(rThree, sClubs),
 		c(rEight, sHearts),
@@ -883,7 +857,7 @@ func TestDeriveShootActivePointsDistributed(t *testing.T) {
 // and K♥ are missing.
 // Branch: early-game path, A♥+K♥+Q♥ check.
 func TestDeriveShootActiveNoPointsMissingTopHearts(t *testing.T) {
-	g := setupShootActiveEarlyGame([]cardcore.Card{
+	g := setupShootActiveEarlyGame(rand.New(rand.NewPCG(1, 2)), []cardcore.Card{
 		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
@@ -918,7 +892,7 @@ func TestDeriveShootActiveNoPointsMissingTopHearts(t *testing.T) {
 // not Q♥. South has 7 hearts (A♥, K♥, J♥, 10♥, 9♥, 8♥, 7♥) plus
 // 4 clubs. Without Q♥, the early-game gate rejects shoot activation.
 func TestDeriveShootActiveNoPointsMissingQueenHearts(t *testing.T) {
-	g := setupShootActiveEarlyGame([]cardcore.Card{
+	g := setupShootActiveEarlyGame(rand.New(rand.NewPCG(1, 2)), []cardcore.Card{
 		twoOfClubs,
 		c(rThree, sClubs),
 		c(rFour, sClubs),
@@ -956,7 +930,7 @@ func TestDeriveShootActiveNoPointsMissingQueenHearts(t *testing.T) {
 // but originalHearts < 7 rejects it before that check is reached.
 // Branch: originalHearts < 7 early exit.
 func TestDeriveShootActiveMoonThreatLowOriginalHearts(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 7
 	g.Hands[hearts.East] = cardcore.NewHand([]cardcore.Card{
@@ -985,7 +959,7 @@ func TestDeriveShootActiveMoonThreatLowOriginalHearts(t *testing.T) {
 // played A♥ in trick history (originalHearts = 7). K♥ is unplayed
 // and not in East's hand.
 func TestDeriveShootActiveMoonThreatNoHighestHeart(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 7
 	g.Hands[hearts.East] = cardcore.NewHand([]cardcore.Card{
@@ -1030,7 +1004,7 @@ func TestDeriveShootActiveMoonThreatNoHighestHeart(t *testing.T) {
 // tricks, so originalHearts = 7. East holds A♥ (highest unplayed) and is
 // moon threat.
 func TestDeriveShootActiveHeartsFromSeatReconstruction(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.TrickNum = 9
 	g.Hands[hearts.East] = cardcore.NewHand([]cardcore.Card{

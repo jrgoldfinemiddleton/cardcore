@@ -1,6 +1,9 @@
 package cardcore
 
-import "testing"
+import (
+	"math/rand/v2"
+	"testing"
+)
 
 // BenchmarkNewStandardDeck measures the cost of constructing a fresh
 // sorted 52-card deck.
@@ -11,13 +14,12 @@ func BenchmarkNewStandardDeck(b *testing.B) {
 }
 
 // BenchmarkDeckShuffle measures the cost of in-place Fisher-Yates
-// shuffle on a 52-card deck. Shuffle uses the package-level
-// math/rand/v2 source (no RNG arg), so we cannot seed
-// deterministically. Acceptable: we measure cost, not output.
+// shuffle on a 52-card deck.
 func BenchmarkDeckShuffle(b *testing.B) {
 	d := NewStandardDeck()
+	rng := rand.New(rand.NewPCG(1, 2))
 	for b.Loop() {
-		d.Shuffle()
+		d.Shuffle(rng)
 	}
 }
 

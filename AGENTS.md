@@ -67,6 +67,7 @@ cardcore/
 - **Trick-taking games only**: in test fixtures that build trick history, **comments** that label tricks should use the form `// Trick N:` (spelled out, 1-indexed), where `Trick 1` is the first trick of the round. When a fixture uses `validFirstTrick()` (or equivalent opener helper), annotate the call with `// Trick 1: validated 2♣ opener.` (or the game's equivalent opener description). This applies to comments only — engine code may use whatever indexing it wants (e.g., `g.TrickNum` is 0-indexed).
 - Keep the Go version in `go.mod` aligned with the minimum version stated in `README.md`
 - Read `CONTRIBUTING.md` for general project conventions (naming, changelog rules, code style, doc comments) before making changes — many rules live there rather than being duplicated here.
+- **PR descriptions**: Follow `.github/PULL_REQUEST_TEMPLATE.md`. Omit checklist items that do not apply (e.g., skip `CHANGELOG.md` `[Unreleased]` section updated (if user-facing change) if the change is not user-facing). Keep the exact text of retained items.
 
 ## 4. Never Do
 - Never add external dependencies — stdlib only
