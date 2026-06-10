@@ -2,6 +2,7 @@ package cardcore
 
 import (
 	"math/rand/v2"
+	"reflect"
 	"testing"
 )
 
@@ -195,6 +196,32 @@ func TestDeckShuffle(t *testing.T) {
 	}
 	if len(seen) != DeckSize {
 		t.Errorf("shuffle lost cards: %d unique, want %d", len(seen), DeckSize)
+	}
+}
+
+// TestDeckShuffleDeterminism verifies that shuffling with the same seed
+// produces an identical deck order, and different seeds produce different orders.
+func TestDeckShuffleDeterminism(t *testing.T) {
+	// Deterministic shuffle with identical seeds
+	seed := uint64(42)
+	rngA := rand.New(rand.NewPCG(seed, seed+1))
+	rngB := rand.New(rand.NewPCG(seed, seed+1))
+
+	d1 := NewStandardDeck()
+	d2 := NewStandardDeck()
+	d1.Shuffle(rngA)
+	d2.Shuffle(rngB)
+
+	if !reflect.DeepEqual(d1.Cards, d2.Cards) {
+		t.Fatalf("same seed produced different decks: %v vs %v", d1.Cards, d2.Cards)
+	}
+
+	// Different seed should produce a different order
+	rngC := rand.New(rand.NewPCG(seed+1, seed+2))
+	d3 := NewStandardDeck()
+	d3.Shuffle(rngC)
+	if reflect.DeepEqual(d1.Cards, d3.Cards) {
+		t.Fatalf("different seeds produced identical decks: %v", d3.Cards)
 	}
 }
 

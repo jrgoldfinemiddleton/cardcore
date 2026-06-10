@@ -3,6 +3,7 @@ package hearts
 import (
 	"fmt"
 	"math/rand/v2"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -44,6 +45,73 @@ func TestNewGame(t *testing.T) {
 	if g.Round != 0 {
 		t.Fatalf("new game round = %d, want 0", g.Round)
 	}
+}
+
+// TestDeterministicDeal ensures that two deals with identical RNG seeds produce
+// identical hands for all players, and different seeds produce different hands.
+func TestDeterministicDeal(t *testing.T) {
+	seed := uint64(7)
+	rng1 := rand.New(rand.NewPCG(seed, seed+1))
+	rng2 := rand.New(rand.NewPCG(seed, seed+1))
+
+	g1 := New(rng1)
+	g2 := New(rng2)
+
+	if err := g1.Deal(); err != nil {
+		t.Fatalf("seed %d: Deal error: %v", seed, err)
+	}
+	if err := g2.Deal(); err != nil {
+		t.Fatalf("seed %d: Deal error: %v", seed, err)
+	}
+
+	// Compare each player's hand for determinism.
+	for i := range NumPlayers {
+		h1 := g1.Hands[i]
+		h2 := g2.Hands[i]
+		if !reflect.DeepEqual(h1.Cards, h2.Cards) {
+			t.Fatalf("seed %d: hands differ for seat %d: %v vs %v", seed, i, h1.Cards, h2.Cards)
+		}
+	}
+
+	// Different seed should produce a different deal.
+	rng3 := rand.New(rand.NewPCG(seed+1, seed+2))
+	g3 := New(rng3)
+	if err := g3.Deal(); err != nil {
+		t.Fatalf("seed %d: Deal error: %v", seed+1, err)
+	}
+	equal := true
+	for i := range NumPlayers {
+		if !reflect.DeepEqual(g1.Hands[i].Cards, g3.Hands[i].Cards) {
+			equal = false
+			break
+		}
+	}
+	if equal {
+		t.Fatalf("different seeds produced identical hands across all seats")
+	}
+}
+
+// TestNewNilPanic verifies that New(nil) panics with a non-nil message.
+func TestNewNilPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatalf("expected panic when calling New(nil), got nil")
+		} else {
+			// Ensure panic has a non-empty message when possible.
+			switch v := r.(type) {
+			case string:
+				if v == "" {
+					t.Fatalf("panic with empty message")
+				}
+			case error:
+				if v.Error() == "" {
+					t.Fatalf("panic with empty error message")
+				}
+			}
+		}
+	}()
+
+	_ = New(nil)
 }
 
 // TestCloneGame verifies that Clone produces an independent deep copy of game state.

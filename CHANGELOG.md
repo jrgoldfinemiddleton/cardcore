@@ -8,6 +8,9 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### Fixed
+- Seeded games are now fully deterministic: same seed produces identical game outcomes. The Deal shuffle previously used global rand, now uses the provided *rand.Rand. Breaking change: Deck.Shuffle now requires *rand.Rand, hearts.New now requires *rand.Rand.
+
 ## [0.4.0] - 2026-05-03
 
 ### Added

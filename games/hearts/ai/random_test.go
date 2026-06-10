@@ -2,6 +2,7 @@ package ai
 
 import (
 	"math/rand/v2"
+	"reflect"
 	"testing"
 
 	"github.com/jrgoldfinemiddleton/cardcore/games/hearts"
@@ -98,6 +99,57 @@ func TestLegalityAcrossGames(t *testing.T) {
 		g := hearts.New(rand.New(rand.NewPCG(seed+1000, seed+1001)))
 
 		playRoundWithPlayer(t, g, r, seed)
+	}
+}
+
+// TestDeterministicGame ensures that two identical seeds with identical
+// Random players produce identical full game outcomes (scores and trick history).
+func TestDeterministicGame(t *testing.T) {
+	// We'll run two complete games with four Random players seeded identically
+	// and compare the final outcomes.
+	const seed uint64 = 1234
+
+	// Create four seeded Random players with the same seed for determinism.
+	pA1 := newSeededRandom(seed)
+	pA2 := newSeededRandom(seed)
+	pA3 := newSeededRandom(seed)
+	pA4 := newSeededRandom(seed)
+	players1 := [hearts.NumPlayers]hearts.Player{pA1, pA2, pA3, pA4}
+
+	rng1 := rand.New(rand.NewPCG(seed, seed+1))
+	g1 := hearts.New(rng1)
+
+	// Run a full game to completion using the deterministic players.
+	for g1.Phase != hearts.PhaseEnd {
+		playRoundWithPlayers(t, g1, players1, seed)
+	}
+
+	// Second identical game with new Random instances but same seeds.
+	pB1 := newSeededRandom(seed)
+	pB2 := newSeededRandom(seed)
+	pB3 := newSeededRandom(seed)
+	pB4 := newSeededRandom(seed)
+	players2 := [hearts.NumPlayers]hearts.Player{pB1, pB2, pB3, pB4}
+
+	rng2 := rand.New(rand.NewPCG(seed, seed+1))
+	g2 := hearts.New(rng2)
+
+	for g2.Phase != hearts.PhaseEnd {
+		playRoundWithPlayers(t, g2, players2, seed)
+	}
+
+	// Compare final outcomes: scores and trick history should be identical.
+	if !reflect.DeepEqual(g1.Scores, g2.Scores) {
+		t.Fatalf("deterministic game scores differ: %v vs %v", g1.Scores, g2.Scores)
+	}
+	if !reflect.DeepEqual(g1.TrickHistory, g2.TrickHistory) {
+		t.Fatalf(
+			"deterministic game trick history differs: %v vs %v",
+			g1.TrickHistory, g2.TrickHistory,
+		)
+	}
+	if g1.Phase != g2.Phase {
+		t.Fatalf("deterministic game phase mismatch: %d vs %d", g1.Phase, g2.Phase)
 	}
 }
 
