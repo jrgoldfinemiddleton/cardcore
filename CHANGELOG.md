@@ -8,6 +8,8 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-10
+
 ### Fixed
 - Seeded games are now fully deterministic: the same seed produces identical game outcomes. Previously `Deck.Shuffle` used the global `math/rand/v2` source, which is seeded from process entropy and cannot be reproduced. Now the caller provides a `*rand.Rand` that drives both the deck shuffle and the AI players. Breaking change: `Deck.Shuffle` now requires `*rand.Rand`; `hearts.New` now requires `*rand.Rand`.
 
