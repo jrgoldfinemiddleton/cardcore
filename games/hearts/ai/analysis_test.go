@@ -697,6 +697,33 @@ func TestDetectShootCandidateTooFewHearts(t *testing.T) {
 		c(rThree, sClubs),
 		c(rFour, sClubs),
 		c(rFive, sClubs),
+		c(rSix, sClubs),
+		c(rAce, sClubs),
+		c(rNine, sHearts),
+		c(rTen, sHearts),
+		c(rJack, sHearts),
+		c(rQueen, sHearts),
+		c(rKing, sHearts),
+		c(rAce, sHearts),
+		c(rTwo, sSpades),
+	})
+
+	a := analyze(g, hearts.South)
+
+	if a.considerShoot {
+		t.Error("considerShoot should be false: only 6 hearts")
+	}
+}
+
+// TestDetectShootCandidateMissingQueenOfHearts verifies that considerShoot
+// is false when Q♥ is absent. Hand: 7 hearts
+// (A♥ K♥ J♥ 10♥ 9♥ 8♥ 7♥) + A♣ + 5 clubs.
+func TestDetectShootCandidateMissingQueenOfHearts(t *testing.T) {
+	g := setupShootCandidateSouth(rand.New(rand.NewPCG(1, 2)), []cardcore.Card{
+		twoOfClubs,
+		c(rThree, sClubs),
+		c(rFour, sClubs),
+		c(rFive, sClubs),
 		c(rAce, sClubs),
 		c(rSeven, sHearts),
 		c(rEight, sHearts),
