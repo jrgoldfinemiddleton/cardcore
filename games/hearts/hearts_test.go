@@ -3,6 +3,7 @@ package hearts
 import (
 	"fmt"
 	"math/rand/v2"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -36,7 +37,8 @@ const (
 
 // TestNewGame verifies that a new game starts in PhaseDeal at round 0.
 func TestNewGame(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	if g.Phase != PhaseDeal {
 		t.Fatalf("new game phase = %d, want PhaseDeal", g.Phase)
 	}
@@ -45,9 +47,77 @@ func TestNewGame(t *testing.T) {
 	}
 }
 
+// TestDeterministicDeal ensures that two deals with identical RNG seeds produce
+// identical hands for all players, and different seeds produce different hands.
+func TestDeterministicDeal(t *testing.T) {
+	seed := uint64(7)
+	rng1 := rand.New(rand.NewPCG(seed, seed+1))
+	rng2 := rand.New(rand.NewPCG(seed, seed+1))
+
+	g1 := New(rng1)
+	g2 := New(rng2)
+
+	if err := g1.Deal(); err != nil {
+		t.Fatalf("seed %d: Deal error: %v", seed, err)
+	}
+	if err := g2.Deal(); err != nil {
+		t.Fatalf("seed %d: Deal error: %v", seed, err)
+	}
+
+	// Compare each player's hand for determinism.
+	for i := range NumPlayers {
+		h1 := g1.Hands[i]
+		h2 := g2.Hands[i]
+		if !reflect.DeepEqual(h1.Cards, h2.Cards) {
+			t.Fatalf("seed %d: hands differ for seat %d: %v vs %v", seed, i, h1.Cards, h2.Cards)
+		}
+	}
+
+	// Different seed should produce a different deal.
+	rng3 := rand.New(rand.NewPCG(seed+1, seed+2))
+	g3 := New(rng3)
+	if err := g3.Deal(); err != nil {
+		t.Fatalf("seed %d: Deal error: %v", seed+1, err)
+	}
+	equal := true
+	for i := range NumPlayers {
+		if !reflect.DeepEqual(g1.Hands[i].Cards, g3.Hands[i].Cards) {
+			equal = false
+			break
+		}
+	}
+	if equal {
+		t.Fatalf("different seeds produced identical hands across all seats")
+	}
+}
+
+// TestNewNilPanic verifies that New(nil) panics with a non-nil message.
+func TestNewNilPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatalf("expected panic when calling New(nil), got nil")
+		} else {
+			// Ensure panic has a non-empty message when possible.
+			switch v := r.(type) {
+			case string:
+				if v == "" {
+					t.Fatalf("panic with empty message")
+				}
+			case error:
+				if v.Error() == "" {
+					t.Fatalf("panic with empty error message")
+				}
+			}
+		}
+	}()
+
+	_ = New(nil)
+}
+
 // TestCloneGame verifies that Clone produces an independent deep copy of game state.
 func TestCloneGame(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	if err := g.Deal(); err != nil {
 		t.Fatalf("Deal error: %v", err)
 	}
@@ -112,7 +182,8 @@ func TestCloneGame(t *testing.T) {
 
 // TestLegalMovesWrongPhase verifies that LegalMoves returns an error outside PhasePlay.
 func TestLegalMovesWrongPhase(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	_, err := g.LegalMoves(South)
 	if err == nil {
 		t.Fatalf("LegalMoves in PhaseDeal returned nil error, want non-nil")
@@ -124,7 +195,8 @@ func TestLegalMovesWrongPhase(t *testing.T) {
 
 // TestLegalMovesWrongTurn verifies that LegalMoves returns an error when called for the wrong seat.
 func TestLegalMovesWrongTurn(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.Phase = PhasePlay
 	g.Turn = South
 	g.Hands[North] = cardcore.NewHand([]cardcore.Card{c(rAce, sSpades)})
@@ -140,7 +212,8 @@ func TestLegalMovesWrongTurn(t *testing.T) {
 
 // TestLegalMovesFirstTrickLeader verifies that only 2♣ is legal when leading the first trick.
 func TestLegalMovesFirstTrickLeader(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.Phase = PhasePlay
 	g.TrickNum = 0
 	g.Turn = South
@@ -160,7 +233,8 @@ func TestLegalMovesFirstTrickLeader(t *testing.T) {
 
 // TestLegalMovesFollowSuit verifies that only cards of the led suit are legal when following.
 func TestLegalMovesFollowSuit(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.Phase = PhasePlay
 	g.TrickNum = 1
 	g.Turn = East
@@ -187,7 +261,8 @@ func TestLegalMovesFollowSuit(t *testing.T) {
 
 // TestLegalMovesVoidInLedSuit verifies that all cards are legal when void in the led suit.
 func TestLegalMovesVoidInLedSuit(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.Phase = PhasePlay
 	g.TrickNum = 1
 	g.Turn = West
@@ -209,7 +284,8 @@ func TestLegalMovesVoidInLedSuit(t *testing.T) {
 
 // TestLegalMovesHeartsNotBroken verifies that hearts cannot be led when hearts are not broken.
 func TestLegalMovesHeartsNotBroken(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.Phase = PhasePlay
 	g.TrickNum = 1
 	g.HeartsBroken = false
@@ -230,7 +306,8 @@ func TestLegalMovesHeartsNotBroken(t *testing.T) {
 
 // TestLegalMovesQueenOfSpadesLead verifies that Q♠ can be led when hearts are not broken.
 func TestLegalMovesQueenOfSpadesLead(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.Phase = PhasePlay
 	g.TrickNum = 1
 	g.HeartsBroken = false
@@ -251,7 +328,8 @@ func TestLegalMovesQueenOfSpadesLead(t *testing.T) {
 
 // TestLegalMovesOnlyHeartsRemain verifies that hearts can be led when the hand has only hearts.
 func TestLegalMovesOnlyHeartsRemain(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.Phase = PhasePlay
 	g.TrickNum = 1
 	g.HeartsBroken = false
@@ -273,7 +351,8 @@ func TestLegalMovesOnlyHeartsRemain(t *testing.T) {
 // TestLegalMovesFirstTrickNoPoints verifies that point cards are excluded on
 // the first trick when following void.
 func TestLegalMovesFirstTrickNoPoints(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.Phase = PhasePlay
 	g.TrickNum = 0
 	g.Turn = East
@@ -296,7 +375,8 @@ func TestLegalMovesFirstTrickNoPoints(t *testing.T) {
 // TestLegalMovesFirstTrickOnlyPointCards verifies that all cards are legal on
 // the first trick when only point cards remain.
 func TestLegalMovesFirstTrickOnlyPointCards(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.Phase = PhasePlay
 	g.TrickNum = 0
 	g.Turn = East
@@ -320,8 +400,9 @@ func TestLegalMovesFirstTrickOnlyPointCards(t *testing.T) {
 // across 50 random games.
 func TestLegalMovesRoundtrip(t *testing.T) {
 	for seed := range 50 {
-		rng := rand.New(rand.NewPCG(uint64(seed), uint64(seed+1)))
-		g := New()
+		gameRng := rand.New(rand.NewPCG(uint64(seed), uint64(seed+1)))
+		pickRng := rand.New(rand.NewPCG(uint64(seed), uint64(seed+1)))
+		g := New(gameRng)
 		if err := g.Deal(); err != nil {
 			t.Fatalf("seed %d: Deal error: %v", seed, err)
 		}
@@ -360,7 +441,7 @@ func TestLegalMovesRoundtrip(t *testing.T) {
 			}
 
 			// Play a random legal card.
-			pick := legal[rng.IntN(len(legal))]
+			pick := legal[pickRng.IntN(len(legal))]
 			if err := g.PlayCard(seat, pick); err != nil {
 				t.Fatalf("seed %d: PlayCard rejected legal move %v: %v", seed, pick, err)
 			}
@@ -370,7 +451,8 @@ func TestLegalMovesRoundtrip(t *testing.T) {
 
 // TestDeal verifies that Deal distributes 13 cards to each player and advances to PhasePass.
 func TestDeal(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	if err := g.Deal(); err != nil {
 		t.Fatalf("Deal error: %v", err)
 	}
@@ -396,7 +478,8 @@ func TestDeal(t *testing.T) {
 
 // TestDealHoldRound verifies that Deal skips PhasePass on hold rounds and goes to PhasePlay.
 func TestDealHoldRound(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.PassDir = PassHold
 	if err := g.Deal(); err != nil {
 		t.Fatalf("Deal error: %v", err)
@@ -408,7 +491,8 @@ func TestDealHoldRound(t *testing.T) {
 
 // TestDealWrongPhase verifies that Deal returns an error outside PhaseDeal.
 func TestDealWrongPhase(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.Phase = PhasePlay
 	if err := g.Deal(); err == nil {
 		t.Error("Deal in PhasePlay returned nil error, want non-nil")
@@ -417,7 +501,8 @@ func TestDealWrongPhase(t *testing.T) {
 
 // TestPassWrongPhase verifies that SetPass returns an error outside PhasePass.
 func TestPassWrongPhase(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.Phase = PhasePlay
 	cards := [PassCount]cardcore.Card{}
 	if err := g.SetPass(South, cards); err == nil {
@@ -427,7 +512,8 @@ func TestPassWrongPhase(t *testing.T) {
 
 // TestPlayCardWrongPhase verifies that PlayCard returns an error outside PhasePlay.
 func TestPlayCardWrongPhase(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.Phase = PhasePass
 	if err := g.PlayCard(South, twoOfClubs); err == nil {
 		t.Error("PlayCard in PhasePass returned nil error, want non-nil")
@@ -436,7 +522,8 @@ func TestPlayCardWrongPhase(t *testing.T) {
 
 // TestEndRoundWrongPhase verifies that EndRound returns an error outside PhaseScore.
 func TestEndRoundWrongPhase(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.Phase = PhasePlay
 	if err := g.EndRound(); err == nil {
 		t.Error("EndRound in PhasePlay returned nil error, want non-nil")
@@ -445,7 +532,8 @@ func TestEndRoundWrongPhase(t *testing.T) {
 
 // TestWinnerWrongPhase verifies that Winner returns an error before PhaseEnd.
 func TestWinnerWrongPhase(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.Phase = PhasePlay
 	if _, err := g.Winner(); err == nil {
 		t.Error("Winner before game over returned nil error, want non-nil")
@@ -454,7 +542,8 @@ func TestWinnerWrongPhase(t *testing.T) {
 
 // TestPassValidation verifies that SetPass rejects cards not in hand and duplicate cards.
 func TestPassValidation(t *testing.T) {
-	g := newPassGame(t)
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := newPassGame(t, rng)
 
 	hand := g.Hands[South]
 	var cards [PassCount]cardcore.Card
@@ -495,7 +584,8 @@ func TestPassValidation(t *testing.T) {
 // TestPassExchange verifies that passed cards are removed from the sender and
 // added to the receiver.
 func TestPassExchange(t *testing.T) {
-	g := newPassGame(t)
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := newPassGame(t, rng)
 
 	passedCards := [NumPlayers][PassCount]cardcore.Card{}
 	for i := Seat(0); i < NumPlayers; i++ {
@@ -531,7 +621,8 @@ func TestPassExchange(t *testing.T) {
 
 // TestFirstTrickMustLead2C verifies that the 2♣ holder must lead it on the first trick.
 func TestFirstTrickMustLead2C(t *testing.T) {
-	g := newHoldGame(t)
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := newHoldGame(t, rng)
 
 	holder := findHolder(g, twoOfClubs)
 	if g.Turn != holder {
@@ -554,7 +645,8 @@ func TestFirstTrickMustLead2C(t *testing.T) {
 
 // TestMustFollowSuit verifies that a player with cards in the led suit must play one.
 func TestMustFollowSuit(t *testing.T) {
-	g := setupFixedHands()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := setupFixedHands(rng)
 
 	if err := g.PlayCard(South, twoOfClubs); err != nil {
 		t.Fatalf("PlayCard 2♣ error: %v", err)
@@ -573,7 +665,8 @@ func TestMustFollowSuit(t *testing.T) {
 // TestCannotPlayPointsOnFirstTrick verifies that hearts and Q♠ cannot be played
 // on the first trick when void.
 func TestCannotPlayPointsOnFirstTrick(t *testing.T) {
-	g := setupVoidClubs()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := setupVoidClubs(rng)
 
 	if err := g.PlayCard(South, twoOfClubs); err != nil {
 		t.Fatalf("PlayCard 2♣ error: %v", err)
@@ -598,7 +691,8 @@ func TestCannotPlayPointsOnFirstTrick(t *testing.T) {
 
 // TestTrickResolution verifies that a completed trick advances TrickNum.
 func TestTrickResolution(t *testing.T) {
-	g := setupFixedHands()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := setupFixedHands(rng)
 
 	holder := findHolder(g, twoOfClubs)
 	if err := g.PlayCard(holder, twoOfClubs); err != nil {
@@ -606,7 +700,7 @@ func TestTrickResolution(t *testing.T) {
 	}
 
 	for g.TrickNum == 0 {
-		playAnyValid(g, g.Turn)
+		playAnyValid(g, g.Turn, rng)
 	}
 
 	if g.TrickNum != 1 {
@@ -617,7 +711,8 @@ func TestTrickResolution(t *testing.T) {
 // TestHeartsBroken verifies that hearts are not broken initially and become
 // broken when a heart is played.
 func TestHeartsBroken(t *testing.T) {
-	g := setupFixedHands()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := setupFixedHands(rng)
 
 	if g.HeartsBroken {
 		t.Fatal("hearts should not be broken initially")
@@ -625,7 +720,7 @@ func TestHeartsBroken(t *testing.T) {
 
 	// Play through the first trick.
 	for g.TrickNum == 0 {
-		playAnyValid(g, g.Turn)
+		playAnyValid(g, g.Turn, rng)
 	}
 
 	if g.HeartsBroken {
@@ -653,7 +748,8 @@ func TestHeartsBroken(t *testing.T) {
 
 // TestScoring verifies that round points are added to cumulative scores.
 func TestScoring(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 
 	g.Scores = [NumPlayers]int{10, 5, 4, 7}
 	g.RoundPts = [NumPlayers]int{5, 8, 0, 13}
@@ -669,7 +765,8 @@ func TestScoring(t *testing.T) {
 
 // TestShootTheMoon verifies that shooting the moon adds 26 to all opponents instead of the shooter.
 func TestShootTheMoon(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 
 	g.Scores = [NumPlayers]int{10, 5, 4, 7}
 	g.RoundPts = [NumPlayers]int{0, 0, MoonPoints, 0}
@@ -685,7 +782,8 @@ func TestShootTheMoon(t *testing.T) {
 
 // TestGameEnd verifies that the game transitions to PhaseEnd when a player reaches MaxScore.
 func TestGameEnd(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.Scores = [NumPlayers]int{94, 52, 36, 26}
 
 	g.RoundPts = [NumPlayers]int{10, 3, 8, 5}
@@ -716,7 +814,8 @@ func TestGameEnd(t *testing.T) {
 
 // TestPassDirectionRotation verifies that pass direction cycles Left→Right→Across→Hold.
 func TestPassDirectionRotation(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 
 	want := []PassDirection{PassLeft, PassRight, PassAcross, PassHold, PassLeft}
 	for i, dir := range want {
@@ -736,7 +835,8 @@ func TestPassDirectionRotation(t *testing.T) {
 
 // TestWrongTurn verifies that PlayCard returns an error when played out of turn.
 func TestWrongTurn(t *testing.T) {
-	g := newHoldGame(t)
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := newHoldGame(t, rng)
 	wrongSeat := nextSeat(g.Turn)
 
 	card := g.Hands[wrongSeat].Cards[0]
@@ -751,7 +851,8 @@ func TestWrongTurn(t *testing.T) {
 
 // TestTrickPoints verifies that trickPoints sums hearts (1 each) and Q♠ (13).
 func TestTrickPoints(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.Trick = Trick{
 		Cards: [NumPlayers]cardcore.Card{
 			c(rTwo, sHearts),
@@ -768,7 +869,8 @@ func TestTrickPoints(t *testing.T) {
 
 // TestPassHistoryAccuracy verifies that PassHistory records the exact cards each player passed.
 func TestPassHistoryAccuracy(t *testing.T) {
-	g := newPassGame(t)
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := newPassGame(t, rng)
 
 	passedCards := [NumPlayers][PassCount]cardcore.Card{}
 	for i := Seat(0); i < NumPlayers; i++ {
@@ -788,8 +890,9 @@ func TestPassHistoryAccuracy(t *testing.T) {
 
 // TestPassHistoryResetOnDeal verifies that PassHistory is zeroed on a new deal.
 func TestPassHistoryResetOnDeal(t *testing.T) {
-	g := New()
-	playRandomRound(t, g)
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
+	playRandomRound(t, g, rng)
 
 	// PassHistory should have data from the round just played.
 	// After a new Deal, it should be zeroed.
@@ -805,7 +908,8 @@ func TestPassHistoryResetOnDeal(t *testing.T) {
 
 // TestPassHistoryHoldRound verifies that PassHistory is zeroed on hold rounds.
 func TestPassHistoryHoldRound(t *testing.T) {
-	g := New()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
 	g.PassDir = PassHold
 	if err := g.Deal(); err != nil {
 		t.Fatalf("Deal error: %v", err)
@@ -819,19 +923,20 @@ func TestPassHistoryHoldRound(t *testing.T) {
 
 // TestTrickHistoryMidTrick verifies that TrickHistory only grows when a trick is completed.
 func TestTrickHistoryMidTrick(t *testing.T) {
-	g := setupFixedHands()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := setupFixedHands(rng)
 
 	// Play first trick to completion.
 	for g.TrickNum == 0 {
-		playAnyValid(g, g.Turn)
+		playAnyValid(g, g.Turn, rng)
 	}
 	if len(g.TrickHistory) != 1 {
 		t.Fatalf("len(TrickHistory) after trick 1 = %d, want 1", len(g.TrickHistory))
 	}
 
 	// Play 2 of 4 cards in the second trick.
-	playAnyValid(g, g.Turn)
-	playAnyValid(g, g.Turn)
+	playAnyValid(g, g.Turn, rng)
+	playAnyValid(g, g.Turn, rng)
 
 	if len(g.TrickHistory) != 1 {
 		t.Fatalf("len(TrickHistory) mid-trick = %d, want 1 (trick not yet complete)",
@@ -839,8 +944,8 @@ func TestTrickHistoryMidTrick(t *testing.T) {
 	}
 
 	// Complete the second trick.
-	playAnyValid(g, g.Turn)
-	playAnyValid(g, g.Turn)
+	playAnyValid(g, g.Turn, rng)
+	playAnyValid(g, g.Turn, rng)
 
 	if len(g.TrickHistory) != 2 {
 		t.Fatalf("len(TrickHistory) after trick 2 = %d, want 2", len(g.TrickHistory))
@@ -850,11 +955,12 @@ func TestTrickHistoryMidTrick(t *testing.T) {
 // TestTrickHistoryCloneIndependence verifies that cloned TrickHistory is
 // independent from the original.
 func TestTrickHistoryCloneIndependence(t *testing.T) {
-	g := setupFixedHands()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := setupFixedHands(rng)
 
 	// Play 5 tricks.
 	for g.TrickNum < 5 {
-		playAnyValid(g, g.Turn)
+		playAnyValid(g, g.Turn, rng)
 	}
 	if len(g.TrickHistory) != 5 {
 		t.Fatalf("len(TrickHistory) = %d, want 5", len(g.TrickHistory))
@@ -881,8 +987,9 @@ func TestTrickHistoryCloneIndependence(t *testing.T) {
 
 // TestTrickHistoryResetOnDeal verifies that TrickHistory is cleared on a new deal.
 func TestTrickHistoryResetOnDeal(t *testing.T) {
-	g := New()
-	playRandomRound(t, g)
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
+	playRandomRound(t, g, rng)
 
 	if err := g.Deal(); err != nil {
 		t.Fatalf("Deal error: %v", err)
@@ -894,10 +1001,11 @@ func TestTrickHistoryResetOnDeal(t *testing.T) {
 
 // TestTrickHistoryAccumulation verifies that all 13 tricks are recorded with correct point totals.
 func TestTrickHistoryAccumulation(t *testing.T) {
-	g := setupFixedHands()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := setupFixedHands(rng)
 
 	for g.Phase == PhasePlay {
-		playAnyValid(g, g.Turn)
+		playAnyValid(g, g.Turn, rng)
 	}
 
 	if len(g.TrickHistory) != HandSize {
@@ -929,7 +1037,8 @@ func TestFullGameIntegration(t *testing.T) {
 	)
 
 	for game := range numGames {
-		g := New()
+		rng := rand.New(rand.NewPCG(uint64(game), uint64(game+1)))
+		g := New(rng)
 
 		for round := range maxRounds {
 			wantDir := PassDirection(round % NumPassDirections)
@@ -938,7 +1047,7 @@ func TestFullGameIntegration(t *testing.T) {
 					game, round, g.PassDir, wantDir)
 			}
 
-			playRandomRound(t, g)
+			playRandomRound(t, g, rng)
 
 			if g.Phase == PhaseEnd {
 				break
@@ -1102,12 +1211,13 @@ func TestShootTheMoonIntegration(t *testing.T) {
 	}
 
 	for game := range numGames {
-		g := New()
+		rng := rand.New(rand.NewPCG(uint64(game), uint64(game+1)))
+		g := New(rng)
 
 		// Play random rounds until a non-South player is moonable.
 		foundMoonTarget := false
 		for range maxRounds {
-			playRandomRound(t, g)
+			playRandomRound(t, g, rng)
 
 			if g.Phase == PhaseEnd {
 				break
@@ -1214,9 +1324,9 @@ func verifyWinner(t *testing.T, g *Game, game int) {
 }
 
 // newPassGame creates a dealt game in PhasePass for pass-related tests.
-func newPassGame(t *testing.T) *Game {
+func newPassGame(t *testing.T, rng *rand.Rand) *Game {
 	t.Helper()
-	g := New()
+	g := New(rng)
 	if err := g.Deal(); err != nil {
 		t.Fatalf("Deal error: %v", err)
 	}
@@ -1224,7 +1334,7 @@ func newPassGame(t *testing.T) *Game {
 }
 
 // playRandomRound plays one full round with random legal moves and validates invariants.
-func playRandomRound(t *testing.T, g *Game) {
+func playRandomRound(t *testing.T, g *Game, rng *rand.Rand) {
 	t.Helper()
 
 	if err := g.Deal(); err != nil {
@@ -1257,7 +1367,7 @@ func playRandomRound(t *testing.T, g *Game) {
 
 	for trick := range HandSize {
 		for range NumPlayers {
-			playAnyValid(g, g.Turn)
+			playAnyValid(g, g.Turn, rng)
 		}
 		if g.TrickNum != trick+1 && g.Phase != PhaseScore {
 			t.Fatalf("round %d, trick %d: TrickNum = %d, Phase = %d",
@@ -1297,9 +1407,9 @@ func playRandomRound(t *testing.T, g *Game) {
 }
 
 // newHoldGame creates a dealt hold-round game in PhasePlay.
-func newHoldGame(t *testing.T) *Game {
+func newHoldGame(t *testing.T, rng *rand.Rand) *Game {
 	t.Helper()
-	g := New()
+	g := New(rng)
 	g.PassDir = PassHold
 	if err := g.Deal(); err != nil {
 		t.Fatalf("Deal error: %v", err)
@@ -1344,7 +1454,7 @@ func trickHistoryPoints(history []Trick) int {
 }
 
 // playAnyValid plays a random legal card for the given seat.
-func playAnyValid(g *Game, seat Seat) {
+func playAnyValid(g *Game, seat Seat, rng *rand.Rand) {
 	legal, err := g.LegalMoves(seat)
 	if err != nil {
 		panic(fmt.Sprintf("LegalMoves error: %v", err))
@@ -1352,15 +1462,15 @@ func playAnyValid(g *Game, seat Seat) {
 	if len(legal) == 0 {
 		panic("no legal moves")
 	}
-	pick := legal[rand.IntN(len(legal))]
+	pick := legal[rng.IntN(len(legal))]
 	if err := g.PlayCard(seat, pick); err != nil {
 		panic(fmt.Sprintf("PlayCard rejected legal move %v: %v", pick, err))
 	}
 }
 
 // setupFixedHands creates a game with deterministic hands for rule testing.
-func setupFixedHands() *Game {
-	g := New()
+func setupFixedHands(rng *rand.Rand) *Game {
+	g := New(rng)
 	g.Phase = PhasePlay
 	g.TrickNum = 0
 	g.HeartsBroken = false
@@ -1401,8 +1511,8 @@ func setupFixedHands() *Game {
 
 // setupVoidClubs creates a game where West is void in clubs but has
 // hearts, Q♠, and non-penalty cards.
-func setupVoidClubs() *Game {
-	g := New()
+func setupVoidClubs(rng *rand.Rand) *Game {
+	g := New(rng)
 	g.Phase = PhasePlay
 	g.TrickNum = 0
 	g.HeartsBroken = false

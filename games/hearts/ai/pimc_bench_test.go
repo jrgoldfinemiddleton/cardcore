@@ -14,7 +14,7 @@ func BenchmarkPIMCPlay(b *testing.B) {
 	factory := func(r *rand.Rand) hearts.Player { return NewHeuristic(r) }
 	for _, tc := range benchFixtures() {
 		b.Run(tc.name, func(b *testing.B) {
-			g, seat := tc.build()
+			g, seat := tc.build(rand.New(rand.NewPCG(1, 2)))
 			p := NewPIMC(rand.New(rand.NewPCG(1, 2)), 30, factory, 4)
 			b.ReportAllocs()
 			for b.Loop() {
@@ -31,7 +31,7 @@ func BenchmarkPIMCPlayWithClone(b *testing.B) {
 	factory := func(r *rand.Rand) hearts.Player { return NewHeuristic(r) }
 	for _, tc := range benchFixtures() {
 		b.Run(tc.name, func(b *testing.B) {
-			g, seat := tc.build()
+			g, seat := tc.build(rand.New(rand.NewPCG(1, 2)))
 			p := NewPIMC(rand.New(rand.NewPCG(1, 2)), 30, factory, 4)
 			b.ReportAllocs()
 			for b.Loop() {
@@ -48,7 +48,7 @@ func BenchmarkPIMCPlaySamples(b *testing.B) {
 	factory := func(r *rand.Rand) hearts.Player { return NewHeuristic(r) }
 	for _, n := range []int{10, 30, 100} {
 		b.Run(fmt.Sprintf("N=%d", n), func(b *testing.B) {
-			g, seat := buildFollowWithPoints()
+			g, seat := buildFollowWithPoints(rand.New(rand.NewPCG(1, 2)))
 			p := NewPIMC(rand.New(rand.NewPCG(1, 2)), n, factory, 4)
 			b.ReportAllocs()
 			for b.Loop() {
@@ -64,7 +64,7 @@ func BenchmarkPIMCPlayWorkers(b *testing.B) {
 	factory := func(r *rand.Rand) hearts.Player { return NewHeuristic(r) }
 	for _, w := range []int{1, 2, 4, 8} {
 		b.Run(fmt.Sprintf("W=%d", w), func(b *testing.B) {
-			g, seat := buildFollowWithPoints()
+			g, seat := buildFollowWithPoints(rand.New(rand.NewPCG(1, 2)))
 			p := NewPIMC(rand.New(rand.NewPCG(1, 2)), 30, factory, w)
 			b.ReportAllocs()
 			for b.Loop() {

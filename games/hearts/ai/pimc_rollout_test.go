@@ -2,6 +2,7 @@ package ai
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"testing"
 
 	"github.com/jrgoldfinemiddleton/cardcore"
@@ -83,7 +84,7 @@ func TestLeafScoreSumIs26ButNoShoot(t *testing.T) {
 // TestRolloutDoesNotMutateInput verifies rollout leaves the input game
 // unchanged. Snapshot key fields before and after.
 func TestRolloutDoesNotMutateInput(t *testing.T) {
-	g := freshPlayGame(t)
+	g := freshPlayGame(t, rand.New(rand.NewPCG(1, 2)))
 	seat := g.Turn
 
 	wantPhase := g.Phase
@@ -128,7 +129,7 @@ func TestRolloutDoesNotMutateInput(t *testing.T) {
 // clone, install deal, play candidate, run policy to terminal state,
 // extract leaf score.
 func TestRolloutCompletesAndIsDeterministic(t *testing.T) {
-	g := freshPlayGame(t)
+	g := freshPlayGame(t, rand.New(rand.NewPCG(1, 2)))
 	seat := g.Turn
 	legal, err := g.LegalMoves(seat)
 	if err != nil {
@@ -150,7 +151,7 @@ func TestRolloutCompletesAndIsDeterministic(t *testing.T) {
 // TestRolloutAcceptsAnyPlayer verifies rollout works with any
 // hearts.Player implementation, not just firstLegalPolicy.
 func TestRolloutAcceptsAnyPlayer(t *testing.T) {
-	g := freshPlayGame(t)
+	g := freshPlayGame(t, rand.New(rand.NewPCG(1, 2)))
 	seat := g.Turn
 	legal, err := g.LegalMoves(seat)
 	if err != nil {
@@ -168,7 +169,7 @@ func TestRolloutAcceptsAnyPlayer(t *testing.T) {
 // TestRolloutPanicsOnWrongPhase verifies rollout panics when g is not
 // in PhasePlay.
 func TestRolloutPanicsOnWrongPhase(t *testing.T) {
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePass
 	defer func() {
 		if r := recover(); r == nil {
@@ -180,7 +181,7 @@ func TestRolloutPanicsOnWrongPhase(t *testing.T) {
 
 // TestRolloutPanicsOnWrongTurn verifies rollout panics when g.Turn != seat.
 func TestRolloutPanicsOnWrongTurn(t *testing.T) {
-	g := freshPlayGame(t)
+	g := freshPlayGame(t, rand.New(rand.NewPCG(1, 2)))
 	wrongSeat := (g.Turn + 1) % hearts.NumPlayers
 	defer func() {
 		if r := recover(); r == nil {
@@ -193,7 +194,7 @@ func TestRolloutPanicsOnWrongTurn(t *testing.T) {
 // TestRolloutPanicsOnIllegalCandidate verifies rollout panics when the
 // candidate card is not a legal move (engine PlayCard error wrapped).
 func TestRolloutPanicsOnIllegalCandidate(t *testing.T) {
-	g := freshPlayGame(t)
+	g := freshPlayGame(t, rand.New(rand.NewPCG(1, 2)))
 	seat := g.Turn
 	deal := swappedDeal(t, g, seat)
 
@@ -267,9 +268,9 @@ func (firstLegalPolicy) ChoosePass(
 // handling the pass phase if needed by delegating to firstLegalPolicy.
 // The resulting game has all four hands populated and Turn set to the
 // holder of the 2♣ (the rules-mandated opener).
-func freshPlayGame(t *testing.T) *hearts.Game {
+func freshPlayGame(t *testing.T, rng *rand.Rand) *hearts.Game {
 	t.Helper()
-	g := hearts.New()
+	g := hearts.New(rng)
 	if err := g.Deal(); err != nil {
 		t.Fatalf("Deal error: %v", err)
 	}

@@ -14,7 +14,7 @@ import (
 func BenchmarkRoundHeuristic(b *testing.B) {
 	players := newHeuristics()
 	for b.Loop() {
-		g := hearts.New()
+		g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 		playRoundBench(g, players)
 	}
 }
@@ -27,7 +27,7 @@ func BenchmarkFullGameHeuristic(b *testing.B) {
 	const maxRounds = 20
 	players := newHeuristics()
 	for b.Loop() {
-		g := hearts.New()
+		g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 		for range maxRounds {
 			playRoundBench(g, players)
 			if g.Phase == hearts.PhaseEnd {
@@ -45,7 +45,7 @@ func BenchmarkFullGameHeuristic(b *testing.B) {
 func BenchmarkRoundPIMC(b *testing.B) {
 	players := newPIMCs(30, 4)
 	for b.Loop() {
-		g := hearts.New()
+		g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 		playRoundBench(g, players)
 	}
 }
@@ -56,7 +56,7 @@ func BenchmarkFullGamePIMC(b *testing.B) {
 	const maxRounds = 20
 	players := newPIMCs(30, 4)
 	for b.Loop() {
-		g := hearts.New()
+		g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 		for range maxRounds {
 			playRoundBench(g, players)
 			if g.Phase == hearts.PhaseEnd {

@@ -25,7 +25,7 @@ func TestBuildConstraintsOpponentOrdering(t *testing.T) {
 		{hearts.East, [3]hearts.Seat{hearts.South, hearts.West, hearts.North}},
 	}
 	for _, tt := range tests {
-		g := freshPlayGame(t)
+		g := freshPlayGame(t, rand.New(rand.NewPCG(1, 2)))
 		got := buildConstraints(g, tt.seat).opponents
 		if got != tt.want {
 			t.Errorf("seat %d: opponents got %v, want %v", tt.seat, got, tt.want)
@@ -39,7 +39,7 @@ func TestBuildConstraintsOpponentOrdering(t *testing.T) {
 // g.Hands; buildConstraints reads those lengths, then subtracts the
 // number of unplayed cards seat passed to each opponent.
 func TestBuildConstraintsHandSizesReflectPlay(t *testing.T) {
-	g := freshPlayGame(t)
+	g := freshPlayGame(t, rand.New(rand.NewPCG(1, 2)))
 	seat := hearts.South
 
 	got := buildConstraints(g, seat).handSizes
@@ -71,7 +71,7 @@ func TestBuildConstraintsHandSizesReflectPlay(t *testing.T) {
 // the card (without which the buildConstraints assertion could be
 // vacuously satisfied).
 func TestBuildConstraintsHandSizesReflectMidTrickPlay(t *testing.T) {
-	g := freshPlayGame(t)
+	g := freshPlayGame(t, rand.New(rand.NewPCG(1, 2)))
 
 	leader := g.Turn
 	// seat = the player to move after the leader plays. This is the
@@ -130,7 +130,7 @@ func TestBuildConstraintsTrickHistoryVoids(t *testing.T) {
 			hearts.North: c(rEight, sClubs),
 		},
 	}
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.PassDir = hearts.PassHold
 	g.TrickNum = 2
@@ -176,7 +176,7 @@ func TestBuildConstraintsTrickHistoryVoids(t *testing.T) {
 // the in-progress trick reveal voids. analyze() does not scan the
 // current trick, so this is buildConstraints's own responsibility.
 func TestBuildConstraintsCurrentTrickVoids(t *testing.T) {
-	g := buildVoidFixture(t)
+	g := buildVoidFixture(t, rand.New(rand.NewPCG(1, 2)))
 
 	got := buildConstraints(g, hearts.South)
 	westIdx := 0
@@ -190,7 +190,7 @@ func TestBuildConstraintsCurrentTrickVoids(t *testing.T) {
 // unseenBySuit. Otherwise the DP would try to deal already-played cards
 // to opponents.
 func TestBuildConstraintsCurrentTrickPlayedCardsExcluded(t *testing.T) {
-	g := buildVoidFixture(t)
+	g := buildVoidFixture(t, rand.New(rand.NewPCG(1, 2)))
 
 	got := buildConstraints(g, hearts.South)
 	if slices.Contains(got.unseenBySuit[sClubs], c(rSix, sClubs)) {
@@ -206,7 +206,7 @@ func TestBuildConstraintsCurrentTrickPlayedCardsExcluded(t *testing.T) {
 // recipient's hardAssigned slice, and the recipient's handSize is
 // decremented accordingly.
 func TestBuildConstraintsHardPassConstraint(t *testing.T) {
-	g := buildPassFixture(t, hearts.PassLeft)
+	g := buildPassFixture(t, rand.New(rand.NewPCG(1, 2)), hearts.PassLeft)
 	g.PassHistory[hearts.South] = [hearts.PassCount]cardcore.Card{
 		queenOfSpades, kingOfSpades, aceOfSpades,
 	}
@@ -238,7 +238,7 @@ func TestBuildConstraintsHardPassConstraint(t *testing.T) {
 // rounds (no passing) produce empty hardAssigned and unmodified
 // handSizes.
 func TestBuildConstraintsHoldRoundSkipsHardPass(t *testing.T) {
-	g := buildPassFixture(t, hearts.PassHold)
+	g := buildPassFixture(t, rand.New(rand.NewPCG(1, 2)), hearts.PassHold)
 
 	got := buildConstraints(g, hearts.South)
 	for i := range got.hardAssigned {
@@ -267,7 +267,7 @@ func TestBuildConstraintsPlayedPassCardNotHardAssigned(t *testing.T) {
 	// South passed 3♣, K♠, A♠ to West (PassLeft).
 	// Trick 1: validFirstTrick — West played 3♣ (consumed pass card).
 	// K♠ and A♠ remain unplayed in West's hand → still hard-assigned.
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.PassDir = hearts.PassLeft
 	g.TrickNum = 1
@@ -452,7 +452,7 @@ func TestBinomial(t *testing.T) {
 // cards appear exactly once across opponent hands.
 func TestSampleDealStructure(t *testing.T) {
 	for _, seat := range []hearts.Seat{hearts.South, hearts.East} {
-		g := freshPlayGame(t)
+		g := freshPlayGame(t, rand.New(rand.NewPCG(1, 2)))
 		sc := buildConstraints(g, seat)
 		dp := newSampleDealDP(&sc)
 		rng := rand.New(rand.NewPCG(1, 2))
@@ -512,7 +512,7 @@ func TestSampleDealSmallVoidUniformity(t *testing.T) {
 
 	// Build a minimal game state for the fixture. sample
 	// only reads g.Hands[seat] to copy into the deal.
-	g := hearts.New()
+	g := hearts.New(rand.New(rand.NewPCG(1, 2)))
 	g.Phase = hearts.PhasePlay
 	g.PassDir = hearts.PassHold
 	seat := hearts.South
@@ -558,7 +558,7 @@ func TestSampleDealSmallVoidUniformity(t *testing.T) {
 // TestSampleDealDeterministic verifies that the same RNG seed produces
 // the same deal, confirming the reproducibility contract.
 func TestSampleDealDeterministic(t *testing.T) {
-	g := freshPlayGame(t)
+	g := freshPlayGame(t, rand.New(rand.NewPCG(1, 2)))
 	seat := hearts.South
 	sc := buildConstraints(g, seat)
 	dp := newSampleDealDP(&sc)
@@ -576,7 +576,7 @@ func TestSampleDealDeterministic(t *testing.T) {
 // TestSampleDealDifferentSeeds verifies that different RNG seeds produce
 // at least one different deal (stochastic; uses tries=N pattern).
 func TestSampleDealDifferentSeeds(t *testing.T) {
-	g := freshPlayGame(t)
+	g := freshPlayGame(t, rand.New(rand.NewPCG(1, 2)))
 	seat := hearts.South
 	sc := buildConstraints(g, seat)
 	dp := newSampleDealDP(&sc)
@@ -610,9 +610,9 @@ func TestSampleDealDifferentSeeds(t *testing.T) {
 // Hands are realistic: every unplayed card sits in exactly one hand
 // (52 = 7 played + 45 in hands; West holds zero clubs — had exactly
 // one club (3♣) which was played in Trick 1).
-func buildVoidFixture(t *testing.T) *hearts.Game {
+func buildVoidFixture(t *testing.T, rng *rand.Rand) *hearts.Game {
 	t.Helper()
-	g := hearts.New()
+	g := hearts.New(rng)
 	g.Phase = hearts.PhasePlay
 	g.PassDir = hearts.PassHold
 	g.TrickNum = 1
@@ -666,9 +666,9 @@ func buildVoidFixture(t *testing.T) *hearts.Game {
 // hands (13 per player). West's hand contains Q♠ K♠ A♠ so that
 // TestBuildConstraintsHardPassConstraint can wire PassHistory
 // accordingly.
-func buildPassFixture(t *testing.T, dir hearts.PassDirection) *hearts.Game {
+func buildPassFixture(t *testing.T, rng *rand.Rand, dir hearts.PassDirection) *hearts.Game {
 	t.Helper()
-	g := hearts.New()
+	g := hearts.New(rng)
 	g.Phase = hearts.PhasePlay
 	g.PassDir = dir
 	g.Hands[hearts.South] = cardcore.NewHand([]cardcore.Card{

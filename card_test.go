@@ -1,6 +1,10 @@
 package cardcore
 
-import "testing"
+import (
+	"math/rand/v2"
+	"reflect"
+	"testing"
+)
 
 // TestAllSuits verifies that AllSuits returns all four suits in iota order.
 func TestAllSuits(t *testing.T) {
@@ -167,7 +171,8 @@ func TestDeckShuffle(t *testing.T) {
 	original := make([]Card, DeckSize)
 	copy(original, d.Cards)
 
-	d.Shuffle()
+	rng := rand.New(rand.NewPCG(1, 2))
+	d.Shuffle(rng)
 
 	if d.Len() != DeckSize {
 		t.Fatalf("deck size after shuffle = %d, want %d", d.Len(), DeckSize)
@@ -192,6 +197,43 @@ func TestDeckShuffle(t *testing.T) {
 	if len(seen) != DeckSize {
 		t.Errorf("shuffle lost cards: %d unique, want %d", len(seen), DeckSize)
 	}
+}
+
+// TestDeckShuffleDeterminism verifies that shuffling with the same seed
+// produces an identical deck order, and different seeds produce different orders.
+func TestDeckShuffleDeterminism(t *testing.T) {
+	// Deterministic shuffle with identical seeds
+	seed := uint64(42)
+	rngA := rand.New(rand.NewPCG(seed, seed+1))
+	rngB := rand.New(rand.NewPCG(seed, seed+1))
+
+	d1 := NewStandardDeck()
+	d2 := NewStandardDeck()
+	d1.Shuffle(rngA)
+	d2.Shuffle(rngB)
+
+	if !reflect.DeepEqual(d1.Cards, d2.Cards) {
+		t.Fatalf("same seed produced different decks: %v vs %v", d1.Cards, d2.Cards)
+	}
+
+	// Different seed should produce a different order
+	rngC := rand.New(rand.NewPCG(seed+1, seed+2))
+	d3 := NewStandardDeck()
+	d3.Shuffle(rngC)
+	if reflect.DeepEqual(d1.Cards, d3.Cards) {
+		t.Fatalf("different seeds produced identical decks: %v", d3.Cards)
+	}
+}
+
+// TestDeckShuffleNilPanic verifies that Shuffle panics when called with a nil RNG.
+func TestDeckShuffleNilPanic(t *testing.T) {
+	d := NewStandardDeck()
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("Shuffle(nil) did not panic")
+		}
+	}()
+	d.Shuffle(nil)
 }
 
 // TestDeckDeal verifies dealing cards removes them from the deck, including edge cases

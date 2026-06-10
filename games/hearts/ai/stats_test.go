@@ -72,7 +72,7 @@ func TestShootTheMoonFrequency(t *testing.T) {
 			for game := range numGames {
 				seed := uint64(game) + 1
 				players := setup.players(seed)
-				g := hearts.New()
+				g := hearts.New(rand.New(rand.NewPCG(seed+1000, seed+1001)))
 
 				for range maxRounds {
 					playRoundWithPlayers(t, g, players, seed)
