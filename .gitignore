@@ -35,6 +35,7 @@ coverage.html
 
 # AI orchestration scratch directory (local only)
 .sisyphus/
+.omo/
 
 # Maintainer runbook (local only)
 doc/maintainer-runbook.md

@@ -14,7 +14,10 @@ jobs:
     steps:
       - name: Validate PR title
         run: |
-          TITLE='${{ github.event.pull_request.title }}'
+          TITLE=$(cat <<'EOF'
+          ${{ github.event.pull_request.title }}
+          EOF
+          )
           if [[ $TITLE =~ ^(feat|fix|docs|test|refactor|chore)(\(.+\))?!?:[[:space:]].+ ]]; then
             echo "PR title is valid: $TITLE"
           else

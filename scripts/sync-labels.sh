@@ -41,7 +41,7 @@ delete_if_exists() {
 	if err=$(gh label delete "$label" --yes 2>&1); then
 		return 0
 	fi
-	if [[ "$err" == *"not found"* ]]; then
+	if echo "$err" | grep -qi "not found"; then
 		return 0
 	fi
 	echo "$err" >&2
