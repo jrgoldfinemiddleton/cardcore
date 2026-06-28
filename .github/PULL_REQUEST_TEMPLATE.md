@@ -8,6 +8,8 @@
 
 ## Checklist
 
+<!-- Omit N/A checklist items.  Format of items must exactly match below - including backticks and links. -->
+
 - [ ] Tests added or updated
 - [ ] `CHANGELOG.md` `[Unreleased]` section updated (if user-facing change)
 - [ ] PR title follows [Conventional Commits](https://www.conventionalcommits.org/)
