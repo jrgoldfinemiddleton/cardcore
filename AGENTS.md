@@ -133,3 +133,9 @@ Read `doc/decisions/` for the rationale behind key choices. Important ADRs:
 
 ## 9. Maintainer Runbook
 If `doc/maintainer-runbook.md` exists locally, read it for release procedures, PR review workflow, repository settings reference, and recovery steps. Proactively remind the maintainer of relevant runbook procedures during release, review, and recovery scenarios.
+
+## 10. Implementation Plans
+If `doc/implementation-plans.md` exists locally, read it for details pertaining to ongoing implementations, including plans, guidelines, architecture details.
+
+## 11. Future Considerations
+If `doc/future-considerations.md` exists locally, read it for a list of proposed features and improvements, including triggers for when they may be relevant for further consideration or implementation.

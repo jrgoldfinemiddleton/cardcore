@@ -37,8 +37,14 @@ coverage.html
 .sisyphus/
 .omo/
 
-# Maintainer runbook (local only)
+# Local-only doc files (not committed)
 doc/maintainer-runbook.md
+doc/integration-testing.md
+doc/implementation-plans.md
+doc/future-considerations.md
+
+# Proposed architecture plans (local only)
+doc/plans/
 
 # Repository configuration script (local only)
 scripts/configure-repo.sh
