@@ -115,6 +115,11 @@ func playRoundBench(g *hearts.Game, players [hearts.NumPlayers]hearts.Player) {
 		if err := g.PlayCard(seat, card); err != nil {
 			panic("PlayCard: " + err.Error())
 		}
+		if g.TrickPendingResolution {
+			if err := g.ResolveTrick(); err != nil {
+				panic("ResolveTrick: " + err.Error())
+			}
+		}
 	}
 
 	if err := g.EndRound(); err != nil {

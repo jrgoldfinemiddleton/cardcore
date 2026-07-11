@@ -416,6 +416,11 @@ func TestPIMCChoosePlayDifferentSeeds(t *testing.T) {
 		if err := g.PlayCard(seat, card); err != nil {
 			t.Fatalf("PlayCard(%d, %v): %v", seat, card, err)
 		}
+		if g.TrickPendingResolution {
+			if err := g.ResolveTrick(); err != nil {
+				t.Fatalf("ResolveTrick: %v", err)
+			}
+		}
 	}
 
 	baseline := NewPIMC(rand.New(rand.NewPCG(1, 2)), 10, factory, 1)
@@ -677,6 +682,11 @@ func freshPlayGameOnRound(t *testing.T, rng *rand.Rand, targetRound int) *hearts
 			if err := g.PlayCard(seat, card); err != nil {
 				t.Fatalf("round %d: PlayCard(%d, %v): %v",
 					g.Round, seat, card, err)
+			}
+			if g.TrickPendingResolution {
+				if err := g.ResolveTrick(); err != nil {
+					t.Fatalf("round %d: ResolveTrick: %v", g.Round, err)
+				}
 			}
 		case hearts.PhaseScore:
 			if err := g.EndRound(); err != nil {

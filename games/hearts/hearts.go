@@ -72,18 +72,25 @@ type Trick struct {
 
 // Game holds the complete state of a Hearts game.
 type Game struct {
-	Phase        Phase                                // Current phase of the round.
-	Round        int                                  // Zero-indexed round number.
-	PassDir      PassDirection                        // Pass direction for the current round.
-	Hands        [NumPlayers]*cardcore.Hand           // Each player's current hand.
-	Scores       [NumPlayers]int                      // Cumulative scores across all rounds.
-	RoundPts     [NumPlayers]int                      // Penalty points accumulated this round.
-	Trick        Trick                                // The trick currently in progress.
-	TrickHistory []Trick                              // Completed tricks this round, in play order.
-	TrickNum     int                                  // Zero-indexed trick number within the round.
-	Turn         Seat                                 // The seat whose turn it is to play.
-	HeartsBroken bool                                 // Whether hearts have been played this round.
-	PassHistory  [NumPlayers][PassCount]cardcore.Card // Cards each seat passed this round.
+	Phase        Phase                      // Current phase of the round.
+	Round        int                        // Zero-indexed round number.
+	PassDir      PassDirection              // Pass direction for the current round.
+	Hands        [NumPlayers]*cardcore.Hand // Each player's current hand.
+	Scores       [NumPlayers]int            // Cumulative scores across all rounds.
+	RoundPts     [NumPlayers]int            // Penalty points accumulated this round.
+	Trick        Trick                      // The trick currently in progress.
+	TrickHistory []Trick                    // Completed tricks this round, in play order.
+	TrickNum     int                        // Zero-indexed trick number within the round.
+	Turn         Seat                       // The seat whose turn it is to play.
+	HeartsBroken bool                       // Whether hearts have been played this round.
+
+	// TrickPendingResolution is true when the current trick contains all
+	// NumPlayers cards but has not yet been resolved. While this flag is set,
+	// the game is paused between play completion and trick resolution so that
+	// clients can observe the full trick. Call ResolveTrick to advance.
+	TrickPendingResolution bool
+
+	PassHistory [NumPlayers][PassCount]cardcore.Card // Cards each seat passed this round.
 
 	// rng is the random number generator used for shuffling. Shared with
 	// clones via Game.Clone; not safe for concurrent use. The caller
@@ -136,6 +143,9 @@ func (g *Game) LegalMoves(seat Seat) ([]cardcore.Card, error) {
 	if g.Phase != PhasePlay {
 		return nil, fmt.Errorf("cannot enumerate legal moves in phase %d", g.Phase)
 	}
+	if g.TrickPendingResolution {
+		return nil, fmt.Errorf("trick pending resolution; no legal moves available")
+	}
 	if seat != g.Turn {
 		return nil, fmt.Errorf("not player %d's turn (current: %d)", seat, g.Turn)
 	}
@@ -170,6 +180,7 @@ func (g *Game) Deal() error {
 	g.RoundPts = [NumPlayers]int{}
 	g.HeartsBroken = false
 	g.TrickNum = 0
+	g.TrickPendingResolution = false
 	g.TrickHistory = nil
 	g.PassHistory = [NumPlayers][PassCount]cardcore.Card{}
 	g.passCards = [NumPlayers][PassCount]cardcore.Card{}
@@ -220,6 +231,9 @@ func (g *Game) PlayCard(seat Seat, card cardcore.Card) error {
 	if g.Phase != PhasePlay {
 		return fmt.Errorf("cannot play in phase %d", g.Phase)
 	}
+	if g.TrickPendingResolution {
+		return fmt.Errorf("trick pending resolution; call ResolveTrick() to advance")
+	}
 	if seat != g.Turn {
 		return fmt.Errorf("not player %d's turn (current: %d)", seat, g.Turn)
 	}
@@ -238,7 +252,9 @@ func (g *Game) PlayCard(seat Seat, card cardcore.Card) error {
 	}
 
 	if g.Trick.Count == NumPlayers {
-		g.resolveTrick()
+		g.TrickPendingResolution = true
+		// Do not advance g.Turn; the last player to act remains the current
+		// turn seat until ResolveTrick() is called.
 	} else {
 		g.Turn = nextSeat(g.Turn)
 	}
@@ -279,6 +295,33 @@ func (g *Game) Winner() (Seat, error) {
 		}
 	}
 	return best, nil
+}
+
+// ResolveTrick scores the completed trick and advances the game to the next
+// trick or to the round scoring phase. It must be called only when the current
+// trick is full (Trick.Count == NumPlayers) and TrickPendingResolution is true.
+// Returns an error if called in any other state.
+func (g *Game) ResolveTrick() error {
+	if !g.TrickPendingResolution {
+		return fmt.Errorf("no trick pending resolution")
+	}
+	if g.Trick.Count != NumPlayers {
+		return fmt.Errorf("trick has %d cards, expected %d", g.Trick.Count, NumPlayers)
+	}
+
+	winner := g.trickWinner()
+	pts := g.trickPoints()
+	g.RoundPts[winner] += pts
+	g.TrickHistory = append(g.TrickHistory, g.Trick)
+
+	g.TrickNum++
+	if g.TrickNum == HandSize {
+		g.scoreRound()
+	} else {
+		g.startTrick(winner)
+	}
+	g.TrickPendingResolution = false
+	return nil
 }
 
 // validatePlay checks that card is a legal play for seat in the current trick.
@@ -328,21 +371,6 @@ func (g *Game) validateFollow(seat Seat, card cardcore.Card) error {
 	}
 
 	return nil
-}
-
-// resolveTrick scores the completed trick and starts the next one.
-func (g *Game) resolveTrick() {
-	winner := g.trickWinner()
-	pts := g.trickPoints()
-	g.RoundPts[winner] += pts
-	g.TrickHistory = append(g.TrickHistory, g.Trick)
-
-	g.TrickNum++
-	if g.TrickNum == HandSize {
-		g.scoreRound()
-	} else {
-		g.startTrick(winner)
-	}
 }
 
 // trickWinner returns the seat that won the current trick.

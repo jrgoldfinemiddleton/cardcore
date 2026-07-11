@@ -80,6 +80,11 @@ func playRoundWithPlayers(
 		if err := g.PlayCard(seat, card); err != nil {
 			t.Fatalf("seed %d: PlayCard(%d, %v) error: %v", seed, seat, card, err)
 		}
+		if g.TrickPendingResolution {
+			if err := g.ResolveTrick(); err != nil {
+				t.Fatalf("seed %d: ResolveTrick error: %v", seed, err)
+			}
+		}
 	}
 
 	roundTotal := 0

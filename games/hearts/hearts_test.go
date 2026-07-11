@@ -445,6 +445,11 @@ func TestLegalMovesRoundtrip(t *testing.T) {
 			if err := g.PlayCard(seat, pick); err != nil {
 				t.Fatalf("seed %d: PlayCard rejected legal move %v: %v", seed, pick, err)
 			}
+			if g.TrickPendingResolution {
+				if err := g.ResolveTrick(); err != nil {
+					t.Fatalf("seed %d: ResolveTrick error: %v", seed, err)
+				}
+			}
 		}
 	}
 }
@@ -739,6 +744,11 @@ func TestHeartsBroken(t *testing.T) {
 				break
 			}
 		}
+		if g.TrickPendingResolution {
+			if err := g.ResolveTrick(); err != nil {
+				t.Fatalf("ResolveTrick error: %v", err)
+			}
+		}
 	}
 
 	if breakingCard.Suit != sHearts {
@@ -846,6 +856,217 @@ func TestWrongTurn(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "turn") {
 		t.Errorf("err = %v, want to contain %q", err, "turn")
+	}
+}
+
+// TestFourthCardLeavesTrickFull verifies that playing the fourth card leaves
+// the trick full and sets TrickPendingResolution without advancing the phase.
+func TestFourthCardLeavesTrickFull(t *testing.T) {
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := setupFixedHands(rng)
+	historyBefore := len(g.TrickHistory)
+
+	for range 3 {
+		playAnyValid(g, g.Turn, rng)
+	}
+	legal, err := g.LegalMoves(g.Turn)
+	if err != nil {
+		t.Fatalf("LegalMoves error: %v", err)
+	}
+	if err := g.PlayCard(g.Turn, legal[0]); err != nil {
+		t.Fatalf("PlayCard error: %v", err)
+	}
+
+	if g.Trick.Count != NumPlayers {
+		t.Fatalf("Trick.Count = %d, want %d", g.Trick.Count, NumPlayers)
+	}
+	if !g.TrickPendingResolution {
+		t.Fatalf("TrickPendingResolution = false, want true")
+	}
+	if g.Phase != PhasePlay {
+		t.Fatalf("Phase = %d, want PhasePlay", g.Phase)
+	}
+	if len(g.TrickHistory) != historyBefore {
+		t.Fatalf("len(TrickHistory) = %d, want %d", len(g.TrickHistory), historyBefore)
+	}
+}
+
+// TestResolveTrickAdvancesState verifies that ResolveTrick scores the trick,
+// appends it to TrickHistory, and advances to the next trick.
+func TestResolveTrickAdvancesState(t *testing.T) {
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := setupFixedHands(rng)
+	historyBefore := len(g.TrickHistory)
+	trickNumBefore := g.TrickNum
+
+	for range 3 {
+		playAnyValid(g, g.Turn, rng)
+	}
+	legal, err := g.LegalMoves(g.Turn)
+	if err != nil {
+		t.Fatalf("LegalMoves error: %v", err)
+	}
+	if err := g.PlayCard(g.Turn, legal[0]); err != nil {
+		t.Fatalf("PlayCard error: %v", err)
+	}
+
+	if err := g.ResolveTrick(); err != nil {
+		t.Fatalf("ResolveTrick error: %v", err)
+	}
+
+	if len(g.TrickHistory) != historyBefore+1 {
+		t.Fatalf("len(TrickHistory) = %d, want %d", len(g.TrickHistory), historyBefore+1)
+	}
+	if g.TrickNum != trickNumBefore+1 {
+		t.Fatalf("TrickNum = %d, want %d", g.TrickNum, trickNumBefore+1)
+	}
+	if g.TrickPendingResolution {
+		t.Fatalf("TrickPendingResolution = true, want false")
+	}
+	if g.Phase != PhasePlay {
+		t.Fatalf("Phase = %d, want PhasePlay", g.Phase)
+	}
+	if g.Trick.Count != 0 {
+		t.Fatalf("Trick.Count = %d, want 0", g.Trick.Count)
+	}
+}
+
+// TestResolveTrickRoundEnd verifies that resolving the last trick transitions
+// the game to the scoring phase.
+func TestResolveTrickRoundEnd(t *testing.T) {
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := setupFixedHands(rng)
+
+	for g.TrickNum < HandSize-1 {
+		playAnyValid(g, g.Turn, rng)
+	}
+	for range 3 {
+		playAnyValid(g, g.Turn, rng)
+	}
+	legal, err := g.LegalMoves(g.Turn)
+	if err != nil {
+		t.Fatalf("LegalMoves error: %v", err)
+	}
+	if err := g.PlayCard(g.Turn, legal[0]); err != nil {
+		t.Fatalf("PlayCard error: %v", err)
+	}
+	if err := g.ResolveTrick(); err != nil {
+		t.Fatalf("ResolveTrick error: %v", err)
+	}
+
+	if g.Phase != PhaseScore {
+		t.Fatalf("Phase = %d, want PhaseScore", g.Phase)
+	}
+}
+
+// TestResolveTrickErrorWhenNotPending verifies that ResolveTrick returns an
+// error when no trick is pending resolution.
+func TestResolveTrickErrorWhenNotPending(t *testing.T) {
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := setupFixedHands(rng)
+	err := g.ResolveTrick()
+	if err == nil {
+		t.Fatalf("ResolveTrick returned nil error, want non-nil")
+	}
+	if !strings.Contains(err.Error(), "no trick pending resolution") {
+		t.Fatalf("error = %q, want mention of no trick pending resolution", err)
+	}
+}
+
+// TestResolveTrickErrorWhenTrickIncomplete verifies that ResolveTrick returns
+// an error when the current trick is not full.
+func TestResolveTrickErrorWhenTrickIncomplete(t *testing.T) {
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := setupFixedHands(rng)
+	g.TrickPendingResolution = true
+	g.Trick.Count = 2
+	err := g.ResolveTrick()
+	if err == nil {
+		t.Fatalf("ResolveTrick returned nil error, want non-nil")
+	}
+	if !strings.Contains(err.Error(), "trick has 2 cards") {
+		t.Fatalf("error = %q, want mention of trick has 2 cards", err)
+	}
+}
+
+// TestLegalMovesDuringPendingResolution verifies that LegalMoves returns an
+// error while a trick is pending resolution.
+func TestLegalMovesDuringPendingResolution(t *testing.T) {
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := setupFixedHands(rng)
+	for range 3 {
+		playAnyValid(g, g.Turn, rng)
+	}
+	legal, err := g.LegalMoves(g.Turn)
+	if err != nil {
+		t.Fatalf("LegalMoves error: %v", err)
+	}
+	if err := g.PlayCard(g.Turn, legal[0]); err != nil {
+		t.Fatalf("PlayCard error: %v", err)
+	}
+
+	_, err = g.LegalMoves(South)
+	if err == nil {
+		t.Fatalf("LegalMoves during pending resolution returned nil error, want non-nil")
+	}
+	if !strings.Contains(err.Error(), "trick pending resolution") {
+		t.Fatalf("error = %q, want mention of trick pending resolution", err)
+	}
+}
+
+// TestPlayCardDuringPendingResolution verifies that PlayCard returns an error
+// while a trick is pending resolution.
+func TestPlayCardDuringPendingResolution(t *testing.T) {
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := setupFixedHands(rng)
+	for range 3 {
+		playAnyValid(g, g.Turn, rng)
+	}
+	legal, err := g.LegalMoves(g.Turn)
+	if err != nil {
+		t.Fatalf("LegalMoves error: %v", err)
+	}
+	if err := g.PlayCard(g.Turn, legal[0]); err != nil {
+		t.Fatalf("PlayCard error: %v", err)
+	}
+
+	err = g.PlayCard(South, twoOfClubs)
+	if err == nil {
+		t.Fatalf("PlayCard during pending resolution returned nil error, want non-nil")
+	}
+	if !strings.Contains(err.Error(), "trick pending resolution") {
+		t.Fatalf("error = %q, want mention of trick pending resolution", err)
+	}
+}
+
+// TestClonePreservesPendingResolution verifies that Clone copies the pending
+// resolution flag and that resolving the clone does not affect the original.
+func TestClonePreservesPendingResolution(t *testing.T) {
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := setupFixedHands(rng)
+	for range 3 {
+		playAnyValid(g, g.Turn, rng)
+	}
+	legal, err := g.LegalMoves(g.Turn)
+	if err != nil {
+		t.Fatalf("LegalMoves error: %v", err)
+	}
+	if err := g.PlayCard(g.Turn, legal[0]); err != nil {
+		t.Fatalf("PlayCard error: %v", err)
+	}
+	if !g.TrickPendingResolution {
+		t.Fatalf("TrickPendingResolution = false, want true before clone")
+	}
+
+	clone := g.Clone()
+	if !clone.TrickPendingResolution {
+		t.Fatalf("clone.TrickPendingResolution = false, want true")
+	}
+	if err := clone.ResolveTrick(); err != nil {
+		t.Fatalf("clone.ResolveTrick error: %v", err)
+	}
+	if !g.TrickPendingResolution {
+		t.Fatalf("original TrickPendingResolution = false after clone resolution, want true")
 	}
 }
 
@@ -1260,6 +1481,9 @@ func TestShootTheMoonIntegration(t *testing.T) {
 						game, i+1, p.seat, p.card, err)
 				}
 			}
+			if err := g.ResolveTrick(); err != nil {
+				t.Fatalf("game %d, trick %d: ResolveTrick: %v", game, i+1, err)
+			}
 		}
 
 		if g.Phase != PhaseScore {
@@ -1465,6 +1689,11 @@ func playAnyValid(g *Game, seat Seat, rng *rand.Rand) {
 	pick := legal[rng.IntN(len(legal))]
 	if err := g.PlayCard(seat, pick); err != nil {
 		panic(fmt.Sprintf("PlayCard rejected legal move %v: %v", pick, err))
+	}
+	if g.TrickPendingResolution {
+		if err := g.ResolveTrick(); err != nil {
+			panic(fmt.Sprintf("ResolveTrick error: %v", err))
+		}
 	}
 }
 
