@@ -8,6 +8,8 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-11
+
 ### Changed
 - Hearts trick play and resolution are now separate steps: `PlayCard` no longer auto-resolves completed tricks. Instead, it leaves the full trick in `Game.Trick` and sets `Game.TrickPendingResolution`. Callers must invoke `Game.ResolveTrick()` to score the trick, record it in `TrickHistory`, and advance to the next trick or round scoring. This enables clients to observe the completed trick before it is cleared. (`games/hearts/`)
 
