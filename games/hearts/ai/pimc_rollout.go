@@ -51,12 +51,22 @@ func rollout(
 	if err := clone.PlayCard(seat, candidate); err != nil {
 		panic(fmt.Errorf("ai: rollout candidate play failed: %w", err))
 	}
+	if clone.TrickPendingResolution {
+		if err := clone.ResolveTrick(); err != nil {
+			panic(fmt.Errorf("ai: rollout resolve after candidate: %w", err))
+		}
+	}
 
 	for clone.Phase == hearts.PhasePlay {
 		turn := clone.Turn
 		card := policy.ChoosePlay(clone.Clone(), turn)
 		if err := clone.PlayCard(turn, card); err != nil {
 			panic(fmt.Errorf("ai: rollout policy play failed: %w", err))
+		}
+		if clone.TrickPendingResolution {
+			if err := clone.ResolveTrick(); err != nil {
+				panic(fmt.Errorf("ai: rollout resolve: %w", err))
+			}
 		}
 	}
 
