@@ -8,6 +8,9 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### Added
+- Typed sentinel errors `ErrWrongPhase`, `ErrOutOfTurn`, and `ErrIllegalMove` in the Hearts package (`games/hearts/`). Rule-violation errors from `LegalMoves`, `Deal`, `SetPass`, `PlayCard`, `EndRound`, `Winner`, `ResolveTrick`, and the lead/follow validators now wrap the appropriate sentinel so callers can classify rejections with `errors.Is`. No function signatures changed.
+
 ## [0.6.0] - 2026-07-11
 
 ### Changed
