@@ -141,13 +141,17 @@ func (g *Game) Clone() *Game {
 // play phase or it is not the given seat's turn.
 func (g *Game) LegalMoves(seat Seat) ([]cardcore.Card, error) {
 	if g.Phase != PhasePlay {
-		return nil, fmt.Errorf("cannot enumerate legal moves in phase %d", g.Phase)
+		return nil, fmt.Errorf(
+			"cannot enumerate legal moves in phase %d: %w", g.Phase, ErrWrongPhase,
+		)
 	}
 	if g.TrickPendingResolution {
-		return nil, fmt.Errorf("trick pending resolution; no legal moves available")
+		return nil, fmt.Errorf(
+			"trick pending resolution; no legal moves available: %w", ErrIllegalMove,
+		)
 	}
 	if seat != g.Turn {
-		return nil, fmt.Errorf("not player %d's turn (current: %d)", seat, g.Turn)
+		return nil, fmt.Errorf("not player %d's turn (current: %d): %w", seat, g.Turn, ErrOutOfTurn)
 	}
 	var legal []cardcore.Card
 	for _, card := range g.Hands[seat].Cards {
@@ -162,7 +166,7 @@ func (g *Game) LegalMoves(seat Seat) ([]cardcore.Card, error) {
 // or play phase.
 func (g *Game) Deal() error {
 	if g.Phase != PhaseDeal {
-		return fmt.Errorf("cannot deal in phase %d", g.Phase)
+		return fmt.Errorf("cannot deal in phase %d: %w", g.Phase, ErrWrongPhase)
 	}
 
 	deck := cardcore.NewStandardDeck()
@@ -201,15 +205,15 @@ func (g *Game) Deal() error {
 // play begins.
 func (g *Game) SetPass(seat Seat, cards [PassCount]cardcore.Card) error {
 	if g.Phase != PhasePass {
-		return fmt.Errorf("cannot pass in phase %d", g.Phase)
+		return fmt.Errorf("cannot pass in phase %d: %w", g.Phase, ErrWrongPhase)
 	}
 	for i := range cards {
 		if !g.Hands[seat].Contains(cards[i]) {
-			return fmt.Errorf("player %d does not have %v", seat, cards[i])
+			return fmt.Errorf("player %d does not have %v: %w", seat, cards[i], ErrIllegalMove)
 		}
 		for j := i + 1; j < len(cards); j++ {
 			if cards[i].Equal(cards[j]) {
-				return fmt.Errorf("duplicate card %v", cards[i])
+				return fmt.Errorf("duplicate card %v: %w", cards[i], ErrIllegalMove)
 			}
 		}
 	}
@@ -229,13 +233,15 @@ func (g *Game) SetPass(seat Seat, cards [PassCount]cardcore.Card) error {
 // PlayCard plays a card from the given seat into the current trick.
 func (g *Game) PlayCard(seat Seat, card cardcore.Card) error {
 	if g.Phase != PhasePlay {
-		return fmt.Errorf("cannot play in phase %d", g.Phase)
+		return fmt.Errorf("cannot play in phase %d: %w", g.Phase, ErrWrongPhase)
 	}
 	if g.TrickPendingResolution {
-		return fmt.Errorf("trick pending resolution; call ResolveTrick() to advance")
+		return fmt.Errorf(
+			"trick pending resolution; call ResolveTrick() to advance: %w", ErrIllegalMove,
+		)
 	}
 	if seat != g.Turn {
-		return fmt.Errorf("not player %d's turn (current: %d)", seat, g.Turn)
+		return fmt.Errorf("not player %d's turn (current: %d): %w", seat, g.Turn, ErrOutOfTurn)
 	}
 	if err := g.validatePlay(seat, card); err != nil {
 		return err
@@ -266,7 +272,7 @@ func (g *Game) PlayCard(seat Seat, card cardcore.Card) error {
 // MaxScore the game ends; otherwise a new round begins.
 func (g *Game) EndRound() error {
 	if g.Phase != PhaseScore {
-		return fmt.Errorf("cannot end round in phase %d", g.Phase)
+		return fmt.Errorf("cannot end round in phase %d: %w", g.Phase, ErrWrongPhase)
 	}
 
 	for i := range NumPlayers {
@@ -286,7 +292,7 @@ func (g *Game) EndRound() error {
 // Winner returns the seat with the lowest score. Only valid when Phase == PhaseEnd.
 func (g *Game) Winner() (Seat, error) {
 	if g.Phase != PhaseEnd {
-		return 0, fmt.Errorf("game not over")
+		return 0, fmt.Errorf("game not over: %w", ErrWrongPhase)
 	}
 	best := Seat(0)
 	for i := Seat(1); i < NumPlayers; i++ {
@@ -303,10 +309,12 @@ func (g *Game) Winner() (Seat, error) {
 // Returns an error if called in any other state.
 func (g *Game) ResolveTrick() error {
 	if !g.TrickPendingResolution {
-		return fmt.Errorf("no trick pending resolution")
+		return fmt.Errorf("no trick pending resolution: %w", ErrWrongPhase)
 	}
 	if g.Trick.Count != NumPlayers {
-		return fmt.Errorf("trick has %d cards, expected %d", g.Trick.Count, NumPlayers)
+		return fmt.Errorf(
+			"trick has %d cards, expected %d: %w", g.Trick.Count, NumPlayers, ErrIllegalMove,
+		)
 	}
 
 	winner := g.trickWinner()
@@ -327,7 +335,7 @@ func (g *Game) ResolveTrick() error {
 // validatePlay checks that card is a legal play for seat in the current trick.
 func (g *Game) validatePlay(seat Seat, card cardcore.Card) error {
 	if !g.Hands[seat].Contains(card) {
-		return fmt.Errorf("player %d does not have %v", seat, card)
+		return fmt.Errorf("player %d does not have %v: %w", seat, card, ErrIllegalMove)
 	}
 	if g.Trick.Count == 0 {
 		return g.validateLead(seat, card)
@@ -340,13 +348,13 @@ func (g *Game) validateLead(seat Seat, card cardcore.Card) error {
 	// First trick of the round: must lead 2♣.
 	if g.TrickNum == 0 {
 		if card != twoOfClubs {
-			return fmt.Errorf("first trick must be led with 2♣")
+			return fmt.Errorf("first trick must be led with 2♣: %w", ErrIllegalMove)
 		}
 		return nil
 	}
 	// Cannot lead hearts until broken (unless only hearts remain).
 	if card.Suit == cardcore.Hearts && !g.HeartsBroken && !g.onlyHasHearts(seat) {
-		return fmt.Errorf("cannot lead hearts until hearts are broken")
+		return fmt.Errorf("cannot lead hearts until hearts are broken: %w", ErrIllegalMove)
 	}
 	return nil
 }
@@ -356,17 +364,17 @@ func (g *Game) validateFollow(seat Seat, card cardcore.Card) error {
 	// Must follow suit if possible.
 	ledSuit := g.Trick.LedSuit()
 	if card.Suit != ledSuit && g.Hands[seat].HasSuit(ledSuit) {
-		return fmt.Errorf("must follow suit (%v)", ledSuit)
+		return fmt.Errorf("must follow suit (%v): %w", ledSuit, ErrIllegalMove)
 	}
 
 	// First trick: cannot play hearts or Q♠ unless the player has no
 	// non-penalty cards (outside the led suit).
 	if g.TrickNum == 0 {
 		if card.Suit == cardcore.Hearts && g.hasNonPointCards(seat) {
-			return fmt.Errorf("cannot play hearts on the first trick")
+			return fmt.Errorf("cannot play hearts on the first trick: %w", ErrIllegalMove)
 		}
 		if card == queenOfSpades && g.hasNonPointCards(seat) {
-			return fmt.Errorf("cannot play Q♠ on the first trick")
+			return fmt.Errorf("cannot play Q♠ on the first trick: %w", ErrIllegalMove)
 		}
 	}
 
