@@ -1526,7 +1526,7 @@ func TestShootTheMoonIntegration(t *testing.T) {
 	}
 }
 
-// c is a shorthand constructor for cardcore.Card.
+// c is a shorthand constructor for [cardcore.Card].
 func c(rank cardcore.Rank, suit cardcore.Suit) cardcore.Card {
 	return cardcore.Card{Rank: rank, Suit: suit}
 }

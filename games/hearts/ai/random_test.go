@@ -8,7 +8,7 @@ import (
 	"github.com/jrgoldfinemiddleton/cardcore/games/hearts"
 )
 
-// Compile-time check that Random satisfies hearts.Player.
+// Compile-time check that Random satisfies [hearts.Player].
 var _ hearts.Player = (*Random)(nil)
 
 // TestChoosePassReturnsDistinctCardsFromHand verifies that ChoosePass returns

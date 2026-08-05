@@ -10,4 +10,12 @@ The engine needs to be portable, self-contained, and easy to cross-compile. The 
 Implement cardcore in Go. Use only the standard library for the engine — no external runtime dependencies.
 
 ## Consequences
-(+) Single static binary, trivial cross-compilation. (+) Strong stdlib covers all engine needs (rand, sort, fmt). (+) `go test` built in. (+) Zero runtime dependency headaches. (-) Less familiar language for the author initially. (-) Some verbosity compared to dynamic languages. Note: a friend named Clawd independently suggested Go for portability and self-containment — his advice proved sound.
+
+- (+) Single static binary, trivial cross-compilation.
+- (+) Strong stdlib covers all engine needs (rand, sort, fmt).
+- (+) `go test` built in.
+- (+) Zero runtime dependency headaches.
+- (-) Less familiar language for the author initially.
+- (-) Some verbosity compared to dynamic languages.
+
+Note: a friend named Clawd independently suggested Go for portability and self-containment — his advice proved sound.

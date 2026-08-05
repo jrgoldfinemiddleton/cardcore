@@ -49,16 +49,13 @@ RDD means:
     created.
 
 ## Consequences
-(+) Every rule has a single, traceable source of truth outside the code.
-(+) Rules documents double as user-facing documentation.
-(+) Variants have a clear specification independent of implementation
-    status.
-(+) Contributors can review rules correctness without reading Go.
-(+) Implemented games have stable rules — behavioral changes require
-    code updates in the same PR, preventing spec/code drift.
-(+) Primary reference disputes are resolved through discussion, not
-    competing PRs.
-(-) Requires discipline to write the rules document first.
-(-) Rules documents must be maintained in sync with code changes.
-(-) Changing the behavior of an implemented game is costly — the
-    contributor must update rules, implementation, and tests together.
+
+- (+) Every rule has a single, traceable source of truth outside the code.
+- (+) Rules documents double as user-facing documentation.
+- (+) Variants have a clear specification independent of implementation status.
+- (+) Contributors can review rules correctness without reading Go.
+- (+) Implemented games have stable rules — behavioral changes require code updates in the same PR, preventing spec/code drift.
+- (+) Primary reference disputes are resolved through discussion, not competing PRs.
+- (-) Requires discipline to write the rules document first.
+- (-) Rules documents must be maintained in sync with code changes.
+- (-) Changing the behavior of an implemented game is costly — the contributor must update rules, implementation, and tests together.

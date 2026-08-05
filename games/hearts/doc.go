@@ -26,4 +26,7 @@
 //
 // If a single player takes all 26 penalty points in a round, that
 // player scores zero and every other player receives 26 points instead.
+//
+// See ADR-006 (doc/decisions/006-rules-driven-development.md) and
+// doc/games/hearts/rules.md.
 package hearts

@@ -149,7 +149,7 @@ func TestRolloutCompletesAndIsDeterministic(t *testing.T) {
 }
 
 // TestRolloutAcceptsAnyPlayer verifies rollout works with any
-// hearts.Player implementation, not just firstLegalPolicy.
+// [hearts.Player] implementation, not just firstLegalPolicy.
 func TestRolloutAcceptsAnyPlayer(t *testing.T) {
 	g := freshPlayGame(t, rand.New(rand.NewPCG(1, 2)))
 	seat := g.Turn
@@ -253,7 +253,7 @@ func (firstLegalPolicy) ChoosePlay(g *hearts.Game, seat hearts.Seat) cardcore.Ca
 
 // ChoosePass returns the first PassCount cards from seat's hand;
 // deterministic for testing. Not exercised by rollout (rollout enters
-// the game in PhasePlay) but required by the hearts.Player interface.
+// the game in PhasePlay) but required by the [hearts.Player] interface.
 func (firstLegalPolicy) ChoosePass(
 	g *hearts.Game, seat hearts.Seat,
 ) [hearts.PassCount]cardcore.Card {

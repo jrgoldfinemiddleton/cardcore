@@ -12,7 +12,9 @@ import (
 //
 // ReportAllocs ON — per-call B/op and allocs/op feed the PIMC sizing
 // budget. Fixture is built once outside the loop because analyze is
-// read-only and can safely share *hearts.Game across iterations.
+// read-only and can safely share
+// *[github.com/jrgoldfinemiddleton/cardcore/games/hearts.Game] across
+// iterations.
 func BenchmarkAnalyze(b *testing.B) {
 	for _, tc := range benchFixtures() {
 		b.Run(tc.name, func(b *testing.B) {
