@@ -9,7 +9,7 @@ import (
 
 // BenchmarkRoundHeuristic measures the cost of constructing a Hearts game
 // and playing one full round (deal, pass, play 13 tricks, score) with four
-// Heuristic players. The measurement includes hearts.New since each
+// Heuristic players. The measurement includes [hearts.New] since each
 // iteration needs a fresh game.
 func BenchmarkRoundHeuristic(b *testing.B) {
 	players := newHeuristics()
@@ -22,7 +22,7 @@ func BenchmarkRoundHeuristic(b *testing.B) {
 // BenchmarkFullGameHeuristic measures the cost of constructing a Hearts
 // game and playing it to completion (rounds played until any player reaches
 // MaxScore) with four Heuristic players. The measurement includes
-// hearts.New since each iteration needs a fresh game.
+// [hearts.New] since each iteration needs a fresh game.
 func BenchmarkFullGameHeuristic(b *testing.B) {
 	const maxRounds = 20
 	players := newHeuristics()

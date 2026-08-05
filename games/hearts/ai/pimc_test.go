@@ -645,7 +645,7 @@ func TestPIMCStatisticalCompetenceIntegration(t *testing.T) {
 	}
 }
 
-// baseFingerprintGame returns a minimal *hearts.Game suitable for
+// baseFingerprintGame returns a minimal *[hearts.Game] suitable for
 // fingerprint testing. Callers mutate fields to produce variants.
 func baseFingerprintGame(rng *rand.Rand) *hearts.Game {
 	g := hearts.New(rng)

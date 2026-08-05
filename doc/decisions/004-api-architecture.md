@@ -10,4 +10,9 @@ Card game clients come in many forms: CLI, web browser, mobile app, desktop GUI.
 The Go engine is the single source of truth. It will expose an HTTP/WebSocket API. All clients — CLI, web, desktop, and mobile — are thin clients that call the same server. No game logic lives in clients.
 
 ## Consequences
-(+) Single engine implementation, no logic duplication. (+) Any client in any language can play any game. (+) Engine is testable independently of all UI. (-) Requires a network layer (future work). (-) Adds latency for local single-player play (acceptable tradeoff).
+
+- (+) Single engine implementation, no logic duplication.
+- (+) Any client in any language can play any game.
+- (+) Engine is testable independently of all UI.
+- (-) Requires a network layer (future work).
+- (-) Adds latency for local single-player play (acceptable tradeoff).

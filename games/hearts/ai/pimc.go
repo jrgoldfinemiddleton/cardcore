@@ -11,7 +11,7 @@ import (
 )
 
 // sampledDeal is one constraint-satisfying assignment of unseen cards
-// across the four seats. Index by hearts.Seat. The PIMC player's own
+// across the four seats. Index by [hearts.Seat]. The PIMC player's own
 // entry equals its real hand; the other three are sampled.
 type sampledDeal [hearts.NumPlayers]cardcore.Hand
 
@@ -30,7 +30,7 @@ type sampleResult struct {
 // candidate move on each deal, and selects the candidate with the
 // lowest total leaf score.
 //
-// PIMC delegates pass-phase decisions to a per-call [Heuristic];
+// PIMC delegates pass-phase decisions to a per-call Heuristic;
 // pass-phase PIMC is out of scope for this implementation.
 //
 // PIMC never mutates the live game state. All rollouts operate on
@@ -96,7 +96,7 @@ func NewPIMC(
 	}
 }
 
-// ChoosePass delegates to a per-call [Heuristic] seeded from a
+// ChoosePass delegates to a per-call Heuristic seeded from a
 // fingerprint-derived RNG. Pass-phase PIMC is out of scope for this
 // implementation.
 func (p *PIMC) ChoosePass(g *hearts.Game, seat hearts.Seat) [hearts.PassCount]cardcore.Card {

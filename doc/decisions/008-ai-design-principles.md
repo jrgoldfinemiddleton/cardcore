@@ -94,21 +94,12 @@ We adopt the following principles for all game AI in Cardcore.
     play over many games).
 
 ## Consequences
-(+) AI is cleanly separated from engine logic — the engine works
-    without it.
-(+) The "no live mutation" rule isolates AI bugs from the engine:
-    a buggy AI cannot corrupt the game it is playing in.
-(+) Separate types per difficulty level make each level independently
-    testable and prevent god functions.
-(+) Zero external dependencies keep AI aligned with the project's
-    suckless philosophy.
-(+) Third-party developers can build alternative AI implementations
-    against the same interface.
-(+) Rule changes that affect AI are caught during review, not
-    discovered after release.
-(-) Each game's AI is self-contained, which means some structural
-    patterns will be duplicated across games until a shared
-    abstraction is justified (per ADR-005).
-(-) The stdlib-only constraint (principle 11) limits AI to algorithmic
-    approaches, which may hit a ceiling for games where learned
-    strategies significantly outperform search (for example, poker).
+
+- (+) AI is cleanly separated from engine logic — the engine works without it.
+- (+) The "no live mutation" rule isolates AI bugs from the engine: a buggy AI cannot corrupt the game it is playing in.
+- (+) Separate types per difficulty level make each level independently testable and prevent god functions.
+- (+) Zero external dependencies keep AI aligned with the project's suckless philosophy.
+- (+) Third-party developers can build alternative AI implementations against the same interface.
+- (+) Rule changes that affect AI are caught during review, not discovered after release.
+- (-) Each game's AI is self-contained, which means some structural patterns will be duplicated across games until a shared abstraction is justified (per ADR-005).
+- (-) The stdlib-only constraint (principle 11) limits AI to algorithmic approaches, which may hit a ceiling for games where learned strategies significantly outperform search (for example, poker).

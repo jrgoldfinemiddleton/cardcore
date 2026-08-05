@@ -5,7 +5,7 @@ import "github.com/jrgoldfinemiddleton/cardcore"
 // Player is the interface that any Hearts player — human or AI — must
 // satisfy. Methods receive the live game state and must not mutate it.
 // An implementation that needs to simulate or look ahead must work on
-// its own copy (see [Game.Clone]) rather than the value passed in.
+// its own copy (see Game.Clone) rather than the value passed in.
 // The seat parameter identifies which player is acting, allowing a
 // single Player instance to play multiple seats.
 //

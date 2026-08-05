@@ -33,12 +33,12 @@ const (
 	sSpades   = cardcore.Spades
 )
 
-// c is a shorthand constructor for cardcore.Card.
+// c is a shorthand constructor for [cardcore.Card].
 func c(r cardcore.Rank, s cardcore.Suit) cardcore.Card {
 	return cardcore.Card{Rank: r, Suit: s}
 }
 
-// pointTrick is a shorthand constructor for a complete (4-card) hearts.Trick.
+// pointTrick is a shorthand constructor for a complete (4-card) [hearts.Trick].
 // Used to keep large TrickHistory literals readable.
 func pointTrick(leader hearts.Seat, cards [hearts.NumPlayers]cardcore.Card) hearts.Trick {
 	return hearts.Trick{Leader: leader, Count: hearts.NumPlayers, Cards: cards}

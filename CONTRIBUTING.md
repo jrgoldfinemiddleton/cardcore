@@ -138,6 +138,17 @@ func processHand(h *Hand) int {
 This applies to test helpers too. A one-line comment stating intent is
 sufficient for small functions.
 
+### Doc links
+
+Use links in comments to help readers navigate to referenced resources. Square brackets are reserved for Go doc links; other targets use a `See` line.
+
+- **Go symbols** — use standard Go doc links: `[package.Symbol]` for a symbol in another package of this module (e.g., `[hearts.Player]`), and `[package.Symbol.Method]` with the full chain inside the brackets for methods and fields. Do not link same-package identifiers; name them plainly instead. For standard-library symbols, use the full import path (e.g., `[math/rand/v2.Rand]`); the short form (e.g., `[rand.Rand]`) is allowed only in files that already import the package, and in a package doc comment (`doc.go`) when any file in the package imports it. Do not link obvious stdlib types (`error`, `context.Context`).
+- **ADRs** — reference from code comments as `See ADR-NNN (doc/decisions/NNN-slug.md).` Go doc links cannot target Markdown files, so do not bracket ADR references. Place the reference in the package `doc.go` or near the code that embodies the decision.
+- **Repository docs** — reference from code comments as `See doc/<path>.md.` (e.g., `See doc/games/hearts/rules.md.`). In Markdown files, use normal Markdown links with relative paths for in-repo targets and full URLs only for cross-repo targets.
+- **External resources** — put a bare URL on a `See` line.
+
+`convention_test.go` (`TestDocLinks`) verifies that bracketed doc links resolve and that `ADR-NNN` and `doc/....md` references in comments point at existing files.
+
 ### Function ordering
 
 #### Declarations before functions

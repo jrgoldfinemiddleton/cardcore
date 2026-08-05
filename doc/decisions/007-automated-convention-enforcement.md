@@ -93,19 +93,13 @@ vars) that would be awkward to express as a strict linear rule. This
 remains a style convention enforced during review.
 
 ## Consequences
-(+) Convention violations are caught by `make check` before they reach
-    review.
-(+) Contributors have a single, readable reference (CONTRIBUTING.md)
-    for code conventions, backed by this ADR as the authority.
-(+) New contributors get immediate, specific feedback instead of
-    learning conventions through trial and error.
-(+) The checker requires no external tooling or installation.
-(+) Adding a new package automatically includes it in the check.
-(-) The root package gains a test file unrelated to its public API.
-(-) Changes to conventions require updating both CONTRIBUTING.md and
-    the checker.
-(-) Requiring doc comments on unexported symbols is stricter than Go
-    community norms, which may surprise contributors coming from other
-    Go projects.
-(-) The directory-walking approach means the test reads the filesystem,
-    making it slightly slower than a pure AST test on a single package.
+
+- (+) Convention violations are caught by `make check` before they reach review.
+- (+) Contributors have a single, readable reference (CONTRIBUTING.md) for code conventions, backed by this ADR as the authority.
+- (+) New contributors get immediate, specific feedback instead of learning conventions through trial and error.
+- (+) The checker requires no external tooling or installation.
+- (+) Adding a new package automatically includes it in the check.
+- (-) The root package gains a test file unrelated to its public API.
+- (-) Changes to conventions require updating both CONTRIBUTING.md and the checker.
+- (-) Requiring doc comments on unexported symbols is stricter than Go community norms, which may surprise contributors coming from other Go projects.
+- (-) The directory-walking approach means the test reads the filesystem, making it slightly slower than a pure AST test on a single package.

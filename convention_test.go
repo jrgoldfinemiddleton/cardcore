@@ -6,8 +6,11 @@ import (
 	"go/token"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -75,6 +78,40 @@ type walkOpts struct {
 	suffix    string
 	skipDirs  []string
 	skipFiles []string
+}
+
+// docLinkRE matches bracketed Go doc links in comments: the Name, pkg,
+// pkg.Symbol, pkg.Type.Member, and import/path.Symbol forms.
+var docLinkRE = regexp.MustCompile(`\[([A-Za-z_][A-Za-z0-9_]*(?:[./][A-Za-z0-9_]+)*)\]`)
+
+// adrRefRE matches ADR references in comments: ADR- followed by three
+// digits.
+var adrRefRE = regexp.MustCompile(`\bADR-(\d{3})\b`)
+
+// docPathRE matches in-repo doc path references in comments, with an
+// optional heading anchor (for example a doc/design.md section link).
+var docPathRE = regexp.MustCompile(`\bdoc/[\w./#-]*\.md(?:#[\w-]+)?`)
+
+// versionSuffixRE matches a major version suffix in an import path's
+// last element, e.g. the v2 in math/rand/v2.
+var versionSuffixRE = regexp.MustCompile(`^v\d+$`)
+
+// symbolSet captures the exported symbols of a package for doc link
+// resolution: top-level names and per-type member names.
+type symbolSet struct {
+	top     map[string]bool
+	members map[string]map[string]bool
+}
+
+// docLinkCache memoizes package symbol and name lookups and holds the
+// set of existing ADR numbers and the module root for doc path
+// validation.
+type docLinkCache struct {
+	symbols map[string]*symbolSet // importPath → symbols; nil means unresolvable.
+	names   map[string]string     // importPath → declared package name.
+	locals  map[string]*symbolSet // directory → declared top-level symbols.
+	adrs    map[string]bool       // ADR number ("004") → exists.
+	root    string                // Module root directory.
 }
 
 // TestRankSuitAliasesInGameTests walks every _test.go file under games/
@@ -159,6 +196,17 @@ func TestDocComments(t *testing.T) {
 			return
 		}
 		checkDocComments(t, path, rel)
+	})
+}
+
+// TestDocLinks walks every .go file in the module and verifies that
+// bracketed doc links resolve, that same-package identifiers are not
+// linked, and that ADR and doc path references in comments point at
+// existing files.
+func TestDocLinks(t *testing.T) {
+	cache := newDocLinkCache(t)
+	walkGoFiles(t, walkOpts{}, func(path, rel string) {
+		checkDocLinks(t, path, rel, cache)
 	})
 }
 
@@ -700,4 +748,375 @@ func receiverLabel(recv string) string {
 		return "package-level"
 	}
 	return recv
+}
+
+// newDocLinkCache builds the shared state for doc link validation: the
+// module root and the set of existing ADR numbers.
+func newDocLinkCache(t *testing.T) *docLinkCache {
+	t.Helper()
+
+	root, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd: %v", err)
+	}
+
+	adrFileRE := regexp.MustCompile(`^(\d{3})-.+\.md$`)
+	adrs := map[string]bool{}
+	entries, err := os.ReadDir(filepath.Join(root, "doc", "decisions"))
+	if err != nil {
+		t.Fatalf("read doc/decisions: %v", err)
+	}
+	for _, e := range entries {
+		if m := adrFileRE.FindStringSubmatch(e.Name()); m != nil {
+			adrs[m[1]] = true
+		}
+	}
+
+	return &docLinkCache{
+		symbols: map[string]*symbolSet{},
+		names:   map[string]string{},
+		locals:  map[string]*symbolSet{},
+		adrs:    adrs,
+		root:    root,
+	}
+}
+
+// checkDocLinks validates the links and references in every comment of
+// a single file.
+func checkDocLinks(t *testing.T, path, rel string, cache *docLinkCache) {
+	t.Helper()
+
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
+	if err != nil {
+		t.Errorf("%s: parse error: %v", rel, err)
+		return
+	}
+
+	imports := map[string]string{}
+	for _, imp := range f.Imports {
+		p, err := strconv.Unquote(imp.Path.Value)
+		if err != nil {
+			continue
+		}
+		name := cache.packageName(p)
+		if imp.Name != nil {
+			name = imp.Name.Name
+		}
+		imports[name] = p
+	}
+	if filepath.Base(path) == "doc.go" {
+		mergeDirImports(t, path, imports, cache)
+	}
+	localSyms := cache.localSymbols(filepath.Dir(path))
+
+	for _, cg := range f.Comments {
+		for _, c := range cg.List {
+			line := fset.Position(c.Pos()).Line
+			checkBracketLinks(t, rel, line, c.Text, imports, cache, localSyms)
+			checkADRRefs(t, rel, line, c.Text, cache)
+			checkDocPaths(t, rel, line, c.Text, cache)
+		}
+	}
+}
+
+// checkBracketLinks validates every bracketed doc link in a comment.
+// Single-word brackets that name an identifier declared in the same
+// package are forbidden: name the identifier plainly instead. Other
+// single-word brackets are package links or index/prose shorthand such
+// as deal[seat], which Go renders as plain text. Links with a package
+// and symbol part must resolve.
+func checkBracketLinks(
+	t *testing.T, rel string, line int, text string,
+	imports map[string]string, cache *docLinkCache, localSyms *symbolSet,
+) {
+	t.Helper()
+
+	for _, m := range docLinkRE.FindAllStringSubmatch(text, -1) {
+		link := m[1]
+		pkg, sym := splitDocLink(link)
+		if sym == "" {
+			if localSyms.top[pkg] {
+				t.Errorf("%s:%d: same-package doc link [%s] forbidden: "+
+					"name the identifier without brackets", rel, line, link)
+			}
+			continue
+		}
+		checkSymbolLink(t, rel, line, link, pkg, sym, imports, cache)
+	}
+}
+
+// localSymbols collects the top-level symbols declared by every Go
+// file in dir, distinguishing same-package doc links from prose
+// bracket shorthand. Results are memoized per test run.
+func (c *docLinkCache) localSymbols(dir string) *symbolSet {
+	if syms, ok := c.locals[dir]; ok {
+		return syms
+	}
+	syms := &symbolSet{top: map[string]bool{}, members: map[string]map[string]bool{}}
+	entries, err := os.ReadDir(dir)
+	if err == nil {
+		for _, e := range entries {
+			if strings.HasSuffix(e.Name(), ".go") {
+				collectFileSymbols(filepath.Join(dir, e.Name()), syms)
+			}
+		}
+	}
+	c.locals[dir] = syms
+	return syms
+}
+
+// splitDocLink splits a bracketed doc link target into its package and
+// symbol parts. For full import paths the symbol follows the first dot
+// after the last slash (import paths may themselves contain dots); for
+// short package names it follows the first dot.
+func splitDocLink(link string) (pkg, sym string) {
+	lastSlash := strings.LastIndex(link, "/")
+	dot := strings.Index(link[lastSlash+1:], ".")
+	if dot < 0 {
+		return link, ""
+	}
+	return link[:lastSlash+1+dot], link[lastSlash+1+dot+1:]
+}
+
+// checkSymbolLink validates a pkg.Symbol or pkg.Type.Member doc link:
+// the short package form must be imported by the file, and the symbol
+// must exist in the target package.
+func checkSymbolLink(
+	t *testing.T, rel string, line int, link, pkg, sym string,
+	imports map[string]string, cache *docLinkCache,
+) {
+	t.Helper()
+
+	importPath := pkg
+	if !strings.Contains(pkg, "/") {
+		p, ok := imports[pkg]
+		if !ok {
+			t.Errorf("%s:%d: doc link [%s] uses the short form but package "+
+				"%q is not imported by this file", rel, line, link, pkg)
+			return
+		}
+		importPath = p
+	}
+
+	syms := cache.lookup(importPath)
+	if syms == nil {
+		t.Errorf("%s:%d: doc link [%s]: cannot resolve package %q",
+			rel, line, link, importPath)
+		return
+	}
+
+	typ, member, hasMember := strings.Cut(sym, ".")
+	if !syms.top[typ] {
+		t.Errorf("%s:%d: doc link [%s]: symbol %q not found in package %q",
+			rel, line, link, typ, importPath)
+		return
+	}
+	if hasMember && !syms.members[typ][member] {
+		t.Errorf("%s:%d: doc link [%s]: member %q not found on %q in "+
+			"package %q", rel, line, link, member, typ, importPath)
+	}
+}
+
+// checkADRRefs verifies that every ADR reference in a comment names an
+// ADR file that exists in doc/decisions.
+func checkADRRefs(t *testing.T, rel string, line int, text string, cache *docLinkCache) {
+	t.Helper()
+
+	for _, m := range adrRefRE.FindAllStringSubmatch(text, -1) {
+		if !cache.adrs[m[1]] {
+			t.Errorf("%s:%d: ADR-%s does not match any file in doc/decisions",
+				rel, line, m[1])
+		}
+	}
+}
+
+// checkDocPaths verifies that every in-repo doc path reference in a
+// comment points at a file that exists relative to the module root.
+// Heading anchors are ignored.
+func checkDocPaths(t *testing.T, rel string, line int, text string, cache *docLinkCache) {
+	t.Helper()
+
+	for _, m := range docPathRE.FindAllString(text, -1) {
+		p, _, _ := strings.Cut(m, "#")
+		if _, err := os.Stat(filepath.Join(cache.root, p)); err != nil {
+			t.Errorf("%s:%d: referenced doc %q does not exist", rel, line, p)
+		}
+	}
+}
+
+// mergeDirImports merges the import sets of all non-test Go files in
+// the same directory as path into imports. Go resolves doc links in
+// package documentation against the imports of the whole package.
+func mergeDirImports(
+	t *testing.T, path string, imports map[string]string, cache *docLinkCache,
+) {
+	t.Helper()
+
+	dir := filepath.Dir(path)
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	for _, e := range entries {
+		name := e.Name()
+		if !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") ||
+			name == "doc.go" {
+			continue
+		}
+		f, err := parser.ParseFile(
+			token.NewFileSet(), filepath.Join(dir, name), nil, parser.ImportsOnly)
+		if err != nil {
+			continue
+		}
+		for _, imp := range f.Imports {
+			p, err := strconv.Unquote(imp.Path.Value)
+			if err != nil {
+				continue
+			}
+			iname := cache.packageName(p)
+			if imp.Name != nil {
+				iname = imp.Name.Name
+			}
+			imports[iname] = p
+		}
+	}
+}
+
+// packageName returns the reference name for an import path without an
+// explicit alias: the last path element, or the declared package name
+// resolved via go list when the last element is a major version suffix
+// (for example math/rand/v2 declares package rand).
+func (c *docLinkCache) packageName(importPath string) string {
+	base := importPath[strings.LastIndex(importPath, "/")+1:]
+	if !versionSuffixRE.MatchString(base) {
+		return base
+	}
+	if name, ok := c.names[importPath]; ok {
+		return name
+	}
+	name := base
+	out, err := exec.Command("go", "list", "-f", "{{.Name}}", importPath).Output()
+	if err == nil {
+		name = strings.TrimSpace(string(out))
+	}
+	c.names[importPath] = name
+	return name
+}
+
+// lookup resolves the exported symbols of importPath, memoizing results
+// per test run. It returns nil when the package cannot be resolved.
+func (c *docLinkCache) lookup(importPath string) *symbolSet {
+	if syms, ok := c.symbols[importPath]; ok {
+		return syms
+	}
+	syms := loadPackageSymbols(importPath)
+	c.symbols[importPath] = syms
+	return syms
+}
+
+// loadPackageSymbols resolves importPath via go list and collects the
+// exported top-level symbols and per-type members from its source. It
+// returns nil when the package cannot be resolved.
+func loadPackageSymbols(importPath string) *symbolSet {
+	out, err := exec.Command("go", "list", "-f", "{{.Dir}}", importPath).Output()
+	if err != nil {
+		return nil
+	}
+	dir := strings.TrimSpace(string(out))
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil
+	}
+
+	syms := &symbolSet{top: map[string]bool{}, members: map[string]map[string]bool{}}
+	for _, e := range entries {
+		name := e.Name()
+		if !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		collectFileSymbols(filepath.Join(dir, name), syms)
+	}
+	return syms
+}
+
+// collectFileSymbols adds the exported declarations of a single Go
+// source file to syms.
+func collectFileSymbols(path string, syms *symbolSet) {
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, path, nil, 0)
+	if err != nil {
+		return
+	}
+	for _, decl := range f.Decls {
+		switch d := decl.(type) {
+		case *ast.FuncDecl:
+			collectFuncSymbol(d, syms)
+		case *ast.GenDecl:
+			collectGenSymbols(d, syms)
+		}
+	}
+}
+
+// collectFuncSymbol adds an exported function or method to syms.
+func collectFuncSymbol(fn *ast.FuncDecl, syms *symbolSet) {
+	if !ast.IsExported(fn.Name.Name) {
+		return
+	}
+	recv := receiverType(fn)
+	if recv == "" {
+		syms.top[fn.Name.Name] = true
+		return
+	}
+	if syms.members[recv] == nil {
+		syms.members[recv] = map[string]bool{}
+	}
+	syms.members[recv][fn.Name.Name] = true
+}
+
+// collectGenSymbols adds exported type, var, and const declarations to
+// syms, with interface methods and struct fields recorded as members.
+func collectGenSymbols(gd *ast.GenDecl, syms *symbolSet) {
+	for _, spec := range gd.Specs {
+		switch s := spec.(type) {
+		case *ast.ValueSpec:
+			for _, n := range s.Names {
+				if ast.IsExported(n.Name) {
+					syms.top[n.Name] = true
+				}
+			}
+		case *ast.TypeSpec:
+			if !ast.IsExported(s.Name.Name) {
+				continue
+			}
+			syms.top[s.Name.Name] = true
+			collectTypeMembers(s, syms)
+		}
+	}
+}
+
+// collectTypeMembers records the interface method names and struct
+// field names of an exported type as members in syms.
+func collectTypeMembers(ts *ast.TypeSpec, syms *symbolSet) {
+	add := func(name string) {
+		if syms.members[ts.Name.Name] == nil {
+			syms.members[ts.Name.Name] = map[string]bool{}
+		}
+		syms.members[ts.Name.Name][name] = true
+	}
+	switch typ := ts.Type.(type) {
+	case *ast.InterfaceType:
+		for _, m := range typ.Methods.List {
+			for _, n := range m.Names {
+				add(n.Name)
+			}
+		}
+	case *ast.StructType:
+		for _, fld := range typ.Fields.List {
+			for _, n := range fld.Names {
+				add(n.Name)
+			}
+		}
+	}
 }
