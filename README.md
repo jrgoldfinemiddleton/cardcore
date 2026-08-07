@@ -39,25 +39,17 @@ Go 1.25.12+ (uses `sync.WaitGroup.Go`; dev tools managed via the `tool` directiv
 make check
 ```
 
-This runs formatting, vetting, linting, and tests. See [Makefile Targets](#makefile-targets) for individual targets.
+This runs formatting, vetting, linting, and tests.
 
 Dev tools like [golangci-lint](https://golangci-lint.run/) and [pkgsite](https://pkg.go.dev/golang.org/x/pkgsite) are declared in `go.mod` via the Go 1.25 `tool` directive and are compiled automatically on first use — no manual installation required.
 
-## Makefile Targets
+## Development
 
-| Target | Description |
-|---|---|
-| `make test` | Run all tests |
-| `make fmt` | Format code with [gofmt](https://pkg.go.dev/cmd/gofmt) |
-| `make vet` | Run [go vet](https://pkg.go.dev/cmd/vet) |
-| `make lint` | Run [golangci-lint](https://golangci-lint.run/) |
-| `make vuln` | Run [govulncheck](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck) vulnerability scan |
-| `make build` | Compile all packages |
-| `make doc` | Browse docs locally via [pkgsite](https://pkg.go.dev/golang.org/x/pkgsite) |
-| `make check` | Run fmt, vet, lint, and test |
-| `make bench` | Run all benchmarks |
-| `make stats` | Run AI statistical profiles |
-| `make help` | Show available targets |
+For build, test, lint, and contribution workflow, see [`CONTRIBUTING.md`](CONTRIBUTING.md) or run:
+
+```bash
+make help
+```
 
 ## License
 
