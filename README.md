@@ -31,7 +31,7 @@ cardcore/
 
 ## Requirements
 
-Go 1.25.9+ (uses `sync.WaitGroup.Go`; dev tools managed via the `tool` directive)
+Go 1.25.12+ (uses `sync.WaitGroup.Go`; dev tools managed via the `tool` directive)
 
 ## Getting Started
 
@@ -51,6 +51,7 @@ Dev tools like [golangci-lint](https://golangci-lint.run/) and [pkgsite](https:/
 | `make fmt` | Format code with [gofmt](https://pkg.go.dev/cmd/gofmt) |
 | `make vet` | Run [go vet](https://pkg.go.dev/cmd/vet) |
 | `make lint` | Run [golangci-lint](https://golangci-lint.run/) |
+| `make vuln` | Run [govulncheck](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck) vulnerability scan |
 | `make build` | Compile all packages |
 | `make doc` | Browse docs locally via [pkgsite](https://pkg.go.dev/golang.org/x/pkgsite) |
 | `make check` | Run fmt, vet, lint, and test |

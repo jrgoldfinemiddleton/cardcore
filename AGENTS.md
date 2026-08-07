@@ -23,6 +23,7 @@ cardcore/
 │   ├── design.md        # Design principles
 │   ├── architecture.md  # System architecture
 │   ├── decisions/       # ADRs — read before architectural changes
+│   ├── dependencies.md  # Approved external dependencies
 │   └── games/
 │       └── hearts/
 │           ├── rules.md # Hearts rules specification (RDD)
@@ -95,7 +96,7 @@ cardcore/
 ## UNIQUE STYLES
 
 - **AST-based convention enforcement**: `convention_test.go` is not optional — it enforces function ordering, doc comments, no `//nolint`, no external deps, no game imports in root, and rank/suit aliases in game tests.
-- **Dev tools via `go.mod`**: `golangci-lint`, `pkgsite`, and `benchstat` are declared via the `tool` directive; they compile on first use.
+- **Dev tools via `go.mod`**: `golangci-lint`, `pkgsite`, `benchstat`, and `govulncheck` are declared via the `tool` directive; they compile on first use.
 - **Technique-named AI players**: `Random`, `Heuristic`, and `PIMC` are named by algorithm, not by difficulty tier.
 - **Rules-driven development**: every game starts with a `doc/games/<game>/rules.md` specification before code is written.
 - **Seeded RNG everywhere**: every stochastic type accepts `*rand.Rand` for deterministic tests.
@@ -113,6 +114,7 @@ make vet       # go vet
 make lint      # golangci-lint (uses go.mod tool directive)
 make build     # Compile all packages
 make lint-extra # Optional stricter lint
+make vuln      # govulncheck vulnerability scan (runs in CI)
 
 # Local docs / benchmarks
 make doc       # pkgsite local docs

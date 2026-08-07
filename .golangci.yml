@@ -7,6 +7,7 @@ linters:
     - goconst      # repeated string/number literals that should be constants
     - godoclint    # doc comment presence and format (supplements convention_test.go)
     - godot        # doc comments end with a period
+    - gosec        # security static analysis
     - lll          # line length
     - misspell     # common English misspellings
     - nilerr       # returning nil after seeing a non-nil error
@@ -32,6 +33,18 @@ linters:
 
   exclusions:
     generated: lax
+    rules:
+      - path: _test\.go$
+        linters:
+          - gosec    # tests and convention checks intentionally use seeded RNG, subprocesses, and repo-relative variable paths
+      - path: games/hearts
+        text: "G115:"
+        linters:
+          - gosec    # round/seat values and sample/rollout counters are bounded by game constants (NumPlayers, NumPassDirections, HandSize) by construction; G115 cannot see the range proofs
+      - path: games/hearts/ai/pimc\.go
+        text: "G404:"
+        linters:
+          - gosec    # deriveRNG derives deterministic per-decision PCG sub-streams for reproducible game-AI sampling; cryptographic strength is not required
     paths:
       - third_party$
       - builtin$
