@@ -72,7 +72,7 @@ const modulePath = "github.com/jrgoldfinemiddleton/cardcore"
 
 // walkOpts configures walkGoFiles. Zero values give sensible defaults:
 // root defaults to cwd, suffix defaults to ".go", and skipDirs/skipFiles
-// add to the always-skipped set (.git, vendor, testdata).
+// add to the always-skipped set (.git, vendor, testdata, .sisyphus).
 type walkOpts struct {
 	root      string
 	suffix    string
@@ -95,6 +95,9 @@ var docPathRE = regexp.MustCompile(`\bdoc/[\w./#-]*\.md(?:#[\w-]+)?`)
 // versionSuffixRE matches a major version suffix in an import path's
 // last element, e.g. the v2 in math/rand/v2.
 var versionSuffixRE = regexp.MustCompile(`^v\d+$`)
+
+// agentsPathTokenRE matches backticked spans in AGENTS.md files.
+var agentsPathTokenRE = regexp.MustCompile("`([^`]+)`")
 
 // symbolSet captures the exported symbols of a package for doc link
 // resolution: top-level names and per-type member names.
@@ -210,11 +213,26 @@ func TestDocLinks(t *testing.T) {
 	})
 }
 
+// TestAgentsMDPaths walks every nested AGENTS.md file and verifies that
+// backticked path references in them resolve: relative to the file's
+// own directory first, then relative to the module root. The root
+// AGENTS.md is exempt; only nested files carry directory inventories.
+func TestAgentsMDPaths(t *testing.T) {
+	walkGoFiles(t, walkOpts{suffix: "AGENTS.md", skipDirs: []string{".omo"}},
+		func(path, rel string) {
+			if rel == "AGENTS.md" {
+				return
+			}
+			checkAgentsMDPaths(t, path, rel)
+		})
+}
+
 // walkGoFiles walks Go source files under opts.root (default: cwd) and
 // invokes fn for each file matching opts.suffix (default: ".go").
-// Directories named .git, vendor, or testdata are always skipped, plus
-// any in opts.skipDirs. Files whose basename appears in opts.skipFiles
-// are skipped. rel is the path relative to the working directory.
+// Directories named .git, vendor, testdata, or .sisyphus are always
+// skipped, plus any in opts.skipDirs. Files whose basename appears in
+// opts.skipFiles are skipped. rel is the path relative to the working
+// directory.
 func walkGoFiles(t *testing.T, opts walkOpts, fn func(path, rel string)) {
 	t.Helper()
 
@@ -241,13 +259,12 @@ func walkGoFiles(t *testing.T, opts walkOpts, fn func(path, rel string)) {
 		}
 		if d.IsDir() {
 			base := d.Name()
-			if base == ".git" || base == "vendor" || base == "testdata" {
+			switch base {
+			case ".git", "vendor", "testdata", ".sisyphus":
 				return filepath.SkipDir
 			}
-			for _, s := range opts.skipDirs {
-				if base == s {
-					return filepath.SkipDir
-				}
+			if slices.Contains(opts.skipDirs, base) {
+				return filepath.SkipDir
 			}
 			return nil
 		}
@@ -255,10 +272,8 @@ func walkGoFiles(t *testing.T, opts walkOpts, fn func(path, rel string)) {
 			return nil
 		}
 		base := filepath.Base(path)
-		for _, s := range opts.skipFiles {
-			if base == s {
-				return nil
-			}
+		if slices.Contains(opts.skipFiles, base) {
+			return nil
 		}
 
 		rel, _ := filepath.Rel(cwd, path)
@@ -1119,4 +1134,58 @@ func collectTypeMembers(ts *ast.TypeSpec, syms *symbolSet) {
 			}
 		}
 	}
+}
+
+// checkAgentsMDPaths validates the path-like backticked tokens of one
+// nested AGENTS.md file.
+func checkAgentsMDPaths(t *testing.T, path, rel string) {
+	t.Helper()
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Errorf("%s: read: %v", rel, err)
+		return
+	}
+	dir := filepath.Dir(path)
+	selfLabel := filepath.Base(dir) + "/"
+
+	for _, m := range agentsPathTokenRE.FindAllStringSubmatch(string(data), -1) {
+		token := m[1]
+		if !isAgentsPathCandidate(token, selfLabel) {
+			continue
+		}
+		if _, err := os.Stat(filepath.Join(dir, token)); err == nil {
+			continue
+		}
+		if _, err := os.Stat(token); err == nil {
+			continue
+		}
+		t.Errorf("%s: referenced path `%s` does not exist relative to "+
+			"the file's directory or the module root", rel, token)
+	}
+}
+
+// isAgentsPathCandidate reports whether a backticked token looks like a
+// file or directory path reference: path-safe characters only, no ".."
+// or placeholders, no dots outside the final file extension, and either
+// a .go/.md extension, a trailing slash, or an interior slash.
+func isAgentsPathCandidate(token, selfLabel string) bool {
+	if token == selfLabel {
+		return false
+	}
+	if strings.ContainsAny(token, " <>:*?\"'()[]{}&,;=#") {
+		return false
+	}
+	if strings.Contains(token, "..") {
+		return false
+	}
+	isPathish := strings.HasSuffix(token, ".go") ||
+		strings.HasSuffix(token, ".md") ||
+		strings.HasSuffix(token, "/") ||
+		strings.Contains(token, "/")
+	if !isPathish {
+		return false
+	}
+	stem := strings.TrimSuffix(strings.TrimSuffix(token, ".go"), ".md")
+	return !strings.Contains(stem, ".")
 }

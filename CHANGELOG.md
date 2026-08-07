@@ -8,6 +8,14 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### Added
+- Security scanning: `gosec` is enabled in the default lint config, and `govulncheck` runs locally and in CI via the new `make vuln` target
+- Per-package `AGENTS.md` guides (`games/hearts/`, `games/hearts/ai/`, `doc/decisions/`) are now committed to the repository; `convention_test.go` (`TestAgentsMDPaths`) verifies that paths referenced in nested `AGENTS.md` files exist
+- `doc/dependencies.md`: approved external dependency list (runtime: none — standard library only; dev tools pinned via the `go.mod` `tool` directive)
+
+### Changed
+- Minimum Go version bumped from 1.25.9 to 1.25.12 to stay current on standard-library security patches and align with cardcore-server's minimum; no vulnerabilities were reachable from this module at 1.25.9
+
 ## [0.7.0] - 2026-07-26
 
 ### Added
