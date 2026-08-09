@@ -9,6 +9,7 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### Added
+- `TestConstAndFieldDocComments` convention test: every exported const in a group (including iota groups) and every field of an exported struct must have a doc comment starting with its name; doc comments added across `card.go`, `hand.go`, `games/hearts/`, and `games/hearts/ai/`, with the rules documented in CONTRIBUTING.md
 - Security scanning: `gosec` is enabled in the default lint config, and `govulncheck` runs locally and in CI via the new `make vuln` target
 - Per-package `AGENTS.md` guides (`games/hearts/`, `games/hearts/ai/`, `doc/decisions/`) are now committed to the repository; `convention_test.go` (`TestAgentsMDPaths`) verifies that paths referenced in nested `AGENTS.md` files exist
 - `doc/dependencies.md`: approved external dependency list (runtime: none — standard library only; dev tools pinned via the `go.mod` `tool` directive)

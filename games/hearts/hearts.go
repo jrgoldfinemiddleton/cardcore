@@ -28,11 +28,16 @@ type Phase uint8
 
 // Phases of a Hearts round, in the order they occur.
 const (
-	PhaseDeal  Phase = iota // Waiting to deal cards.
-	PhasePass               // Players selecting cards to pass.
-	PhasePlay               // Trick-taking play in progress.
-	PhaseScore              // Round complete, scoring.
-	PhaseEnd                // Game over (someone hit MaxScore).
+	// PhaseDeal is the phase in which players are waiting to deal cards.
+	PhaseDeal Phase = iota
+	// PhasePass is the phase in which players are selecting cards to pass.
+	PhasePass
+	// PhasePlay is the phase in which trick-taking play is in progress.
+	PhasePlay
+	// PhaseScore is the phase in which the round is complete and scoring occurs.
+	PhaseScore
+	// PhaseEnd is the phase in which the game is over (someone hit MaxScore).
+	PhaseEnd
 )
 
 // PassDirection determines which direction cards are passed each round.
@@ -40,10 +45,14 @@ type PassDirection uint8
 
 // Pass directions, rotated each round (left, right, across, hold).
 const (
-	PassLeft   PassDirection = iota // Pass to the player on your left.
-	PassRight                       // Pass to the player on your right.
-	PassAcross                      // Pass to the player across from you.
-	PassHold                        // No passing this round.
+	// PassLeft passes cards to the player on your left.
+	PassLeft PassDirection = iota
+	// PassRight passes cards to the player on your right.
+	PassRight
+	// PassAcross passes cards to the player across from you.
+	PassAcross
+	// PassHold means no passing this round.
+	PassHold
 )
 
 // NumPassDirections is the number of distinct pass directions in the rotation.
@@ -57,32 +66,50 @@ type Seat uint8
 
 // Seats at the table, in clockwise order from South.
 const (
-	South Seat = iota // The human player (in a typical setup).
-	West              // The player to South's left.
-	North             // The player across from South.
-	East              // The player to South's right.
+	// South is the human player (in a typical setup).
+	South Seat = iota
+	// West is the player to South's left.
+	West
+	// North is the player across from South.
+	North
+	// East is the player to South's right.
+	East
 )
 
 // Trick records the cards played in a single trick.
 type Trick struct {
-	Cards  [NumPlayers]cardcore.Card // The card each player contributed.
-	Leader Seat                      // The seat that leads this trick.
-	Count  int                       // The number of cards played so far.
+	// Cards holds the card each player contributed.
+	Cards [NumPlayers]cardcore.Card
+	// Leader is the seat that leads this trick.
+	Leader Seat
+	// Count is the number of cards played so far.
+	Count int
 }
 
 // Game holds the complete state of a Hearts game.
 type Game struct {
-	Phase        Phase                      // Current phase of the round.
-	Round        int                        // Zero-indexed round number.
-	PassDir      PassDirection              // Pass direction for the current round.
-	Hands        [NumPlayers]*cardcore.Hand // Each player's current hand.
-	Scores       [NumPlayers]int            // Cumulative scores across all rounds.
-	RoundPts     [NumPlayers]int            // Penalty points accumulated this round.
-	Trick        Trick                      // The trick currently in progress.
-	TrickHistory []Trick                    // Completed tricks this round, in play order.
-	TrickNum     int                        // Zero-indexed trick number within the round.
-	Turn         Seat                       // The seat whose turn it is to play.
-	HeartsBroken bool                       // Whether hearts have been played this round.
+	// Phase is the current phase of the round.
+	Phase Phase
+	// Round is the zero-indexed round number.
+	Round int
+	// PassDir is the pass direction for the current round.
+	PassDir PassDirection
+	// Hands holds each player's current hand.
+	Hands [NumPlayers]*cardcore.Hand
+	// Scores holds the cumulative scores across all rounds.
+	Scores [NumPlayers]int
+	// RoundPts holds the penalty points accumulated this round.
+	RoundPts [NumPlayers]int
+	// Trick is the trick currently in progress.
+	Trick Trick
+	// TrickHistory holds the completed tricks this round, in play order.
+	TrickHistory []Trick
+	// TrickNum is the zero-indexed trick number within the round.
+	TrickNum int
+	// Turn is the seat whose turn it is to play.
+	Turn Seat
+	// HeartsBroken reports whether hearts have been played this round.
+	HeartsBroken bool
 
 	// TrickPendingResolution is true when the current trick contains all
 	// NumPlayers cards but has not yet been resolved. While this flag is set,
@@ -90,15 +117,17 @@ type Game struct {
 	// clients can observe the full trick. Call ResolveTrick to advance.
 	TrickPendingResolution bool
 
-	PassHistory [NumPlayers][PassCount]cardcore.Card // Cards each seat passed this round.
+	// PassHistory holds the cards each seat passed this round.
+	PassHistory [NumPlayers][PassCount]cardcore.Card
 
 	// rng is the random number generator used for shuffling. Shared with
 	// clones via Game.Clone; not safe for concurrent use. The caller
 	// controls seeding for reproducible games.
 	rng *rand.Rand
 
-	// Pending passes: passCards[from] = cards to pass.
+	// passCards holds pending passes: passCards[from] = cards to pass.
 	passCards [NumPlayers][PassCount]cardcore.Card
+	// passReady tracks which seats have submitted their pass cards this round.
 	passReady [NumPlayers]bool
 }
 

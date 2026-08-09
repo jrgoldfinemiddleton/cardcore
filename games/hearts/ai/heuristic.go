@@ -17,6 +17,9 @@ import (
 // safe, dump the Queen of Spades on opponents, and attempt to shoot
 // the moon when the hand supports it.
 type Heuristic struct {
+	// rng is the random number generator used to shuffle candidates
+	// before stable sorting, providing random tie-breaking among
+	// equally scored moves.
 	rng *rand.Rand
 }
 

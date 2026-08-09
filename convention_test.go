@@ -202,6 +202,19 @@ func TestDocComments(t *testing.T) {
 	})
 }
 
+// TestConstAndFieldDocComments walks every .go file in the module and
+// verifies that every exported const has a doc comment starting with its
+// name, and that every field of an exported struct has a doc comment
+// starting with the field name.
+func TestConstAndFieldDocComments(t *testing.T) {
+	walkGoFiles(t, walkOpts{skipDirs: []string{"doc"}}, func(path, rel string) {
+		if strings.HasSuffix(path, "doc.go") {
+			return
+		}
+		checkConstAndFieldDocs(t, path, rel)
+	})
+}
+
 // TestDocLinks walks every .go file in the module and verifies that
 // bracketed doc links resolve, that same-package identifiers are not
 // linked, and that ADR and doc path references in comments point at
@@ -472,20 +485,139 @@ func checkDocComments(t *testing.T, path, rel string) {
 
 		name := fn.Name.Name
 		line := fset.Position(fn.Pos()).Line
+		requireNameDoc(t, rel, line, name, fn.Doc)
+	}
+}
 
-		if fn.Doc == nil || len(fn.Doc.List) == 0 {
-			t.Errorf("%s:%d: %s has no doc comment", rel, line, name)
+// requireNameDoc verifies that doc exists and that its first line starts
+// with "// <name> ", reporting an error otherwise.
+func requireNameDoc(t *testing.T, rel string, line int, name string, doc *ast.CommentGroup) {
+	t.Helper()
+
+	if doc == nil || len(doc.List) == 0 {
+		t.Errorf("%s:%d: %s has no doc comment", rel, line, name)
+		return
+	}
+
+	first := doc.List[0].Text
+	// Expected: "// Name ..." where Name is the symbol name.
+	prefix := "// " + name + " "
+	if !strings.HasPrefix(first, prefix) {
+		t.Errorf("%s:%d: doc comment for %s must start with %q, got %q",
+			rel, line, name, "// "+name+" ...", first)
+	}
+}
+
+// checkConstAndFieldDocs verifies that every exported const and every
+// field of every exported struct in the file has a doc comment starting
+// with its name.
+func checkConstAndFieldDocs(t *testing.T, path, rel string) {
+	t.Helper()
+
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
+	if err != nil {
+		t.Errorf("%s: parse error: %v", rel, err)
+		return
+	}
+
+	for _, decl := range f.Decls {
+		gd, ok := decl.(*ast.GenDecl)
+		if !ok {
 			continue
 		}
-
-		first := fn.Doc.List[0].Text
-		// Expected: "// Name ..." where Name is the function name.
-		prefix := "// " + name + " "
-		if !strings.HasPrefix(first, prefix) {
-			t.Errorf("%s:%d: doc comment for %s must start with %q, got %q",
-				rel, line, name, "// "+name+" ...", first)
+		if gd.Tok == token.CONST {
+			checkConstDocs(t, fset, rel, gd)
+		}
+		if gd.Tok == token.TYPE {
+			checkStructFieldDocs(t, fset, rel, gd)
 		}
 	}
+}
+
+// checkConstDocs verifies that each exported name in a const declaration
+// has a doc comment starting with that name. For an ungrouped declaration
+// the doc comment on the declaration itself counts.
+func checkConstDocs(t *testing.T, fset *token.FileSet, rel string, gd *ast.GenDecl) {
+	t.Helper()
+
+	for _, spec := range gd.Specs {
+		vs, ok := spec.(*ast.ValueSpec)
+		if !ok {
+			continue
+		}
+		for _, n := range vs.Names {
+			if !ast.IsExported(n.Name) {
+				continue
+			}
+			doc := vs.Doc
+			if !gd.Lparen.IsValid() && doc == nil {
+				doc = gd.Doc
+			}
+			line := fset.Position(vs.Pos()).Line
+			requireNameDoc(t, rel, line, n.Name, doc)
+		}
+	}
+}
+
+// checkStructFieldDocs verifies that every field of each exported struct
+// type has a doc comment starting with the first field name. Embedded
+// fields take the embedded type name as the expected prefix.
+func checkStructFieldDocs(t *testing.T, fset *token.FileSet, rel string, gd *ast.GenDecl) {
+	t.Helper()
+
+	for _, spec := range gd.Specs {
+		ts, ok := spec.(*ast.TypeSpec)
+		if !ok || !ast.IsExported(ts.Name.Name) {
+			continue
+		}
+		st, ok := ts.Type.(*ast.StructType)
+		if !ok {
+			continue
+		}
+		for _, fld := range st.Fields.List {
+			line := fset.Position(fld.Pos()).Line
+			if len(fld.Names) == 0 {
+				checkEmbeddedFieldDoc(t, rel, line, fld)
+				continue
+			}
+			requireNameDoc(t, rel, line, fld.Names[0].Name, fld.Doc)
+		}
+	}
+}
+
+// checkEmbeddedFieldDoc verifies that an embedded struct field has a doc
+// comment starting with the embedded type name.
+func checkEmbeddedFieldDoc(t *testing.T, rel string, line int, fld *ast.Field) {
+	t.Helper()
+
+	name := embeddedFieldName(fld.Type)
+	if name == "" {
+		if fld.Doc == nil || len(fld.Doc.List) == 0 {
+			t.Errorf("%s:%d: embedded field has no doc comment", rel, line)
+		}
+		return
+	}
+	requireNameDoc(t, rel, line, name, fld.Doc)
+}
+
+// embeddedFieldName returns the display name of an embedded field's type
+// for doc comment prefix checks, unwrapping pointers, selector
+// expressions, and generic instantiations.
+func embeddedFieldName(expr ast.Expr) string {
+	switch t := expr.(type) {
+	case *ast.Ident:
+		return t.Name
+	case *ast.StarExpr:
+		return embeddedFieldName(t.X)
+	case *ast.SelectorExpr:
+		return t.Sel.Name
+	case *ast.IndexExpr:
+		return embeddedFieldName(t.X)
+	case *ast.IndexListExpr:
+		return embeddedFieldName(t.X)
+	}
+	return ""
 }
 
 // checkPackageDoc verifies that a doc.go file has a package doc comment
