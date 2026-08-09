@@ -11,6 +11,8 @@ import (
 // It serves as a baseline opponent and as a control in statistical
 // tests. The caller controls seeding for reproducible play.
 type Random struct {
+	// rng is the random number generator used for all move selection.
+	// The caller controls seeding for reproducible play.
 	rng *rand.Rand
 }
 

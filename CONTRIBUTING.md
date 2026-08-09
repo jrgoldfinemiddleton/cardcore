@@ -138,6 +138,31 @@ func processHand(h *Hand) int {
 This applies to test helpers too. A one-line comment stating intent is
 sufficient for small functions.
 
+Every exported type must have a doc comment beginning with its name. Every
+constant in a grouped const declaration must have its own doc comment —
+trailing end-of-line comments do not count — and every field of an
+exported struct must have a doc comment beginning with the field name:
+
+```go
+const (
+	// PhaseDeal indicates the round is waiting to deal cards.
+	PhaseDeal Phase = iota
+	// PhasePass indicates players are selecting cards to pass.
+	PhasePass
+)
+
+type Card struct {
+	// Rank is the card's rank.
+	Rank Rank
+	// Suit is the card's suit.
+	Suit Suit
+}
+```
+
+`convention_test.go` enforces these rules: `TestDocComments` covers
+functions and methods, and `TestConstAndFieldDocComments` covers exported
+constants and fields of exported structs.
+
 ### Doc links
 
 Use links in comments to help readers navigate to referenced resources. Square brackets are reserved for Go doc links; other targets use a `See` line.

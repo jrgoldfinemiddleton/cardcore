@@ -4,6 +4,7 @@ import "slices"
 
 // Hand represents a player's hand of cards.
 type Hand struct {
+	// Cards holds the cards the player is currently holding.
 	Cards []Card
 }
 

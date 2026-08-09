@@ -41,13 +41,33 @@ type sampleResult struct {
 // For algorithm details and design rationale, see
 // doc/games/hearts/ai-pimc-design.md.
 type PIMC struct {
-	sampleSeed   [2]uint64 // base material for per-(sample, candidate) rollout RNGs
-	tiebreakSeed [2]uint64 // base material for the aggregation tiebreak RNG
-	passSeed     [2]uint64 // base material for ChoosePass delegation RNGs
+	// sampleSeed is the base material for per-(sample, candidate)
+	// rollout RNGs, combined with the decision fingerprint and the
+	// sample and candidate indices via deriveRNG.
+	sampleSeed [2]uint64
 
-	samples        int
+	// tiebreakSeed is the base material for the aggregation tiebreak
+	// RNG, derived once per decision point to break final score ties
+	// uniformly at random.
+	tiebreakSeed [2]uint64
+
+	// passSeed is the base material for ChoosePass delegation RNGs,
+	// which seed the per-call Heuristic that makes pass-phase
+	// decisions.
+	passSeed [2]uint64
+
+	// samples is the number of determinized deals sampled per
+	// decision.
+	samples int
+
+	// rolloutFactory produces a fresh rollout policy per (sample,
+	// candidate) pair, seeded with the per-pair derived RNG so that
+	// stochastic policies do not share RNG state across candidates.
 	rolloutFactory func(*rand.Rand) hearts.Player
-	workers        int
+
+	// workers is the number of goroutines used to run samples in
+	// parallel.
+	workers int
 }
 
 // NewPIMC constructs a PIMC player.

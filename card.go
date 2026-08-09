@@ -10,10 +10,14 @@ type Suit uint8
 
 // Standard suits, in canonical order (Clubs, Diamonds, Hearts, Spades).
 const (
-	Clubs    Suit = iota // ♣
-	Diamonds             // ♦
-	Hearts               // ♥
-	Spades               // ♠
+	// Clubs is the clubs suit (♣).
+	Clubs Suit = iota
+	// Diamonds is the diamonds suit (♦).
+	Diamonds
+	// Hearts is the hearts suit (♥).
+	Hearts
+	// Spades is the spades suit (♠).
+	Spades
 )
 
 // NumSuits is the number of standard suits.
@@ -27,19 +31,32 @@ type Rank uint8
 
 // Standard ranks, in ascending order (Two through Ace).
 const (
-	Two   Rank = iota // 2
-	Three             // 3
-	Four              // 4
-	Five              // 5
-	Six               // 6
-	Seven             // 7
-	Eight             // 8
-	Nine              // 9
-	Ten               // 10
-	Jack              // J
-	Queen             // Q
-	King              // K
-	Ace               // A
+	// Two is the two rank (2).
+	Two Rank = iota
+	// Three is the three rank (3).
+	Three
+	// Four is the four rank (4).
+	Four
+	// Five is the five rank (5).
+	Five
+	// Six is the six rank (6).
+	Six
+	// Seven is the seven rank (7).
+	Seven
+	// Eight is the eight rank (8).
+	Eight
+	// Nine is the nine rank (9).
+	Nine
+	// Ten is the ten rank (10).
+	Ten
+	// Jack is the jack rank (J).
+	Jack
+	// Queen is the queen rank (Q).
+	Queen
+	// King is the king rank (K).
+	King
+	// Ace is the ace rank (A).
+	Ace
 )
 
 // NumRanks is the number of standard ranks.
@@ -51,7 +68,9 @@ var rankNames = [NumRanks]string{
 
 // Card represents a single playing card as a rank and suit.
 type Card struct {
+	// Rank is the card's rank.
 	Rank Rank
+	// Suit is the card's suit.
 	Suit Suit
 }
 
@@ -60,6 +79,8 @@ const DeckSize = NumSuits * NumRanks // 52
 
 // Deck is an ordered collection of cards.
 type Deck struct {
+	// Cards holds the cards in the deck; Deal removes cards from the top
+	// (the front of the slice).
 	Cards []Card
 }
 
