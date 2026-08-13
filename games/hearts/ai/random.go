@@ -22,7 +22,10 @@ func NewRandom(rng *rand.Rand) *Random {
 	return &Random{rng: rng}
 }
 
-// ChoosePass selects three cards at random from the hand at seat.
+// ChoosePass selects three cards at random from the hand at seat via
+// rng.Perm, giving every card an equal chance of being passed; Random
+// applies no pass strategy. It panics outside the pass phase or when
+// the hand holds fewer than PassCount cards.
 func (r *Random) ChoosePass(g *hearts.Game, seat hearts.Seat) [hearts.PassCount]cardcore.Card {
 	if g.Phase != hearts.PhasePass {
 		panic("ai: ChoosePass called outside pass phase")
@@ -39,7 +42,9 @@ func (r *Random) ChoosePass(g *hearts.Game, seat hearts.Seat) [hearts.PassCount]
 	return cards
 }
 
-// ChoosePlay selects a random legal card to play from the hand at seat.
+// ChoosePlay selects a uniformly random card from the legal moves at
+// seat via rng.IntN; Random applies no play strategy beyond legality.
+// It panics if LegalMoves reports an invalid state.
 func (r *Random) ChoosePlay(g *hearts.Game, seat hearts.Seat) cardcore.Card {
 	legal, err := g.LegalMoves(seat)
 	if err != nil {
