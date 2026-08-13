@@ -242,7 +242,10 @@ func TestRolloutPanicsOnIllegalCandidate(t *testing.T) {
 	rollout(g, seat, illegal, deal, firstLegalPolicy{})
 }
 
-// ChoosePlay returns the first legal move; deterministic for testing.
+// ChoosePlay returns the first card from LegalMoves so rollout output
+// is deterministic; it panics if LegalMoves errors, which rollout
+// prevents by calling ChoosePlay only during PhasePlay on the seat
+// whose turn it is.
 func (firstLegalPolicy) ChoosePlay(g *hearts.Game, seat hearts.Seat) cardcore.Card {
 	legal, err := g.LegalMoves(seat)
 	if err != nil {

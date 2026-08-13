@@ -30,7 +30,12 @@ func NewHeuristic(rng *rand.Rand) *Heuristic {
 	return &Heuristic{rng: rng}
 }
 
-// ChoosePass selects three cards to pass from the hand at seat.
+// ChoosePass scores every card in the hand at seat — with
+// shootPassScore when analysis favors shooting the moon and passScore
+// otherwise — then shuffles for random tie-breaking, sorts stably by
+// descending score, and returns the three highest-scored cards. It
+// panics outside the pass phase or when the hand holds fewer than
+// PassCount cards.
 func (h *Heuristic) ChoosePass(g *hearts.Game, seat hearts.Seat) [hearts.PassCount]cardcore.Card {
 	if g.Phase != hearts.PhasePass {
 		panic("ai: ChoosePass called outside pass phase")
@@ -70,7 +75,11 @@ func (h *Heuristic) ChoosePass(g *hearts.Game, seat hearts.Seat) [hearts.PassCou
 	return cards
 }
 
-// ChoosePlay selects a card to play from the hand at seat.
+// ChoosePlay returns the sole legal move immediately when only one
+// exists; otherwise it analyzes the game state and dispatches to
+// chooseLead, chooseFollow, or chooseVoid depending on whether seat
+// leads the trick, must follow the led suit, or is void in it. It
+// panics if LegalMoves reports an invalid state.
 func (h *Heuristic) ChoosePlay(g *hearts.Game, seat hearts.Seat) cardcore.Card {
 	legal, err := g.LegalMoves(seat)
 	if err != nil {
