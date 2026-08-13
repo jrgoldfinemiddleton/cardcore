@@ -9,12 +9,14 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### Added
+- `nakedret` linting: naked returns are now forbidden in every function regardless of length (`max-func-lines: 0`), so named result parameters serve purely as signature documentation and every return statement stays explicit
 - `TestConstAndFieldDocComments` convention test: every exported const in a group (including iota groups) and every field of an exported struct must have a doc comment starting with its name; doc comments added across `card.go`, `hand.go`, `games/hearts/`, and `games/hearts/ai/`, with the rules documented in CONTRIBUTING.md
 - Security scanning: `gosec` is enabled in the default lint config, and `govulncheck` runs locally and in CI via the new `make vuln` target
 - Per-package `AGENTS.md` guides (`games/hearts/`, `games/hearts/ai/`, `doc/decisions/`) are now committed to the repository; `convention_test.go` (`TestAgentsMDPaths`) verifies that paths referenced in nested `AGENTS.md` files exist
 - `doc/dependencies.md`: approved external dependency list (runtime: none — standard library only; dev tools pinned via the `go.mod` `tool` directive)
 
 ### Changed
+- Named result parameters adopted where positional results were ambiguous: the Hearts AI `currentWinner` helper now returns `(winnerSeat hearts.Seat, winnerRank cardcore.Rank)` — the names its callers already used — and the `firstNonTwoOfClubs` rollout-test helper returns `(card cardcore.Card, ok bool)`. All other multi-result signatures were reviewed and deliberately left positional: `Deck.Deal`, `Game.LegalMoves`, and `Game.Winner` return `(T, error)` where the function name already documents `T`, and the six `build*` bench fixtures return the distinct, self-describing pair `(*hearts.Game, hearts.Seat)`. Signature-only refactor with no behavior change
 - Minimum Go version bumped from 1.25.9 to 1.25.12 to stay current on standard-library security patches and align with cardcore-server's minimum; no vulnerabilities were reachable from this module at 1.25.9
 
 ## [0.7.0] - 2026-07-26

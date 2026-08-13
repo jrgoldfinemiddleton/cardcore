@@ -369,7 +369,7 @@ func currentTrickPoints(g *hearts.Game) int {
 
 // currentWinner returns the seat and rank currently winning the
 // in-progress trick. Only cards matching the led suit compete.
-func currentWinner(g *hearts.Game) (hearts.Seat, cardcore.Rank) {
+func currentWinner(g *hearts.Game) (winnerSeat hearts.Seat, winnerRank cardcore.Rank) {
 	ledSuit := g.Trick.LedSuit()
 	best := g.Trick.Cards[g.Trick.Leader].Rank
 	winner := g.Trick.Leader

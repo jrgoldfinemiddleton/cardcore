@@ -352,7 +352,7 @@ func swappedDeal(t *testing.T, g *hearts.Game, seat hearts.Seat) sampledDeal {
 
 // firstNonTwoOfClubs returns the first card in cards that is not 2♣.
 // Returns (zero, false) if every card is 2♣ (or cards is empty).
-func firstNonTwoOfClubs(cards []cardcore.Card) (cardcore.Card, bool) {
+func firstNonTwoOfClubs(cards []cardcore.Card) (card cardcore.Card, ok bool) {
 	for _, c := range cards {
 		if c != twoOfClubs {
 			return c, true
