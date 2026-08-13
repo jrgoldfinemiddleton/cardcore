@@ -10,6 +10,7 @@ linters:
     - gosec        # security static analysis
     - lll          # line length
     - misspell     # common English misspellings
+    - nakedret     # no naked returns, ever; named results are documentation, not a license for bare return
     - nilerr       # returning nil after seeing a non-nil error
     - nolintlint   # police any //nolint usage (convention_test.go bans them entirely; this is defense in depth)
     - prealloc     # slices that should be preallocated
@@ -30,6 +31,8 @@ linters:
     lll:
       line-length: 100
       tab-width: 4
+    nakedret:
+      max-func-lines: 0  # forbid naked returns in every function, however short
 
   exclusions:
     generated: lax
