@@ -9,6 +9,7 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### Added
+- `scripts/release.sh` is now the only supported way to tag a release: it validates strict semver and the pre-1.0 policy, verifies the tree is on a clean, current `main`, requires a dated, non-empty changelog section with an empty `[Unreleased]` (using the same extraction as the release workflow), runs `make check`, and only then creates an annotated tag (`git tag -a`) and pushes it. `doc/releasing.md` documents the full maintainer release process, including post-release verification and recovery. All future tags are annotated; v0.1.0–v0.6.0 were lightweight
 - `nakedret` linting: naked returns are now forbidden in every function regardless of length (`max-func-lines: 0`), so named result parameters serve purely as signature documentation and every return statement stays explicit
 - `TestConstAndFieldDocComments` convention test: every exported const in a group (including iota groups) and every field of an exported struct must have a doc comment starting with its name; doc comments added across `card.go`, `hand.go`, `games/hearts/`, and `games/hearts/ai/`, with the rules documented in CONTRIBUTING.md
 - Security scanning: `gosec` is enabled in the default lint config, and `govulncheck` runs locally and in CI via the new `make vuln` target
@@ -16,6 +17,7 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 - `doc/dependencies.md`: approved external dependency list (runtime: none — standard library only; dev tools pinned via the `go.mod` `tool` directive)
 
 ### Changed
+- Minimum Go version bumped from 1.25.12 to 1.26.6 to align with cardcore-server's minimum; no language or standard-library changes affect this module
 - `Player` interface-method doc comments brought to the "behavior + type-specific why" standard: `Random.ChoosePass`/`ChoosePlay` and `Heuristic.ChoosePass`/`ChoosePlay` now describe each type's selection mechanism, tie-breaking, and panic preconditions, and the rollout-test `firstLegalPolicy.ChoosePlay` states its determinism rationale — replacing thin restatements of the `Player` interface contract. `PIMC`'s methods and `firstLegalPolicy.ChoosePass` already met the standard and are unchanged
 - Named result parameters adopted where positional results were ambiguous: the Hearts AI `currentWinner` helper now returns `(winnerSeat hearts.Seat, winnerRank cardcore.Rank)` — the names its callers already used — and the `firstNonTwoOfClubs` rollout-test helper returns `(card cardcore.Card, ok bool)`. All other multi-result signatures were reviewed and deliberately left positional: `Deck.Deal`, `Game.LegalMoves`, and `Game.Winner` return `(T, error)` where the function name already documents `T`, and the six `build*` bench fixtures return the distinct, self-describing pair `(*hearts.Game, hearts.Seat)`. Signature-only refactor with no behavior change
 - Minimum Go version bumped from 1.25.9 to 1.25.12 to stay current on standard-library security patches and align with cardcore-server's minimum; no vulnerabilities were reachable from this module at 1.25.9
