@@ -1,6 +1,6 @@
 module github.com/jrgoldfinemiddleton/cardcore
 
-go 1.25.12
+go 1.26.6
 
 tool (
 	github.com/golangci/golangci-lint/v2/cmd/golangci-lint

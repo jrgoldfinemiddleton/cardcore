@@ -24,13 +24,15 @@ cardcore/
 │   ├── architecture.md  # System architecture
 │   ├── decisions/       # ADRs — read before architectural changes
 │   ├── dependencies.md  # Approved external dependencies
+│   ├── releasing.md     # Maintainer release process
 │   └── games/
 │       └── hearts/
 │           ├── rules.md # Hearts rules specification (RDD)
 │           └── ai-pimc-design.md # PIMC algorithm design
 ├── scripts/
 │   ├── sync-labels.sh   # Source of truth for the repository label set
-│   └── apply-labels.sh   # Auto-apply labels from changed paths
+│   ├── apply-labels.sh  # Auto-apply labels from changed paths
+│   └── release.sh       # Release entry point — the only supported way to tag
 ├── Makefile             # Build/test/lint targets
 ├── .golangci.yml        # Linter config
 └── .golangci-extra.yml  # Optional stricter lint config
@@ -46,6 +48,7 @@ cardcore/
 | Change Hearts rules | `games/hearts/hearts.go`, `doc/games/hearts/rules.md` | Update rules doc before implementation |
 | Architectural change | `doc/decisions/` | Read ADR-001; write new ADR if needed |
 | Build/CI | `Makefile`, `.github/workflows/` | `make check` is the single gate |
+| Cut a release | `scripts/release.sh`, `doc/releasing.md` | The script is the only supported way to tag a release; never tag by hand |
 
 ## CODE MAP
 
@@ -130,7 +133,7 @@ make apply-labels PR=<number>
 
 - `make check` is the only required gate; CI (`pr.yml`, `main.yml`) runs it.
 - PR titles are validated against Conventional Commits by `pr.yml`; labels are auto-computed by `scripts/apply-labels.sh`.
-- Release tags must be on `main`, valid semver, and have a matching `CHANGELOG.md` entry.
+- Release tags are created exclusively by `scripts/release.sh` — annotated, on `main`, valid semver, with a matching `CHANGELOG.md` entry; see `doc/releasing.md`.
 
 ### Maintainer Runbook
 If `doc/maintainer-runbook.md` exists locally, read it for release procedures, PR review workflow, repository settings reference, and recovery steps. Proactively remind the maintainer of relevant runbook procedures during release, review, and recovery scenarios.

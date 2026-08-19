@@ -31,7 +31,7 @@ cardcore/
 
 ## Requirements
 
-Go 1.25.12+ (uses `sync.WaitGroup.Go`; dev tools managed via the `tool` directive)
+Go 1.26.6+ (dev tools managed via the `tool` directive)
 
 ## Getting Started
 
