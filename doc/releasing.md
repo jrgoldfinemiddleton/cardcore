@@ -17,7 +17,10 @@ in sync with `scripts/release.sh` and `.github/workflows/release.yml`.
 - **Fix forward.** If a release has a problem, land the fix on `main` and
   tag the next patch version. Do not attempt to repair a published release.
 - **Releases are never cut by hand.** `scripts/release.sh` is the single
-  entry point; it runs every check before creating anything.
+  entry point for tagging; it runs every check before creating anything.
+  `scripts/prepare-release.sh` is the single entry point for the
+  changelog-preparation PR; it guarantees the heading format and PR body the
+  release tooling depends on.
 
 ## Release artifacts
 
@@ -31,13 +34,17 @@ GitHub Release whose notes are the hand-curated `## [X.Y.Z]` section of
 ### 1. Prepare the changelog (its own PR)
 
 1. Ensure everything for the release is merged to `main`.
-2. In `CHANGELOG.md`, create a `## [X.Y.Z] - YYYY-MM-DD` heading (today's
-   date) directly below `## [Unreleased]`, move all `[Unreleased]` items
-   into the new section, and leave `[Unreleased]` empty.
-3. Open a PR titled `docs(changelog): prepare vX.Y.Z release` and merge it.
-4. Optional: run the benchmark spot-check against the previous tag
-   (`make bench` + `go tool benchstat`) and note any >2x regressions in the
-   release notes.
+2. Optional: run the benchmark spot-check against the previous tag
+   (`make bench` + `go tool benchstat`); if any >2x regressions show up, note
+   them in the `[Unreleased]` section before preparing.
+3. Run `scripts/prepare-release.sh vX.Y.Z` (`--dry-run` rehearses without
+   creating anything). The script verifies the repository state, moves the
+   `[Unreleased]` items into a dated `## [X.Y.Z] - YYYY-MM-DD` section
+   (leaving `[Unreleased]` empty), and opens the PR titled
+   `docs(changelog): prepare vX.Y.Z release`. Never hand-edit the changelog
+   for release prep or open this PR manually.
+4. Merge the PR. Prepare and tag on the same day: `release.sh` warns when
+   the changelog heading date is not the tag date.
 
 ### 2. Cut the release
 

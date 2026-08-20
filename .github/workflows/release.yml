@@ -39,10 +39,14 @@ jobs:
         run: make check
 
       - name: Extract changelog section to file
+        # The notes file lives outside the checkout for consistency with
+        # cardcore-server's workflow, where an in-tree file breaks GoReleaser's
+        # clean-git-state check.
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          sed -n "/^## \[${VERSION}\]/,/^## \[/{/^## \[${VERSION}\]/d;/^## \[/d;p;}" CHANGELOG.md > release-notes.md
-          if [ -z "$(tr -d '[:space:]' < release-notes.md)" ]; then
+          NOTES_FILE="${{ runner.temp }}/release-notes.md"
+          sed -n "/^## \[${VERSION}\]/,/^## \[/{/^## \[${VERSION}\]/d;/^## \[/d;p;}" CHANGELOG.md > "$NOTES_FILE"
+          if [ -z "$(tr -d '[:space:]' < "$NOTES_FILE")" ]; then
             echo "::error::No changelog entry found for version ${VERSION}."
             echo "Add a '## [${VERSION}]' section to CHANGELOG.md before tagging."
             exit 1
@@ -54,4 +58,4 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" \
             --title "$GITHUB_REF_NAME" \
-            --notes-file release-notes.md
+            --notes-file "${{ runner.temp }}/release-notes.md"
