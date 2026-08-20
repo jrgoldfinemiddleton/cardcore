@@ -8,6 +8,8 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-08-20
+
 ### Added
 - `scripts/prepare-release.sh` is now the only supported way to prepare a release's changelog section and its PR: it validates the repository, moves `[Unreleased]` into a dated `[X.Y.Z]` section (verified with the same extraction the release tooling uses), and opens the `docs(changelog)` PR with the fixed title and body. `doc/releasing.md` documents the script-based preparation flow. The release workflow also writes its extracted notes to `runner.temp` instead of the checkout, matching cardcore-server's workflow
 - `scripts/release.sh` is now the only supported way to tag a release: it validates strict semver and the pre-1.0 policy, verifies the tree is on a clean, current `main`, requires a dated, non-empty changelog section with an empty `[Unreleased]` (using the same extraction as the release workflow), runs `make check`, and only then creates an annotated tag (`git tag -a`) and pushes it. `doc/releasing.md` documents the full maintainer release process, including post-release verification and recovery. All future tags are annotated; v0.1.0–v0.6.0 were lightweight
