@@ -16,6 +16,7 @@ set -euo pipefail
 # Single blue family so they visually cluster in label dropdowns.
 gh label create "scope:engine" --color "1d76db" --description "Root cardcore package (engine primitives)" --force
 gh label create "scope:hearts" --color "1d76db" --description "Hearts game logic (games/hearts/, excluding ai/)" --force
+gh label create "scope:tienlen" --color "1d76db" --description "Tiến Lên game logic (games/tienlen/, excluding ai/); covers Killer" --force
 gh label create "scope:ai" --color "1d76db" --description "Game AI implementations (games/<game>/ai/)" --force
 gh label create "scope:docs" --color "1d76db" --description "Documentation (doc/, README, AGENTS, CHANGELOG, CONTRIBUTING, ADRs)" --force
 gh label create "scope:ci" --color "1d76db" --description "Build, test, lint, workflows (Makefile, .github/, .golangci.yml, convention_test.go)" --force

@@ -25,6 +25,7 @@ fi
 managed=(
 	"scope:engine"
 	"scope:hearts"
+	"scope:tienlen"
 	"scope:ai"
 	"scope:docs"
 	"scope:ci"
@@ -66,10 +67,15 @@ while IFS= read -r f; do
 		games/hearts/ai/*)
 			add_want "scope:ai"
 			add_want "scope:hearts" ;;
+		games/tienlen/ai/*)
+			add_want "scope:ai"
+			add_want "scope:tienlen" ;;
 		games/*/ai/*)
 			add_want "scope:ai" ;;
 		games/hearts/*)
 			add_want "scope:hearts" ;;
+		games/tienlen/*)
+			add_want "scope:tienlen" ;;
 		*.md)
 			# Top-level *.md (README, CHANGELOG, CONTRIBUTING, AGENTS, etc.).
 			add_want "scope:docs" ;;
