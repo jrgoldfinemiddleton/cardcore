@@ -8,6 +8,9 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### Added
+- Tiến Lên package foundation (`games/tienlen/`): combination classification and comparison (singles, pairs, triples, four-of-a-kind, straights, pair sequences), the variant-gated chop relation with the Killer chop table wired (ADR-010), game-local rank/suit ordering (3 low … 2 high, ♠<♣<♦<♥), and `ErrWrongPhase`/`ErrOutOfTurn`/`ErrIllegalMove` sentinels
+
 ## [0.7.1] - 2026-08-20
 
 ### Added
