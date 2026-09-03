@@ -90,7 +90,7 @@ type Trick struct {
 type Game struct {
 	// Phase is the current phase of the round.
 	Phase Phase
-	// Round is the zero-indexed round number.
+	// Round is the 0-indexed round number.
 	Round int
 	// PassDir is the pass direction for the current round.
 	PassDir PassDirection
@@ -104,7 +104,7 @@ type Game struct {
 	Trick Trick
 	// TrickHistory holds the completed tricks this round, in play order.
 	TrickHistory []Trick
-	// TrickNum is the zero-indexed trick number within the round.
+	// TrickNum is the 0-indexed trick number within the round.
 	TrickNum int
 	// Turn is the seat whose turn it is to play.
 	Turn Seat

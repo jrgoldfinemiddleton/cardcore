@@ -8,15 +8,6 @@ import (
 	"github.com/jrgoldfinemiddleton/cardcore"
 )
 
-// Variant identifies a Tiến Lên ruleset (ADR-010).
-type Variant uint8
-
-// Tiến Lên variants.
-const (
-	// Killer is the San Diego "Killer" ruleset.
-	Killer Variant = iota
-)
-
 // ComboKind identifies the type of a Tiến Lên combination.
 type ComboKind uint8
 

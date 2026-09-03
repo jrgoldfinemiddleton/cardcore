@@ -28,9 +28,16 @@
 //
 // Rulesets are selected with the Variant type. The San Diego "Killer"
 // ruleset ships first; the canonical Southern (Standard) ruleset
-// follows. This package currently provides combination classification,
-// comparison, and the Killer chop table; the game state machine is a
-// later step.
+// follows.
+//
+// # Playing a match
+//
+// Construct a game with New and drive it by phase: Deal, optional
+// DeclareAutoWin calls while the declaration window is open, StartPlay,
+// then Play and ResolvePile until the hand reaches PhaseScore. EndHand
+// starts the next hand or ends the match. Every accepted action is
+// recorded in the game's ordered event log (see Events), from which
+// settlement is computed.
 //
 // See ADR-006 (doc/decisions/006-rules-driven-development.md) and
 // doc/games/tienlen/rules.md.
