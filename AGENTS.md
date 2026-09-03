@@ -69,6 +69,7 @@ cardcore/
 - Run `make check` before considering any change complete.
 - Add or update tests whenever you add or change code.
 - Write Go doc comments on all exported symbols (and unexported functions too — enforced by `convention_test.go`).
+- Keep comments free of workflow jargon — humans read them — and never reference gitignored or local-only files  from committed files.
 - Keep the root package free of game-specific logic.
 - Place game-specific logic in subpackages under `games/`.
 - Read the relevant ADRs in `doc/decisions/` before making architectural decisions.
