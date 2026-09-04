@@ -3,7 +3,7 @@
 // Hearts is a trick-taking card game for four players. The goal is to
 // avoid taking penalty points: each heart card is worth one point, and the
 // queen of spades is worth thirteen. The game ends when any player
-// reaches 100 points, and the player with the lowest score wins.
+// reaches 100 points, and the players tied for the lowest score share the win.
 //
 // # Passing
 //

@@ -535,13 +535,13 @@ func TestEndRoundWrongPhase(t *testing.T) {
 	}
 }
 
-// TestWinnerWrongPhase verifies that Winner returns an error before PhaseEnd.
-func TestWinnerWrongPhase(t *testing.T) {
+// TestWinnersWrongPhase verifies that Winners returns an error before PhaseEnd.
+func TestWinnersWrongPhase(t *testing.T) {
 	rng := rand.New(rand.NewPCG(1, 2))
 	g := New(rng)
 	g.Phase = PhasePlay
-	if _, err := g.Winner(); err == nil {
-		t.Error("Winner before game over returned nil error, want non-nil")
+	if _, err := g.Winners(); err == nil {
+		t.Error("Winners before game over returned nil error, want non-nil")
 	}
 }
 
@@ -813,12 +813,80 @@ func TestGameEnd(t *testing.T) {
 		t.Fatalf("phase = %d, want PhaseEnd", g.Phase)
 	}
 
-	winner, err := g.Winner()
+	winner, err := g.Winners()
 	if err != nil {
-		t.Fatalf("Winner error: %v", err)
+		t.Fatalf("Winners error: %v", err)
 	}
-	if winner != East {
-		t.Errorf("winner = %d, want East (%d)", winner, East)
+	if len(winner) != 1 || winner[0] != East {
+		t.Errorf("winner = %v, want [East (%d)]", winner, East)
+	}
+}
+
+// TestWinnersTiedGame verifies that Winners returns every seat tied for the
+// lowest score when two players finish level.
+func TestWinnersTiedGame(t *testing.T) {
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
+	g.Scores = [NumPlayers]int{91, 49, 18, 24}
+
+	g.RoundPts = [NumPlayers]int{13, 3, 8, 2}
+	g.Phase = PhasePlay
+	g.TrickNum = HandSize
+	g.scoreRound()
+
+	if g.Phase != PhaseScore {
+		t.Fatalf("phase = %d, want PhaseScore", g.Phase)
+	}
+
+	if err := g.EndRound(); err != nil {
+		t.Fatalf("EndRound error: %v", err)
+	}
+
+	if g.Phase != PhaseEnd {
+		t.Fatalf("phase = %d, want PhaseEnd", g.Phase)
+	}
+
+	winners, err := g.Winners()
+	if err != nil {
+		t.Fatalf("Winners error: %v", err)
+	}
+	want := []Seat{North, East}
+	if !reflect.DeepEqual(winners, want) {
+		t.Errorf("winners = %v, want %v", winners, want)
+	}
+}
+
+// TestWinnersThreeWayTiedGame verifies that Winners returns every seat tied
+// for the lowest score when three players finish level.
+func TestWinnersThreeWayTiedGame(t *testing.T) {
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := New(rng)
+	g.Scores = [NumPlayers]int{91, 23, 18, 24}
+
+	g.RoundPts = [NumPlayers]int{13, 3, 8, 2}
+	g.Phase = PhasePlay
+	g.TrickNum = HandSize
+	g.scoreRound()
+
+	if g.Phase != PhaseScore {
+		t.Fatalf("phase = %d, want PhaseScore", g.Phase)
+	}
+
+	if err := g.EndRound(); err != nil {
+		t.Fatalf("EndRound error: %v", err)
+	}
+
+	if g.Phase != PhaseEnd {
+		t.Fatalf("phase = %d, want PhaseEnd", g.Phase)
+	}
+
+	winners, err := g.Winners()
+	if err != nil {
+		t.Fatalf("Winners error: %v", err)
+	}
+	want := []Seat{West, North, East}
+	if !reflect.DeepEqual(winners, want) {
+		t.Errorf("winners = %v, want %v", winners, want)
 	}
 }
 
@@ -1290,7 +1358,7 @@ func TestFullGameIntegration(t *testing.T) {
 			t.Fatalf("game %d: no player reached %d, max score = %d", game, MaxScore, maxScore)
 		}
 
-		verifyWinner(t, g, game)
+		verifyWinners(t, g, game)
 	}
 }
 
@@ -1522,7 +1590,7 @@ func TestShootTheMoonIntegration(t *testing.T) {
 			t.Fatalf("game %d: phase = %d after moon round, want PhaseEnd", game, g.Phase)
 		}
 
-		verifyWinner(t, g, game)
+		verifyWinners(t, g, game)
 	}
 }
 
@@ -1531,18 +1599,28 @@ func c(rank cardcore.Rank, suit cardcore.Suit) cardcore.Card {
 	return cardcore.Card{Rank: rank, Suit: suit}
 }
 
-// verifyWinner checks that the declared winner has the lowest score.
-func verifyWinner(t *testing.T, g *Game, game int) {
+// verifyWinners checks that Winners returns a non-empty set of seats that
+// are all tied for the lowest score.
+func verifyWinners(t *testing.T, g *Game, game int) {
 	t.Helper()
 
-	winner, err := g.Winner()
+	winners, err := g.Winners()
 	if err != nil {
-		t.Fatalf("game %d: Winner error: %v", game, err)
+		t.Fatalf("game %d: Winners error: %v", game, err)
 	}
-	for i := Seat(0); i < NumPlayers; i++ {
-		if g.Scores[i] < g.Scores[winner] {
-			t.Errorf("game %d: player %d has score %d, lower than winner %d with %d",
-				game, i, g.Scores[i], winner, g.Scores[winner])
+	if len(winners) == 0 {
+		t.Errorf("game %d: winners = %v, want at least one winner", game, winners)
+	}
+	for _, w := range winners {
+		if g.Scores[w] != g.Scores[winners[0]] {
+			t.Errorf("game %d: winner %d score = %d, want %d (all winners tied)",
+				game, w, g.Scores[w], g.Scores[winners[0]])
+		}
+		for s := Seat(0); s < NumPlayers; s++ {
+			if g.Scores[w] > g.Scores[s] {
+				t.Errorf("game %d: winner %d score = %d, want <= seat %d score %d",
+					game, w, g.Scores[w], s, g.Scores[s])
+			}
 		}
 	}
 }
