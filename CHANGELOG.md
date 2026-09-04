@@ -8,12 +8,14 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-03
+
 ### Added
 - Tiến Lên Killer state machine (`games/tienlen/`): the match lifecycle (batch deal, automatic-win declaration window, climb/pass with lockout and self-beat, the finisher rule, places) driven by `Deal`/`DeclareAutoWin`/`StartPlay`/`Play`/`ResolvePile`/`EndHand` with seeded determinism; an append-only event log (`Events()`) recording every accepted action for the later settlement ledger; exhaustive legal-move enumeration (`LegalMoves`, `CanPass`) in a documented stable order; and the `Player` interface (`ChoosePlay`, `ChooseDeclareAutoWin`)
 - Tiến Lên package foundation (`games/tienlen/`): combination classification and comparison (singles, pairs, triples, four-of-a-kind, straights, pair sequences), the variant-gated chop relation with the Killer chop table wired (ADR-010), game-local rank/suit ordering (3 low … 2 high, ♠<♣<♦<♥), and `ErrWrongPhase`/`ErrOutOfTurn`/`ErrIllegalMove` sentinels
 
 ### Changed
-- Breaking: renamed `Game.Winner` to `Game.Winners` returning `([]Seat, error)` — supersedes the positional-return decision (v0.7.x) because the old single-Seat return hid tied-endgames (draws).
+- Breaking (Hearts): renamed `Game.Winner` to `Game.Winners` returning `([]Seat, error)` — supersedes the positional-return decision (v0.7.x) because the old single-Seat return hid tied-endgames (draws).
 
 ## [0.7.1] - 2026-08-20
 
