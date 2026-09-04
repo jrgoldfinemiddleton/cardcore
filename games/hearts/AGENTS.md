@@ -21,7 +21,7 @@ games/hearts/
 |------|------|-------|
 | Change Hearts rules | `hearts.go` | Update `doc/games/hearts/rules.md` first |
 | Change passing logic | `hearts.go` | `SetPass` / pass phase validation |
-| Change trick resolution | `hearts.go` | `PlayCard`, `Winner`, `EndRound` |
+| Change trick resolution | `hearts.go` | `PlayCard`, `Winners`, `EndRound` |
 | Add legal-play constraints | `hearts.go` | Hearts broken, lead suit, point-card first trick |
 | Change player contract | `player.go` | `ChoosePass` and `ChoosePlay` signatures |
 | Add game lifecycle tests | `hearts_test.go` | Point conservation, hand depletion, phase transitions |

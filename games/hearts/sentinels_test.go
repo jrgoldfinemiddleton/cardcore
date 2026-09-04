@@ -237,12 +237,12 @@ func TestSentinelsEndRoundWrongPhase(t *testing.T) {
 	}
 }
 
-// TestSentinelsWinnerWrongPhase verifies that Winner wraps ErrWrongPhase
+// TestSentinelsWinnersWrongPhase verifies that Winners wraps ErrWrongPhase
 // when called before the game has ended.
-func TestSentinelsWinnerWrongPhase(t *testing.T) {
+func TestSentinelsWinnersWrongPhase(t *testing.T) {
 	rng := rand.New(rand.NewPCG(1, 2))
 	g := newHoldGame(t, rng)
-	_, err := g.Winner()
+	_, err := g.Winners()
 	if !errors.Is(err, ErrWrongPhase) {
 		t.Fatalf("errors.Is(err, ErrWrongPhase) = false, got %v", err)
 	}

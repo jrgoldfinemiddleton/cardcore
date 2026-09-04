@@ -50,7 +50,7 @@ details.
 
 Hearts is a trick-taking card game for four players. The goal is to
 avoid taking penalty points. The game ends when any player reaches or
-exceeds 100 points, and the player with the lowest score wins.
+exceeds 100 points, and the players tied for the lowest score share the win.
 
 ## Players and Cards
 
@@ -126,8 +126,8 @@ other player receives 26 penalty points.
 A round is always played to completion, even if a player's cumulative
 score would reach or exceed 100 points before the end of the round.
 After scoring, if any player's
-cumulative score has reached or exceeded 100 points, the game ends. The
-player with the lowest score wins.
+cumulative score has reached or exceeded 100 points, the game ends. All
+players tied for the lowest score share the win (a draw).
 
 ## Variants
 

@@ -318,18 +318,24 @@ func (g *Game) EndRound() error {
 	return nil
 }
 
-// Winner returns the seat with the lowest score. Only valid when Phase == PhaseEnd.
-func (g *Game) Winner() (Seat, error) {
+// Winners returns the seats tied for the lowest score. Only valid when Phase == PhaseEnd.
+func (g *Game) Winners() ([]Seat, error) {
 	if g.Phase != PhaseEnd {
-		return 0, fmt.Errorf("game not over: %w", ErrWrongPhase)
+		return nil, fmt.Errorf("game not over: %w", ErrWrongPhase)
 	}
-	best := Seat(0)
+	min := g.Scores[0]
 	for i := Seat(1); i < NumPlayers; i++ {
-		if g.Scores[i] < g.Scores[best] {
-			best = i
+		if g.Scores[i] < min {
+			min = g.Scores[i]
 		}
 	}
-	return best, nil
+	var winners []Seat
+	for i := Seat(0); i < NumPlayers; i++ {
+		if g.Scores[i] == min {
+			winners = append(winners, i)
+		}
+	}
+	return winners, nil
 }
 
 // ResolveTrick scores the completed trick and advances the game to the next

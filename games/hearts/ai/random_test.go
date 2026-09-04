@@ -179,14 +179,23 @@ func TestFullGameIntegration(t *testing.T) {
 			t.Fatalf("game %d: did not end within %d rounds", game, maxRounds)
 		}
 
-		winner, err := g.Winner()
+		winners, err := g.Winners()
 		if err != nil {
-			t.Fatalf("game %d: Winner error: %v", game, err)
+			t.Fatalf("game %d: Winners error: %v", game, err)
 		}
-		for i := hearts.Seat(0); i < hearts.NumPlayers; i++ {
-			if g.Scores[i] < g.Scores[winner] {
-				t.Errorf("game %d: player %d has score %d, lower than winner %d with %d",
-					game, i, g.Scores[i], winner, g.Scores[winner])
+		if len(winners) == 0 {
+			t.Errorf("game %d: winners = %v, want at least one winner", game, winners)
+		}
+		for _, w := range winners {
+			if g.Scores[w] != g.Scores[winners[0]] {
+				t.Errorf("game %d: winner %d score = %d, want %d (all winners tied)",
+					game, w, g.Scores[w], g.Scores[winners[0]])
+			}
+			for s := hearts.Seat(0); s < hearts.NumPlayers; s++ {
+				if g.Scores[w] > g.Scores[s] {
+					t.Errorf("game %d: winner %d score = %d, want <= seat %d score %d",
+						game, w, g.Scores[w], s, g.Scores[s])
+				}
 			}
 		}
 	}
