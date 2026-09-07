@@ -8,6 +8,9 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### Added
+- Tiến Lên settlement ledger (`games/tienlen/`): each completed hand folds its event log into a zero-sum, append-only transfer record and cumulative match balances — Killer chop chains (escalate-and-cancel within a pile, payment-free finisher protection, self-chop freeze) and the last-place payment — exposed read-only via `Transfers()` and `Balances()`, with `Winner()` reporting the match outcome after the final hand (tied balances draw)
+
 ## [0.8.0] - 2026-09-03
 
 ### Added

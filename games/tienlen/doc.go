@@ -34,10 +34,12 @@
 //
 // Construct a game with New and drive it by phase: Deal, optional
 // DeclareAutoWin calls while the declaration window is open, StartPlay,
-// then Play and ResolvePile until the hand reaches PhaseScore. EndHand
-// starts the next hand or ends the match. Every accepted action is
-// recorded in the game's ordered event log (see Events), from which
-// settlement is computed.
+// then Play and ResolvePile until the hand reaches PhaseScore, where the
+// hand settles: its events fold into transfers and the cumulative
+// balances (see Transfers and Balances). EndHand starts the next hand or
+// ends the match, and Winner reports the outcome. Every accepted action
+// is recorded in the game's ordered event log (see Events); folding the
+// log reproduces the settlement exactly.
 //
 // See ADR-006 (doc/decisions/006-rules-driven-development.md) and
 // doc/games/tienlen/rules.md.
