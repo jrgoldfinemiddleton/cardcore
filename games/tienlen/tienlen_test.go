@@ -42,6 +42,10 @@ type gameSummary struct {
 	pending bool
 	// windowOpen reports whether the declaration window is open.
 	windowOpen bool
+	// balances is the printed per-seat match balances.
+	balances string
+	// transfers is the transfer record length.
+	transfers int
 }
 
 // TestNewPanicsOnNilRNG verifies that New panics without a random source.
@@ -412,6 +416,8 @@ func TestClone(t *testing.T) {
 	clone.Places = append(clone.Places, 1)
 	clone.CardsPlayed[0] = 99
 	clone.events = append(clone.events, HandStartedEvent{Hand: 9})
+	clone.balances[0] = 99
+	clone.transfers = append(clone.transfers, Transfer{Hand: 9, From: 0, To: 1, Amount: 1})
 
 	if !g.Hands[1].Contains(c(rFour, sSpades)) || !g.Hands[1].Contains(c(rEight, sHearts)) {
 		t.Error("original hand changed through clone")
@@ -424,6 +430,9 @@ func TestClone(t *testing.T) {
 	}
 	if len(g.Places) != 0 || g.CardsPlayed[0] != 1 || len(g.Events()) != 2 {
 		t.Error("original places, counts, or events changed through clone")
+	}
+	if g.Balances()[0] != 0 || len(g.Transfers()) != 0 {
+		t.Error("original ledger changed through clone")
 	}
 }
 
@@ -1745,7 +1754,7 @@ func assertTurnValid(t *testing.T, g *Game) {
 // summarizeGame captures the observable state of a game for equality
 // checks around rejected actions.
 func summarizeGame(g *Game) gameSummary {
-	var hands, top, locked, cardsPlayed strings.Builder
+	var hands, top, locked, cardsPlayed, balances strings.Builder
 	for _, h := range g.Hands {
 		if h == nil {
 			continue
@@ -1755,6 +1764,7 @@ func summarizeGame(g *Game) gameSummary {
 	fmt.Fprintf(&top, "%v", g.Pile.Top.Cards)
 	fmt.Fprintf(&locked, "%v", g.Pile.Locked)
 	fmt.Fprintf(&cardsPlayed, "%v", g.CardsPlayed)
+	fmt.Fprintf(&balances, "%v", g.balances)
 	return gameSummary{
 		phase:       g.Phase,
 		turn:        g.Turn,
@@ -1770,6 +1780,8 @@ func summarizeGame(g *Game) gameSummary {
 		selfBeat:    g.SelfBeatContinuation,
 		pending:     g.PilePendingResolution,
 		windowOpen:  g.AutoWinWindowOpen,
+		balances:    balances.String(),
+		transfers:   len(g.transfers),
 	}
 }
 
@@ -1794,6 +1806,24 @@ func eventsOfType[T Event](events []Event) []T {
 // within a generous action cap.
 func driveHand(t *testing.T, g *Game, declare bool) {
 	t.Helper()
+	balances := g.Balances()
+	transfers := g.Transfers()
+	// The ledger must not move while the hand is in play: settlement
+	// happens only at the transition into PhaseScore.
+	assertLedgerFrozen := func() {
+		t.Helper()
+		if g.Phase != PhasePlay {
+			return
+		}
+		if got := g.Balances(); !slices.Equal(got, balances) {
+			t.Errorf("got balances %v during play, want %v (settlement waits for PhaseScore)",
+				got, balances)
+		}
+		if got := g.Transfers(); !slices.Equal(got, transfers) {
+			t.Errorf("got transfers %v during play, want %v (settlement waits for PhaseScore)",
+				got, transfers)
+		}
+	}
 	for actions := 0; ; actions++ {
 		if actions > 1000 {
 			t.Fatal("hand did not end within 1000 actions")
@@ -1820,6 +1850,7 @@ func driveHand(t *testing.T, g *Game, declare bool) {
 			if err := g.StartPlay(); err != nil {
 				t.Fatalf("StartPlay: %v", err)
 			}
+			assertLedgerFrozen()
 			assertFullCardIntegrity(t, g)
 			continue
 		}
@@ -1827,6 +1858,7 @@ func driveHand(t *testing.T, g *Game, declare bool) {
 			if err := g.ResolvePile(); err != nil {
 				t.Fatalf("ResolvePile: %v", err)
 			}
+			assertLedgerFrozen()
 			assertFullCardIntegrity(t, g)
 			continue
 		}
@@ -1842,9 +1874,11 @@ func driveHand(t *testing.T, g *Game, declare bool) {
 					"(canPass=%v, err=%v)", seat, canPass, err)
 			}
 			mustPass(t, g, seat)
+			assertLedgerFrozen()
 			continue
 		}
 		mustPlay(t, g, seat, moves[0].Cards...)
+		assertLedgerFrozen()
 		assertFullCardIntegrity(t, g)
 	}
 }

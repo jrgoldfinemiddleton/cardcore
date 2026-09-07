@@ -220,6 +220,14 @@ type Game struct {
 	// does not (the play opens a new pile and everyone is unlocked).
 	SelfBeatContinuation bool
 
+	// balances holds each seat's cumulative match balance in the
+	// caller's smallest integral units (see Config.Stake). It is updated
+	// only when a hand settles (see completeHand) and always sums to
+	// zero.
+	balances []int
+	// transfers is the match's append-only settlement record, in
+	// settlement order. It grows only when a hand completes.
+	transfers []Transfer
 	// events is the match's ordered log of accepted actions.
 	events []Event
 	// rng is the random number generator used for shuffling. Shared with
@@ -258,11 +266,12 @@ func New(rng *rand.Rand, cfg Config) *Game {
 		cfg.MatchLength = DefaultMatchLength
 	}
 	return &Game{
-		Config: cfg,
-		Phase:  PhaseDeal,
-		Hands:  make([]*cardcore.Hand, cfg.NumPlayers),
-		rules:  rules,
-		rng:    rng,
+		Config:   cfg,
+		Phase:    PhaseDeal,
+		Hands:    make([]*cardcore.Hand, cfg.NumPlayers),
+		balances: make([]int, cfg.NumPlayers),
+		rules:    rules,
+		rng:      rng,
 	}
 }
 
@@ -320,6 +329,8 @@ func (g *Game) Clone() *Game {
 		clone.PileHistory[i] = clonePile(p)
 	}
 	clone.events = cloneEvents(g.events)
+	clone.balances = slices.Clone(g.balances)
+	clone.transfers = slices.Clone(g.transfers)
 	return &clone
 }
 
@@ -558,7 +569,7 @@ func (g *Game) Play(seat Seat, cards []cardcore.Card) error {
 // PilePendingResolution is true. If the finisher's last play stood, the
 // pile is archived and the next active player after the finisher takes
 // the lead. If the hand is over, the last remaining player takes last
-// place and the game moves to PhaseScore.
+// place, the hand settles, and the game moves to PhaseScore.
 func (g *Game) ResolvePile() error {
 	if g.Phase != PhasePlay {
 		return fmt.Errorf("cannot resolve a pile in phase %d: %w", g.Phase, ErrWrongPhase)
@@ -569,21 +580,8 @@ func (g *Game) ResolvePile() error {
 	g.PilePendingResolution = false
 
 	if g.activeCount() == 1 {
-		last := g.soleActiveSeat()
 		g.closePile(0, false)
-		g.Places = append(g.Places, last)
-		g.events = append(g.events, FinishEvent{
-			Hand:   g.Hand,
-			Seat:   last,
-			Place:  len(g.Places),
-			Reason: FinishLast,
-		})
-		g.events = append(g.events, HandEndedEvent{
-			Hand:        g.Hand,
-			Places:      slices.Clone(g.Places),
-			CardsPlayed: slices.Clone(g.CardsPlayed),
-		})
-		g.Phase = PhaseScore
+		g.completeHand()
 		return nil
 	}
 
@@ -596,8 +594,9 @@ func (g *Game) ResolvePile() error {
 // StartPlay closes the declaration window and starts the first pile.
 // Declared automatic wins are resolved in priority order: each declarer
 // takes the next available place, and their hand is removed from play.
-// If declarations leave more than one player, the holder of the lowest
-// remaining card leads and must include it in the first play.
+// If declarations leave at most one player, the hand ends and settles
+// immediately. Otherwise the holder of the lowest remaining card leads
+// and must include it in the first play.
 func (g *Game) StartPlay() error {
 	if g.Phase != PhasePlay {
 		return fmt.Errorf("cannot start play in phase %d: %w", g.Phase, ErrWrongPhase)
@@ -623,35 +622,14 @@ func (g *Game) StartPlay() error {
 		})
 	}
 
-	switch g.activeCount() {
-	case 0:
-		g.events = append(g.events, HandEndedEvent{
-			Hand:        g.Hand,
-			Places:      slices.Clone(g.Places),
-			CardsPlayed: slices.Clone(g.CardsPlayed),
-		})
-		g.Phase = PhaseScore
-	case 1:
-		last := g.soleActiveSeat()
-		g.Places = append(g.Places, last)
-		g.events = append(g.events, FinishEvent{
-			Hand:   g.Hand,
-			Seat:   last,
-			Place:  len(g.Places),
-			Reason: FinishLast,
-		})
-		g.events = append(g.events, HandEndedEvent{
-			Hand:        g.Hand,
-			Places:      slices.Clone(g.Places),
-			CardsPlayed: slices.Clone(g.CardsPlayed),
-		})
-		g.Phase = PhaseScore
-	default:
-		card, holder := g.lowestActiveCard()
-		g.OpeningCard = card
-		g.OpeningLeadRequired = true
-		g.Turn = holder
+	if g.activeCount() <= 1 {
+		g.completeHand()
+		return nil
 	}
+	card, holder := g.lowestActiveCard()
+	g.OpeningCard = card
+	g.OpeningLeadRequired = true
+	g.Turn = holder
 	return nil
 }
 
@@ -703,6 +681,31 @@ func (g *Game) closePile(nextLeader Seat, hasNextLeader bool) {
 	})
 	g.PileHistory = append(g.PileHistory, g.Pile)
 	g.Pile = Pile{}
+}
+
+// completeHand settles a finished hand: when one card-holder remains it
+// records last place, then it appends the hand-ended event, folds the
+// hand's events into transfers and balances, and moves the game to
+// PhaseScore. The hand-ended event precedes the fold because the fold
+// reads the finishing order from it.
+func (g *Game) completeHand() {
+	if g.activeCount() == 1 {
+		last := g.soleActiveSeat()
+		g.Places = append(g.Places, last)
+		g.events = append(g.events, FinishEvent{
+			Hand:   g.Hand,
+			Seat:   last,
+			Place:  len(g.Places),
+			Reason: FinishLast,
+		})
+	}
+	g.events = append(g.events, HandEndedEvent{
+		Hand:        g.Hand,
+		Places:      slices.Clone(g.Places),
+		CardsPlayed: slices.Clone(g.CardsPlayed),
+	})
+	g.settleHand()
+	g.Phase = PhaseScore
 }
 
 // detectAutoWins finds every seat's automatic win, if any, and stores
@@ -812,12 +815,13 @@ func (g *Game) pass(seat Seat) error {
 }
 
 // recordPlay appends a play of combo by seat to the current pile,
-// updates the pile's top and holder, and appends a PlayEvent. A play
-// either opens the pile or beats the pile's current top — the previous
-// play, by definition. Chop-chain numbers run per pile: a chop of an
-// ordinary play or of a payment-free chop starts a new chain at depth 1,
-// a chop of a payable chop continues its chain, and a chop of a
-// finisher's last play is payment-free and belongs to no chain.
+// updates the pile's top and holder, and appends a PlayEvent; finished
+// reports whether the play emptied the seat's hand. A play either opens
+// the pile or beats the pile's current top — the previous play, by
+// definition. Chop-chain numbers run per pile: a chop of an ordinary
+// play or of a payment-free chop starts a new chain at depth 1, a chop
+// of a payable chop continues its chain, and a chop of a finisher's last
+// play is payment-free and belongs to no chain.
 func (g *Game) recordPlay(seat Seat, combo Combo, finished bool) {
 	play := PilePlay{
 		Index:    len(g.Pile.Plays),

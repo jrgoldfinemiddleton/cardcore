@@ -99,6 +99,56 @@ func TestRecordPlayChainAssignment(t *testing.T) {
 	}
 }
 
+// TestRecordPlayFinisherFreezeChainAssignment verifies the ruled overlap
+// of finisher protection and chain resumption: a chop of a payment-free
+// chop whose chopper went out on that play is itself payment-free — no
+// one ever earns anything by chopping a final play.
+func TestRecordPlayFinisherFreezeChainAssignment(t *testing.T) {
+	g := newKillerGame(t,
+		[]cardcore.Card{c(rThree, sSpades)},
+		[]cardcore.Card{c(rFour, sSpades)},
+		[]cardcore.Card{c(rFive, sSpades)},
+	)
+
+	// Round 1: a finisher's 2 is chopped payment-free by a quad, and
+	// that chopper goes out with the chop; a further Bomb chop of it is
+	// payment-free too.
+	g.openPile(0)
+	g.recordPlay(0, mustClassify(t, c(rTwo, sSpades)), true)
+	g.recordPlay(1, mustClassify(t,
+		c(rSeven, sSpades), c(rSeven, sClubs), c(rSeven, sDiamonds), c(rSeven, sHearts)), true)
+	g.recordPlay(2, mustClassify(t,
+		c(rThree, sClubs), c(rThree, sDiamonds),
+		c(rFour, sClubs), c(rFour, sDiamonds),
+		c(rFive, sClubs), c(rFive, sDiamonds),
+		c(rSix, sClubs), c(rSix, sDiamonds)), false)
+
+	type want struct {
+		chop        bool
+		paymentFree bool
+		chain       int
+		depth       int
+	}
+	wants := []want{
+		{false, false, 0, 0}, // the lead cannot be a chop
+		{true, true, 0, 0},   // chopping a finisher's play earns nothing
+		{true, true, 0, 0},   // a finisher's payment-free chop stays protected
+	}
+	if len(g.Pile.Plays) != len(wants) {
+		t.Fatalf("got %d plays, want %d", len(g.Pile.Plays), len(wants))
+	}
+	for i, w := range wants {
+		play := g.Pile.Plays[i]
+		if play.Chop != w.chop || play.PaymentFree != w.paymentFree ||
+			play.Chain != w.chain || play.Depth != w.depth {
+			t.Errorf("play %d: got (chop %v, payment-free %v, chain %d, depth %d), "+
+				"want (%v, %v, %d, %d)",
+				i, play.Chop, play.PaymentFree, play.Chain, play.Depth,
+				w.chop, w.paymentFree, w.chain, w.depth)
+		}
+	}
+}
+
 // TestKillerEventOrderAcrossPileLifecycle verifies the ordered event
 // stream of a short two-player Killer hand from opening lead to hand
 // end.

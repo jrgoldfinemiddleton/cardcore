@@ -368,13 +368,20 @@ All amounts are multiples of the agreed stake:
   chain: the first chop is 1 stake, the second 2, the third 3, and so
   on; only the last chopped player pays, settling with the last
   chopper. A player may therefore free another from debt (debts are
-  forgiven transitively). Chops in different piles settle
+  forgiven transitively). A self-chop — possible only when every
+  other player is locked out of the pile or has gone out — neither
+  raises nor cancels its chain: the chain settles at the last chop of
+  another player's combination, at that chop's layer. Chops in
+  different piles settle
   independently — a chop opening a new pile is worth 1 stake again,
   and earlier piles' debts stand.
 - Bombing or killing a finisher's final combination earns nothing: a
   player who has gone out is protected. Such a chop earns only
   continuation of play, and a further chop beating it earns payment
-  normally, as the first chop of a new chain.
+  normally, as the first chop of a new chain. Protection is absolute:
+  if such a payment-free chop is itself the chopper's final
+  combination, chopping it earns nothing either — a player's winnings
+  are fixed the moment they go out.
 - There are no penalties for any other scenarios, including cards
   left in any player's hand.
 
